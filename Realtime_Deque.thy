@@ -51,8 +51,8 @@ datatype 'a deque =
     "'a list"
     (* status *)
     "'a transformation option"
-| ShortDeque
-    (* less than 3 values *)
+    | ShortDeque
+    (* less than 4 values *)
     "'a list"
 
 fun copy :: "'a copyState \<Rightarrow> 'a copyState" where
