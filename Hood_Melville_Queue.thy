@@ -155,7 +155,7 @@ proof -
   qed (auto simp add: not_idle)
 qed
 
-(* Preservation of the status invariants by exec2 *)
+(* Preservation of the status invariants by exec *)
 lemma st_inv_exec:
   assumes st_inv: "st_inv s"
   shows "st_inv (exec s)"
