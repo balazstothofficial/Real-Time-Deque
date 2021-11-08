@@ -71,18 +71,24 @@ definition sixTicks where
 datatype side = Left | Right
 
 datatype 'a deque =
-   List "'a list"
-| Deque "'a state" "'a state"
+  Empty
+  | One 'a
+  | Two 'a 'a
+  | Three 'a 'a 'a 
+  | Deque "'a state" "'a state"
 
 definition empty where
-  "empty \<equiv> List []"
+  "empty \<equiv> Empty"
 
 fun isEmpty :: "'a deque \<Rightarrow> bool" where
-  "isEmpty (List []) = True"
+  "isEmpty Empty = True"
 | "isEmpty _ = False"
 
 fun swap :: "'a deque \<Rightarrow> 'a deque" where
-  "swap (List xs) = List (rev xs)"
+  "swap Empty = Empty"  
+| "swap (One x) = One x"
+| "swap (Two x y) = Two y x"
+| "swap (Three x y z) = Three z y x"
 | "swap (Deque left right) = Deque left right"
 
 fun popState :: "'a state \<Rightarrow> 'a * 'a state" where
@@ -99,8 +105,25 @@ fun pushState :: "'a \<Rightarrow> 'a state \<Rightarrow> 'a state" where
 | "pushState x (RevS2 a b c d e) = RevS2 (put x a) b c d e"
 | "pushState x (Copy a b c d)    = Copy  (put x a) b c d"
 
+fun toSmall :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a deque" where
+  "toSmall []     [] = Empty"
+
+| "toSmall (x#[]) [] = One x"
+| "toSmall [] (x#[]) = One x"
+
+| "toSmall (x#[])(y#[]) = Two y x"
+| "toSmall (x#y#[]) [] = Two y x"
+| "toSmall [] (x#y#[])= Two y x"
+
+| "toSmall [] (x#y#z#[])   = Three z y x"
+| "toSmall (x#y#z#[]) []   = Three z y x"
+| "toSmall (x#y#[]) (z#[]) = Three z y x"
+| "toSmall (x#[]) (y#z#[]) = Three z y x"
+
 fun dequeueLeft' :: "'a deque \<Rightarrow> 'a * 'a deque" where
-  "dequeueLeft' (List (x#xs)) = (x, List xs)"
+  "dequeueLeft' (One x) = (x, Empty)"
+| "dequeueLeft' (Two x y) = (x, One x)"
+| "dequeueLeft' (Three x y z) = (x, Two x y)"
 | "dequeueLeft' (Deque (Norm L l) (Norm R r)) = (
    let head = first L in
    let tail = pop L in
@@ -110,7 +133,7 @@ fun dequeueLeft' :: "'a deque \<Rightarrow> 'a * 'a deque" where
     then let (newLeft, newRight) = sixTicks (RevS1 (Current [] 0 L (2 * l - 1)) L [])
                                             (RevB  (Current [] 0 R (r - l)) R [] (r - l)) 
          in (head, Deque newLeft newRight)
-    else case R of Stack r1 r2 \<Rightarrow> (head, List (rev (r1@r2)))
+    else case R of Stack r1 r2 \<Rightarrow> (head, toSmall r1 r2)
   )"
 | "dequeueLeft' (Deque left right) = (
     let (x, L) = popState left in 
@@ -137,11 +160,10 @@ fun firstRight :: "'a deque \<Rightarrow> 'a" where
   "firstRight deque = (let (x, _) = dequeueRight' deque in x)" 
 
 fun enqueueLeft :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
-  "enqueueLeft x (List xs) = (
-    if length xs \<le> 2
-    then List (x#xs)
-    else Deque (Norm (Stack [x, hd xs] []) 2) (Norm (Stack [hd (tl (tl xs)), hd (tl xs)] []) 2)
-  )"
+  "enqueueLeft x Empty = One x"
+| "enqueueLeft x (One y) = Two x y"
+| "enqueueLeft x (Two y z) = Three x y z"
+| "enqueueLeft x (Three a b c) = Deque (Norm (Stack [x, a] []) 2) (Norm (Stack [c, b] []) 2)"
 | "enqueueLeft x (Deque (Norm L l) (Norm R r)) = (
     let L = push x L in 
     if 3 * r \<ge> Suc l
@@ -174,25 +196,29 @@ lemma [simp]:"\<lbrakk>(x, deque') = dequeueLeft' (Deque left right)\<rbrakk>
          )
   sorry
 
-lemma [simp]:"\<lbrakk>(a, b) = (case dequeueLeft' (Deque v va) of (x, deque) \<Rightarrow> (x, swap deque));
-        (xa, y) = (case dequeueLeft' (Deque v va) of (x, deque) \<Rightarrow> (x, swap deque))\<rbrakk>
+lemma [simp]:"\<lbrakk>(xa, y) = (case dequeueLeft' (Deque v va) of (x, deque) \<Rightarrow> (x, swap deque))\<rbrakk>
        \<Longrightarrow> size y < Suc (size v + size va)"
   sorry
 
-lemma [simp]: " \<lbrakk>(a, b) = (case dequeueLeft' (List (rev vb @ [va])) of (x, deque) \<Rightarrow> (x, swap deque));
-        (xa, y) = (case dequeueLeft' (List (rev vb @ [va])) of (x, deque) \<Rightarrow> (x, swap deque))\<rbrakk>
+lemma [simp]: " \<lbrakk>(xa, y) = (case dequeueLeft' (List (rev vb @ [va])) of (x, deque) \<Rightarrow> (x, swap deque))\<rbrakk>
        \<Longrightarrow> size y < Suc (Suc (length vb))"
   sorry
 
 fun listLeft :: "'a deque \<Rightarrow> 'a list" where
-  "listLeft (List []) = []"
+  "listLeft Empty = []"
+| "listLeft (One x) = [x]"
+| "listLeft (Two x y) = [x, y]"
+| "listLeft (Three x y z) = [x, y, z]"
 | "listLeft deque = (
     let (x, deque) = dequeueLeft' deque in
       x # (listLeft deque)
   )"
 
 fun listRight :: "'a deque \<Rightarrow> 'a list" where
-  "listRight (List []) = []"
+  "listRight Empty = []"
+| "listRight (One x) = [x]"
+| "listRight (Two x y) = [y, x]"
+| "listRight (Three x y z) = [z, y, x]"
 | "listRight deque = (
     let (x, deque) = dequeueRight' deque in
       x # (listRight deque)
@@ -262,38 +288,59 @@ next
   case (5 q)
   then show ?case 
     apply(induction q)
-    apply(auto split: prod.splits)
+    apply auto
+        apply(auto split: prod.splits)
     sorry
 next
   case (6 q)
-  then show ?case sorry
+  then show ?case 
+    apply(induction q)
+    apply(auto split: prod.splits)
+    sorry
 next
   case (7 q)
-  then show ?case sorry
+  then show ?case
+    apply(induction q)
+    apply(auto split: prod.splits)
+    sorry
 next
   case (8 q)
-  then show ?case sorry
+  then show ?case 
+    apply(induction q)
+    apply(auto split: prod.splits)
+    sorry
 next
   case (9 q)
-  then show ?case sorry
+  then show ?case
+    apply(induction q)
+    apply(auto split: prod.splits)
+    sorry
 next
   case (10 q)
-  then show ?case sorry
+  then show ?case
+    apply(induction q)
+    apply(auto split: prod.splits)
+    sorry
 next
   case 11
-  then show ?case sorry
+  then show ?case
+    sorry
 next
   case (12 q x)
-  then show ?case sorry
+  then show ?case
+    sorry
 next
   case (13 q x)
-  then show ?case sorry
+  then show ?case
+    sorry
 next
   case (14 q)
-then show ?case sorry
+  then show ?case
+    sorry
 next
   case (15 q)
-then show ?case sorry
+  then show ?case
+    sorry
 qed
 
 
