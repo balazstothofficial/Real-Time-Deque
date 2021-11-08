@@ -2,45 +2,73 @@ theory Realtime_Deque
   imports Main "HOL-Data_Structures.Queue_Spec"
 begin
 
+datatype 'a countedList =
+ CountedList
+  (* length *)
+  nat
+  (* values *)
+  "'a list"
+
+definition emptyCountedList where
+  "emptyCountedList = CountedList 0 []"
 
 datatype 'a copyState = 
-  Copy 
-    (* from *)
-    "'a list"
-    (* to *)
-    "'a list"
+ Copy 
+  (* remaining steps *)
+  nat
+  (* from *)
+  "'a countedList"
+  (* to *)
+  "'a countedList"
 
-datatype 'a dequeEnd =
-  DequeEnd
-    (* length *)
-    nat
-    (* values *)
-    "'a list"
+datatype 'a shortTransformation =
+ FirstPhase 
+  (* counter popped *)
+  nat
+  (* extra *)
+  "'a countedList"
+  (* reverse short end *)
+  "'a copyState" |
+ SecondPhase
+  (* counter popped *)
+  nat
+  (* extra *)
+  "'a countedList"
+  (* reversed short end *)
+  "'a countedList"
+  (* reverse remaining of long end *)
+  "'a copyState" |
+ ThirdPhase
+  (* extra *)
+  "'a countedList"
+  (* reverse reversed short end onto reversed remaining of long end *)
+  "'a copyState" |
+ ExtraPhase
+  (* reverse extra *)
+  "'a copyState"
 
-datatype 'a phase = 
-  Initial |
-  FirstPhase
-    (* remaining steps (Is this really needed?)*)
-    nat
-    "'a copyState"
-    "'a copyState" |
-  SecondPhase
-    (* aux short *)
-    "'a list"
-    "'a copyState"
-    "'a copyState" |
-  ThirdPhase
-    "'a copyState"
-    "'a copyState" |
-  Done "'a dequeEnd" "'a dequeEnd"
+datatype 'a longTransformation =
+ FirstPhase 
+  (* counter popped *)
+  nat
+  (* extra *)
+  "'a countedList"
+  (* reverse top of long end *)
+  "'a copyState" |
+ SecondPhase
+  (* extra *)
+  "'a countedList"
+  (* reverse reversed top of long end *)
+  "'a copyState" |
+ ExtraPhase
+  (* reverse extra *)
+  "'a copyState"
 
-datatype 'a transformation =
-  Transformation 
-  (* smaller *)
-  "'a dequeEnd"
-  (* bigger *)
-  "'a dequeEnd"
-  "'a phase"
+datatype 'a transformation = 
+  Short
+    "'a shortTransformation" |
+  Long
+    "'a longTransformation"
 
 datatype 'a deque = 
   Empty
@@ -49,80 +77,114 @@ datatype 'a deque =
 | Three 'a 'a 'a
 | Idle
   (* left end *)
-  "'a dequeEnd"
+  "'a countedList"
   (* right end *)
-  "'a dequeEnd"
+  "'a countedList"
+  (*TODO: Would it be good to have "TransformingToLeft" and "TransformingToRight"? *)
 | Transforming
-  (* left end *)
-  "'a dequeEnd"
-  (* right end *)
-  "'a dequeEnd"
+  (* left transformation *)
+  "'a transformation"
+  (* right transformation *)
   "'a transformation"
 
 datatype "end" = Left | Right
 
 datatype 'a action = Enqueue "end" 'a | Dequeue "end"
 
-fun copy :: "'a copyState \<Rightarrow> 'a copyState" where
-  "copy (Copy (x#from) to) = Copy from (x#to)"
-| "copy (Copy []       to) = Copy []   to"
+fun push :: "'a \<Rightarrow> 'a countedList \<Rightarrow> 'a countedList" where
+  "push x (CountedList l xs) = CountedList (Suc l) (x#xs)"
 
-fun transform :: "'a transformation \<Rightarrow> 'a transformation" where
-  "transform (Transformation shortEnd longEnd phase) = (
-    let newPhase = (
-       case shortEnd of DequeEnd shortLength shortValues \<Rightarrow>
-       case longEnd  of DequeEnd longLength  longValues  \<Rightarrow>
-       let k = longLength - 3 * shortLength in (
-       case phase of
-            Initial \<Rightarrow>
-             FirstPhase (shortLength  * 2 + k - 1) (Copy shortValues []) (Copy longValues [])
-          | FirstPhase (Suc n) shortCopy longCopy \<Rightarrow> 
-             FirstPhase n (copy shortCopy) (copy longCopy)
-          | FirstPhase 0 (Copy _ auxShort) (Copy remainderLong auxLong) \<Rightarrow> 
-             SecondPhase auxShort (Copy remainderLong []) (Copy auxLong [])
-          | SecondPhase auxShort (Copy [] newShort) longCopy \<Rightarrow> 
-             ThirdPhase (copy (Copy auxShort newShort)) (copy longCopy)
-          | SecondPhase auxShort shortCopy longCopy \<Rightarrow> 
-              SecondPhase auxShort (copy shortCopy) (copy longCopy)
-          | ThirdPhase (Copy [] newShort) (Copy [] newLong) \<Rightarrow> 
-             Done (DequeEnd (shortLength * 2 + 1) newShort)(DequeEnd (shortLength * 2 - 1 + k) newLong)
-          | ThirdPhase shortCopy longCopy \<Rightarrow> ThirdPhase (copy shortCopy) (copy longCopy)
-          | done \<Rightarrow> done
-      )) in Transformation shortEnd longEnd newPhase
+fun pop :: "'a countedList \<Rightarrow> 'a countedList" where
+  "pop (CountedList (Suc l) (x#xs)) = CountedList l xs"
+
+fun copy :: "'a copyState \<Rightarrow> 'a copyState" where
+  "copy (Copy (Suc n) (CountedList (Suc l) (x#from)) to) = Copy n (CountedList l from) (push x to)"
+| "copy (Copy  0       from    to)                       = Copy 0 from to"
+
+(* TODO: generalize *)
+fun fullCopyOnto :: "'a countedList \<Rightarrow> 'a countedList \<Rightarrow> 'a copyState" where
+  "fullCopyOnto (CountedList l xs) other = Copy l (CountedList l xs) other"
+
+fun fullCopyOntoBut :: "nat \<Rightarrow> 'a countedList \<Rightarrow> 'a countedList \<Rightarrow> 'a copyState" where
+  "fullCopyOntoBut n (CountedList l xs) other = Copy (l -n) (CountedList l xs) other"
+
+fun fullCopy :: "'a countedList \<Rightarrow> 'a copyState" where
+  "fullCopy list = fullCopyOnto list emptyCountedList"
+
+fun fullCopyBut :: "nat \<Rightarrow> 'a countedList \<Rightarrow> 'a copyState" where
+  "fullCopyBut n list = fullCopyOntoBut n list emptyCountedList"
+
+(* TODO: Find out how to remove "shortTransformation." *)
+(* TODO: What to do with missing cases? *)
+fun transform :: "'a shortTransformation \<Rightarrow> 'a longTransformation \<Rightarrow> ('a shortTransformation * 'a longTransformation)" where
+  (* TODO: Invariant: short < steps first long phase *)
+  "transform (shortTransformation.FirstPhase  poppedShort extraShort (Copy 0 _ reversedShort))              (FirstPhase poppedLong extraLong (Copy 0 remainingLong reversedLong))
+     =       (shortTransformation.SecondPhase poppedShort extraShort reversedShort (fullCopy remainingLong), SecondPhase extraLong (fullCopyBut poppedLong reversedLong))"
+
+| "transform (shortTransformation.FirstPhase poppedShort extraShort reverseShort)       (FirstPhase poppedLong extraLong reverseLong)
+     =       (shortTransformation.FirstPhase poppedShort extraShort (copy reverseShort), FirstPhase poppedLong extraLong (copy reverseLong))"
+
+| "transform (shortTransformation.SecondPhase poppedShort extraShort reversedShort (Copy 0 _ reversedRemainingLong))              (SecondPhase extraLong reverseLongTop)
+     =       (shortTransformation.ThirdPhase  extraShort (copy (fullCopyOntoBut poppedShort reversedShort reversedRemainingLong)), SecondPhase extraLong (copy reverseLongTop))"
+
+| "transform (shortTransformation.SecondPhase poppedShort extraShort reversedShort reverseRemainingLong)       (SecondPhase extraLong reverseLongTop)
+     =       (shortTransformation.SecondPhase poppedShort extraShort reversedShort (copy reverseRemainingLong), SecondPhase extraLong (copy reverseLongTop))"
+
+| "transform (shortTransformation.ThirdPhase extraShort (Copy 0 _ newShort))   (SecondPhase extraLong (Copy 0 _ newLong))
+     =       (shortTransformation.ExtraPhase (fullCopyOnto extraShort newShort), ExtraPhase (fullCopyOnto extraLong newLong))"
+
+| "transform (shortTransformation.ThirdPhase extraShort reverseNewShort)       (SecondPhase extraLong reverseLongTop)
+     =       (shortTransformation.ThirdPhase extraShort (copy reverseNewShort), SecondPhase extraLong (copy reverseLongTop))"
+
+| "transform (shortTransformation.ExtraPhase reverseShortExtra)   (ExtraPhase reverseLongExtra)
+     =       (shortTransformation.ExtraPhase (copy reverseShortExtra), ExtraPhase (copy reverseLongExtra))"
+
+
+fun twice :: "('a \<Rightarrow> 'b \<Rightarrow> ('a * 'b)) \<Rightarrow> ('a \<Rightarrow> 'b \<Rightarrow> ('a * 'b))" where
+  "twice f = (\<lambda>a b. let (a', b') = f a b in f a' b')"
+
+definition transformFourTimes where
+  "transformFourTimes \<equiv> twice (twice transform)"
+
+definition transformSixTimes where
+  "transformSixTimes \<equiv> twice (twice (twice transform))"
+
+fun check' :: "'a countedList \<Rightarrow> 'a countedList \<Rightarrow> ('a shortTransformation * 'a longTransformation)" where
+  "check' shortEnd longEnd = (
+     case shortEnd of CountedList shortLength shortValues \<Rightarrow>
+     case longEnd  of CountedList longLength  longValues \<Rightarrow>
+     let k = longLength - 3 * shortLength in
+      transformSixTimes
+        (shortTransformation.FirstPhase 0 (Copy shortLength                shortEnd  emptyCountedList))
+        (                    FirstPhase 0 (Copy (shortLength  * 2 + k - 1) longEnd   emptyCountedList))
   )"
 
-fun transform4 :: "'a transformation \<Rightarrow> 'a transformation" where
-  "transform4 x = transform (transform (transform (transform x)))"
-
-fun transform6 :: "'a transformation \<Rightarrow> 'a transformation" where
-  "transform6 x = transform ( transform (transform (transform (transform (transform x)))))"
-
-
-fun check :: "'a dequeEnd \<Rightarrow> 'a dequeEnd \<Rightarrow> 'a deque" where
+fun check :: "'a countedList \<Rightarrow> 'a countedList \<Rightarrow> 'a deque" where
   "check leftEnd rightEnd = (
     
-    case leftEnd of DequeEnd leftLength leftValues \<Rightarrow>
-    case rightEnd of DequeEnd rightLength rightValues \<Rightarrow>
+    case leftEnd of CountedList leftLength leftValues \<Rightarrow>
+    case rightEnd of CountedList rightLength rightValues \<Rightarrow>
     
     if leftLength * 3 < rightLength
-    then Transforming leftEnd rightEnd (transform6 (Transformation leftEnd rightEnd Initial))
+    then let (short, long) = check' leftEnd rightEnd 
+         in Transforming (Short short) (Long long)
+
     else if rightLength * 3 < leftLength
-    then Transforming leftEnd rightEnd (transform6 (Transformation rightEnd leftEnd Initial))
+    then let (short, long) = check' rightEnd leftEnd 
+         in Transforming (Long long) (Short short) 
+
     else Idle leftEnd rightEnd
   )"
 
-fun addToCopy :: "'a \<Rightarrow> 'a copyState \<Rightarrow> 'a copyState" where
+(*fun addToCopy :: "'a \<Rightarrow> 'a copyState \<Rightarrow> 'a copyState" where
   "addToCopy x (Copy from to) = Copy (x#from) to"
 
 fun popFromCopy :: "'a copyState \<Rightarrow> 'a copyState" where
   "popFromCopy (Copy (_#from) to) = Copy from to"
 | "popFromCopy (Copy [] (_#to)) = Copy [] to"
 
-fun append :: "'a \<Rightarrow> 'a dequeEnd \<Rightarrow> 'a dequeEnd" where
-  "append x (DequeEnd l xs) = DequeEnd (Suc l) (x#xs)"
-
-fun pop :: "'a dequeEnd \<Rightarrow> 'a dequeEnd" where
-  "pop (DequeEnd (Suc l) (x#xs)) = DequeEnd l xs"
+fun pushToTransformation :: "'a \<Rightarrow> 'a transformation \<Rightarrow> 'a transformation" where
+  "pushToTransformation x (Short l xs) = DequeEnd (Suc l) (x#xs)"*)
 
 fun operate :: "'a deque \<Rightarrow> 'a action \<Rightarrow> 'a deque" where
   "operate Empty (Dequeue _)   = Empty"
@@ -137,181 +199,27 @@ fun operate :: "'a deque \<Rightarrow> 'a action \<Rightarrow> 'a deque" where
 | "operate (Two x y) (Enqueue Left z)  = Three z x y"
 | "operate (Two x y) (Enqueue Right z) = Three x y z"
 
-| "operate (Three x y z) (Dequeue Left) = Two y z"
-| "operate (Three x y z) (Dequeue Right) = Two x y"
-| "operate (Three x y z) (Enqueue Left v) = Idle (DequeEnd 2 [v, x]) (DequeEnd 2 [z, y])"
-| "operate (Three x y z) (Enqueue Right v) = Idle (DequeEnd 2 [x, y]) (DequeEnd 2 [v, z])"
+| "operate (Three x y z) (Dequeue Left)    = Two y z"
+| "operate (Three x y z) (Dequeue Right)   = Two x y"
+| "operate (Three x y z) (Enqueue Left v)  = Idle (CountedList 2 [v, x]) (CountedList 2 [z, y])"
+| "operate (Three x y z) (Enqueue Right v) = Idle (CountedList 2 [x, y]) (CountedList 2 [v, z])"
 
-(* TODO: Would it be good to have the concrete lengths? *)
-| "operate (Idle (DequeEnd _ (_#[])) (DequeEnd _ (x#y#z#[]))) (Dequeue Left) = Three z y x" 
-| "operate (Idle (DequeEnd _ (_#[])) (DequeEnd _ (y#z#[])))   (Dequeue Left) = Two z y"
-| "operate (Idle (DequeEnd _ (_#[])) (DequeEnd _ (z#[])))     (Dequeue Left) = One z"
+(* TODO: Would it be good to have the concrete lengths? Is it possible? *)
+| "operate (Idle (CountedList _ (_#[])) (CountedList _ (x#y#z#[]))) (Dequeue Left) = Three z y x" 
+| "operate (Idle (CountedList _ (_#[])) (CountedList _ (y#z#[])))   (Dequeue Left) = Two z y"
+| "operate (Idle (CountedList _ (_#[])) (CountedList _ (z#[])))     (Dequeue Left) = One z"
 
-| "operate (Idle (DequeEnd _ (x#y#z#[])) (DequeEnd _ (_#[]))) (Dequeue Right)  = Three x y z"
-| "operate (Idle (DequeEnd _ (y#z#[]))   (DequeEnd _ (_#[]))) (Dequeue Right)  = Two y z"
-| "operate (Idle (DequeEnd _ (z#[]))     (DequeEnd _ (_#[]))) (Dequeue Right)  = One z"
+| "operate (Idle (CountedList _ (x#y#z#[])) (CountedList _ (_#[]))) (Dequeue Right)  = Three x y z"
+| "operate (Idle (CountedList _ (y#z#[]))   (CountedList _ (_#[]))) (Dequeue Right)  = Two y z"
+| "operate (Idle (CountedList _ (z#[]))     (CountedList _ (_#[]))) (Dequeue Right)  = One z"
 
-| "operate (Idle leftEnd rightEnd) (Enqueue Left x)  = check (append x leftEnd) rightEnd"
-| "operate (Idle leftEnd rightEnd) (Enqueue Right x) = check leftEnd (append x rightEnd)"
+| "operate (Idle leftEnd rightEnd) (Enqueue Left x)  = check (push x leftEnd) rightEnd"
+| "operate (Idle leftEnd rightEnd) (Enqueue Right x) = check leftEnd (push x rightEnd)"
 | "operate (Idle leftEnd rightEnd) (Dequeue Left)    = check (pop leftEnd) rightEnd"
 | "operate (Idle leftEnd rightEnd) (Dequeue Right)   = check leftEnd (pop rightEnd)"
 
-| "operate (Transforming leftEnd rightEnd transformation) (Enqueue Left x) = (
-    case transform4 transformation of Transformation shortEnd longEnd phase \<Rightarrow>
-    case shortEnd of DequeEnd shortLength shortValues \<Rightarrow>
-    case leftEnd of DequeEnd leftLength leftValues \<Rightarrow>
-      if shortLength = leftLength
-      then let newPhase = (
-          case phase of
-                  Initial \<Rightarrow> Initial
-                | FirstPhase steps shortCopy longCopy \<Rightarrow>
-                   FirstPhase (Suc steps) (addToCopy x shortCopy) longCopy
-                | SecondPhase auxShort shortCopy longCopy \<Rightarrow>
-                   SecondPhase (x#auxShort) shortCopy longCopy
-                | ThirdPhase shortCopy longCopy \<Rightarrow>
-                   ThirdPhase (addToCopy x shortCopy) longCopy
-                | Done shortEnd longEnd \<Rightarrow>
-                   Done (append x shortEnd) longEnd
-          )
-          in case newPhase of
-                Done shortEnd longEnd 
-                  \<Rightarrow> Idle shortEnd longEnd
-            | _   \<Rightarrow> Transforming (append x leftEnd) rightEnd (Transformation (append x shortEnd) longEnd newPhase)
-      else let newPhase = (
-          case phase of
-                  Initial \<Rightarrow> Initial
-                | FirstPhase steps shortCopy longCopy \<Rightarrow>
-                   FirstPhase (Suc steps) shortCopy (addToCopy x longCopy)
-                | SecondPhase auxShort shortCopy longCopy \<Rightarrow>
-                   SecondPhase auxShort shortCopy (addToCopy x longCopy)
-                | ThirdPhase shortCopy longCopy \<Rightarrow>
-                   ThirdPhase shortCopy (addToCopy x longCopy)
-                | Done shortEnd longEnd \<Rightarrow>
-                   Done shortEnd (append x longEnd)
-          )
-          in case newPhase of
-                Done shortEnd longEnd 
-                  \<Rightarrow> Idle longEnd shortEnd
-            | _   \<Rightarrow> Transforming (append x leftEnd) rightEnd (Transformation shortEnd (append x longEnd) newPhase)
-  )"
-| "operate (Transforming leftEnd rightEnd transformation) (Enqueue Right x) = (
-    case transform4 transformation of Transformation shortEnd longEnd phase \<Rightarrow>
-    case shortEnd of DequeEnd shortLength shortValues \<Rightarrow>
-    case rightEnd of DequeEnd rightLength rightValues \<Rightarrow>
-      if shortLength = rightLength
-      then let newPhase = (
-          case phase of
-                  Initial \<Rightarrow> Initial
-                | FirstPhase steps shortCopy longCopy \<Rightarrow>
-                   FirstPhase (Suc steps) (addToCopy x shortCopy) longCopy
-                | SecondPhase auxShort shortCopy longCopy \<Rightarrow>
-                   SecondPhase (x#auxShort) shortCopy longCopy
-                | ThirdPhase shortCopy longCopy \<Rightarrow>
-                   ThirdPhase (addToCopy x shortCopy) longCopy
-                | Done shortEnd longEnd \<Rightarrow>
-                   Done (append x shortEnd) longEnd
-          )
-          in case newPhase of
-                Done shortEnd longEnd 
-                  \<Rightarrow> Idle longEnd shortEnd
-            | _   \<Rightarrow> Transforming leftEnd (append x rightEnd) (Transformation (append x shortEnd) longEnd newPhase)
-      else let newPhase = (
-          case phase of
-                  Initial \<Rightarrow> Initial
-                | FirstPhase steps shortCopy longCopy \<Rightarrow>
-                   FirstPhase (Suc steps) shortCopy (addToCopy x longCopy)
-                | SecondPhase auxShort shortCopy longCopy \<Rightarrow>
-                   SecondPhase auxShort shortCopy (addToCopy x longCopy)
-                | ThirdPhase shortCopy longCopy \<Rightarrow>
-                   ThirdPhase shortCopy (addToCopy x longCopy)
-                | Done shortEnd longEnd \<Rightarrow>
-                   Done shortEnd (append x longEnd)
-          )
-          in case newPhase of
-                Done shortEnd longEnd 
-                  \<Rightarrow> Idle shortEnd longEnd
-            | _   \<Rightarrow> Transforming leftEnd (append x rightEnd) (Transformation shortEnd (append x longEnd) newPhase)
-  )"
-| "operate (Transforming leftEnd rightEnd transformation) (Dequeue Left) = (
-    case transform4 transformation of Transformation shortEnd longEnd phase \<Rightarrow>
-    case shortEnd of DequeEnd shortLength shortValues \<Rightarrow>
-    case leftEnd of DequeEnd leftLength leftValues \<Rightarrow>
-      if shortLength = leftLength
-      then let newPhase = (
-          case phase of
-                  Initial \<Rightarrow> Initial
-                | FirstPhase steps shortCopy longCopy \<Rightarrow>
-                   FirstPhase steps (popFromCopy shortCopy) longCopy
-                | SecondPhase (_#auxShort) shortCopy longCopy \<Rightarrow>
-                   SecondPhase auxShort shortCopy longCopy
-                | ThirdPhase shortCopy longCopy \<Rightarrow>
-                   ThirdPhase (popFromCopy shortCopy) longCopy
-                | Done shortEnd longEnd \<Rightarrow>
-                   Done (pop shortEnd) longEnd
-          )
-          in case newPhase of
-                Done shortEnd longEnd 
-                  \<Rightarrow> Idle shortEnd longEnd
-            | _   \<Rightarrow> Transforming (pop leftEnd) rightEnd (Transformation (pop shortEnd) longEnd newPhase)
-      else let newPhase = (
-          case phase of
-                  Initial \<Rightarrow> Initial
-                | FirstPhase 0 shortCopy longCopy \<Rightarrow>
-                   FirstPhase 0 shortCopy (popFromCopy longCopy)
-                |  FirstPhase (Suc steps) shortCopy longCopy \<Rightarrow>
-                   FirstPhase steps shortCopy (popFromCopy longCopy)
-                | SecondPhase auxShort shortCopy longCopy \<Rightarrow>
-                   SecondPhase auxShort shortCopy (popFromCopy longCopy)
-                | ThirdPhase shortCopy longCopy \<Rightarrow>
-                   ThirdPhase shortCopy (popFromCopy longCopy)
-                | Done shortEnd longEnd \<Rightarrow>
-                   Done shortEnd (pop longEnd)
-          )
-          in case newPhase of
-                Done shortEnd longEnd 
-                  \<Rightarrow> Idle longEnd shortEnd
-            | _   \<Rightarrow> Transforming (pop leftEnd) rightEnd (Transformation shortEnd (pop longEnd) newPhase)
-  )"
-| "operate (Transforming leftEnd rightEnd transformation) (Dequeue Right) = (
-    case transform4 transformation of Transformation shortEnd longEnd phase \<Rightarrow>
-    case shortEnd of DequeEnd shortLength shortValues \<Rightarrow>
-    case rightEnd of DequeEnd rightLength rightValues \<Rightarrow>
-      if shortLength = rightLength
-      then let newPhase = (
-          case phase of
-                  Initial \<Rightarrow> Initial
-                | FirstPhase steps shortCopy longCopy \<Rightarrow>
-                   FirstPhase steps (popFromCopy shortCopy) longCopy
-                | SecondPhase (_#auxShort) shortCopy longCopy \<Rightarrow>
-                   SecondPhase auxShort shortCopy longCopy
-                | ThirdPhase shortCopy longCopy \<Rightarrow>
-                   ThirdPhase (popFromCopy shortCopy) longCopy
-                | Done shortEnd longEnd \<Rightarrow>
-                   Done (pop shortEnd) longEnd
-          )
-           in case newPhase of
-                Done shortEnd longEnd 
-                  \<Rightarrow> Idle longEnd shortEnd
-            | _   \<Rightarrow> Transforming leftEnd (pop rightEnd) (Transformation (pop shortEnd) longEnd newPhase)
-      else let newPhase = (
-          case phase of
-                  Initial \<Rightarrow> Initial
-                | FirstPhase 0 shortCopy longCopy \<Rightarrow>
-                   FirstPhase 0 shortCopy (popFromCopy longCopy)
-                |  FirstPhase (Suc steps) shortCopy longCopy \<Rightarrow>
-                   FirstPhase steps shortCopy (popFromCopy longCopy)
-                | SecondPhase auxShort shortCopy longCopy \<Rightarrow>
-                   SecondPhase auxShort shortCopy (popFromCopy longCopy)
-                | ThirdPhase shortCopy longCopy \<Rightarrow>
-                   ThirdPhase shortCopy (popFromCopy longCopy)
-                | Done shortEnd longEnd \<Rightarrow>
-                   Done shortEnd (pop longEnd)
-          )
-           in case newPhase of
-                Done shortEnd longEnd 
-                  \<Rightarrow> Idle shortEnd longEnd
-            | _   \<Rightarrow> Transforming leftEnd (pop rightEnd) (Transformation shortEnd (pop longEnd) newPhase)
-  )"
+| "operate (Transforming leftEnd rightEnd) operation = Transforming leftEnd rightEnd"
+
 
 fun enqueueLeft :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
   "enqueueLeft x deque = operate deque (Enqueue Left x)"
@@ -328,6 +236,7 @@ fun dequeueRight :: "'a deque \<Rightarrow> 'a deque" where
 definition empty :: "'a deque" where
   "empty = Empty"
 
+(*
 fun firstLeft :: "'a deque \<Rightarrow> 'a" where
   "firstLeft (One x) = x"
 | "firstLeft (Two x _) = x"
@@ -483,7 +392,7 @@ next
 qed
 
 
-
+*)
     
 value "
 enqueueRight 3 (
