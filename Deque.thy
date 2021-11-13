@@ -12,7 +12,7 @@ datatype 'a state =
   Copy "'a current" "'a list" "'a list" nat
 
 fun put :: "'a \<Rightarrow> 'a current \<Rightarrow> 'a current" where
-  "put element (Current extra added old remained) = Current (element#extra) (Suc added) old remained"
+  "put element (Current extra added old remained) = Current (element#extra) (added + 1) old remained"
 
 fun get :: "'a current \<Rightarrow> 'a * 'a current" where
   "get (Current [] added old remained)     = (first old, Current [] added (pop old) (remained - 1))"
@@ -122,23 +122,23 @@ fun toSmall :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a deque" where
 
 fun dequeueLeft' :: "'a deque \<Rightarrow> 'a * 'a deque" where
   "dequeueLeft' (One x) = (x, Empty)"
-| "dequeueLeft' (Two x y) = (x, One x)"
-| "dequeueLeft' (Three x y z) = (x, Two x y)"
-| "dequeueLeft' (Deque (Norm L l) (Norm R r)) = (
-   let head = first L in
-   let tail = pop L in
-    if 3 * (l - 1) \<ge> r 
-    then (head, Deque (Norm tail (l - 1)) (Norm R r))
-    else if l \<ge> 2
-    then let (newLeft, newRight) = sixTicks (RevS1 (Current [] 0 L (2 * l - 1)) L [])
-                                            (RevB  (Current [] 0 R (r - l)) R [] (r - l)) 
-         in (head, Deque newLeft newRight)
-    else case R of Stack r1 r2 \<Rightarrow> (head, toSmall r1 r2)
+| "dequeueLeft' (Two x y) = (x, One y)"
+| "dequeueLeft' (Three x y z) = (x, Two y z)"
+| "dequeueLeft' (Deque (Norm left leftLength) (Norm right rightLength)) = (
+   let x = first left in
+   let left = pop left in
+    if 3 * (leftLength - 1) \<ge> rightLength 
+    then (x, Deque (Norm left (leftLength - 1)) (Norm right rightLength))
+    else if leftLength \<ge> 2
+    then let (left, newRight) = sixTicks (RevS1 (Current [] 0 left (2 * leftLength - 1)) left [])
+                                         (RevB  (Current [] 0 right (rightLength - leftLength)) right [] (rightLength - leftLength)) 
+         in (x, Deque left newRight)
+    else case right of Stack r1 r2 \<Rightarrow> (x, toSmall r1 r2)
   )"
 | "dequeueLeft' (Deque left right) = (
-    let (x, L) = popState left in 
-    let (newLeft, newRight) = fourTicks left right in
-      (x, Deque newLeft newRight)
+    let (x, left) = popState left in 
+    let (left, right) = fourTicks left right in
+      (x, Deque left right)
   )"
 
 fun dequeueRight' :: "'a deque \<Rightarrow> 'a * 'a deque" where
@@ -164,17 +164,17 @@ fun enqueueLeft :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
 | "enqueueLeft x (One y) = Two x y"
 | "enqueueLeft x (Two y z) = Three x y z"
 | "enqueueLeft x (Three a b c) = Deque (Norm (Stack [x, a] []) 2) (Norm (Stack [c, b] []) 2)"
-| "enqueueLeft x (Deque (Norm L l) (Norm R r)) = (
-    let L = push x L in 
-    if 3 * r \<ge> Suc l
-    then Deque (Norm L (Suc l)) (Norm R r)
-    else let (newLeft, newRight) = sixTicks (RevB  (Current [] 0 L (l - r)) L [] (r - l))
-                                            (RevS1 (Current [] 0 R (2 * r + 1)) R []) 
-         in Deque newLeft newRight
+| "enqueueLeft x (Deque (Norm left leftLength) (Norm right rightLength)) = (
+    let left = push x left in 
+      if 3 * rightLength \<ge> Suc leftLength
+      then Deque (Norm left (Suc leftLength)) (Norm right rightLength)
+      else let (left, right) = sixTicks (RevB  (Current [] 0 left (leftLength - rightLength)) left [] (leftLength - rightLength))
+                                              (RevS1 (Current [] 0 right (2 * rightLength + 1)) right [])
+            in Deque left right
   )"
 | "enqueueLeft x (Deque left right) = (
-    let (newLeft, newRight) = fourTicks (pushState x left) right 
-    in Deque newLeft newRight
+    let (left, right) = fourTicks (pushState x left) right 
+    in Deque left right
   )"
 
 fun enqueueRight :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
@@ -224,6 +224,17 @@ fun listRight :: "'a deque \<Rightarrow> 'a list" where
       x # (listRight deque)
   )"
 
+fun enqueueLeftAll :: "'a list \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
+  "enqueueLeftAll [] deque = deque"
+| "enqueueLeftAll (x#xs) deque = enqueueLeftAll xs (enqueueLeft x deque)" 
+
+fun enqueueRightAll :: "'a list \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
+  "enqueueRightAll [] deque = deque"
+| "enqueueRightAll (x#xs) deque = enqueueRightAll xs (enqueueRight x deque)" 
+
+fun dequeueLeftN :: "nat \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
+  "dequeueLeftN 0 deque = deque"
+| "dequeueLeftN (Suc n) deque = dequeueLeftN n (dequeueLeft deque)" 
 
 locale Deque =
 fixes empty :: "'q"
@@ -236,22 +247,25 @@ fixes dequeueRight :: "'q \<Rightarrow> 'q"
 fixes isEmpty :: "'q \<Rightarrow> bool"
 fixes listLeft :: "'q \<Rightarrow> 'a list"
 fixes listRight :: "'q \<Rightarrow> 'a list"
-fixes invar :: "'q \<Rightarrow> bool"
+(*fixes invar :: "'q \<Rightarrow> bool"*)
 assumes listLeft_empty:     "listLeft empty = []"
 assumes listRight_empty:    "listRight empty = []"
-assumes list_enqueueLeft:   "invar q \<Longrightarrow> listLeft(enqueueLeft x q) = x # listLeft q"
-assumes list_enqueueRight:  "invar q \<Longrightarrow> listRight(enqueueRight x q) = x # listRight q"
-assumes list_dequeueLeft:   "invar q \<Longrightarrow> listLeft(dequeueLeft q) = tl(listLeft q)"
-assumes list_dequeueRight:  "invar q \<Longrightarrow> listRight(dequeueRight q) = tl(listRight q)"
-assumes list_firstLeft:     "invar q \<Longrightarrow> \<not> listLeft q = [] \<Longrightarrow> firstLeft q = hd(listLeft q)"
-assumes list_firstRight:    "invar q \<Longrightarrow> \<not> listRight q = [] \<Longrightarrow> firstRight q = hd(listRight q)"
-assumes listLeft_isEmpty:   "invar q \<Longrightarrow> isEmpty q = (listLeft q = [])"
-assumes listRight_isEmpty:  "invar q \<Longrightarrow> isEmpty q = (listRight q = [])"
-assumes invar_empty:        "invar empty"
+assumes list_enqueueLeft:   "listLeft(enqueueLeft x q) = x # listLeft q"
+assumes list_enqueueRight:  "listRight(enqueueRight x q) = x # listRight q"
+assumes list_dequeueLeft:   "\<not> listLeft q = [] \<Longrightarrow> listLeft(dequeueLeft q) = tl(listLeft q)"
+assumes list_dequeueRight:  "\<not> listRight q = [] \<Longrightarrow> listRight(dequeueRight q) = tl(listRight q)"
+assumes list_firstLeft:     "\<not> listLeft q = [] \<Longrightarrow> firstLeft q = hd(listLeft q)"
+assumes list_firstRight:    "\<not> listRight q = [] \<Longrightarrow> firstRight q = hd(listRight q)"
+assumes listLeft_isEmpty:   "isEmpty q = (listLeft q = [])"
+assumes listRight_isEmpty:  "isEmpty q = (listRight q = [])"
+(*assumes invar_empty:        "invar empty"
 assumes invar_enqueueLeft:  "invar q \<Longrightarrow> invar(enqueueLeft x q)"
 assumes invar_enqueueRight: "invar q \<Longrightarrow> invar(enqueueRight x q)"
 assumes invar_dequeueLeft:  "invar q \<Longrightarrow> invar(dequeueLeft q)"
-assumes invar_dequeueRight: "invar q \<Longrightarrow> invar(dequeueRight q)"
+assumes invar_dequeueRight: "invar q \<Longrightarrow> invar(dequeueRight q)"*)
+
+lemma "listLeft (dequeueLeft (enqueueLeft x deque)) = listLeft deque"
+  sorry
 
 interpretation RealtimeDeque: Deque where
   empty    = empty    and
@@ -263,8 +277,7 @@ interpretation RealtimeDeque: Deque where
   dequeueRight = dequeueRight and
   isEmpty = isEmpty and
   listLeft = listLeft and
-  listRight = listRight and
-  invar = invar
+  listRight = listRight
 proof (standard, goal_cases)
 case 1
   then show ?case by(simp add: empty_def)
@@ -273,74 +286,50 @@ next
   then show ?case 
     by(simp add: empty_def)
 next
-  case (3 q x)
+  case (3 x q)
   then show ?case
     apply(induction q arbitrary: x)
     apply(auto split: prod.splits)
+    
     sorry
 next
-  case (4 q x)
+  case (4 x q)
   then show ?case
     apply(induction q arbitrary: x)
-    apply(auto split: prod.splits)
+    apply (auto split: prod.splits)
     sorry
 next
   case (5 q)
   then show ?case 
-    apply(induction q)
-    apply auto
-        apply(auto split: prod.splits)
-    sorry
+    apply (auto split: prod.splits)
+    apply (induction q)
+    by auto
 next
   case (6 q)
   then show ?case 
-    apply(induction q)
-    apply(auto split: prod.splits)
-    sorry
+    apply (auto split: prod.splits)
+    apply (induction q)
+    by auto
 next
   case (7 q)
   then show ?case
-    apply(induction q)
-    apply(auto split: prod.splits)
-    sorry
+    apply (induction q)
+    by (auto split: prod.splits)
 next
   case (8 q)
   then show ?case 
     apply(induction q)
-    apply(auto split: prod.splits)
-    sorry
+    by(auto split: prod.splits)
 next
   case (9 q)
   then show ?case
     apply(induction q)
-    apply(auto split: prod.splits)
-    sorry
+    by(auto split: prod.splits)
 next
   case (10 q)
   then show ?case
     apply(induction q)
-    apply(auto split: prod.splits)
-    sorry
-next
-  case 11
-  then show ?case
-    sorry
-next
-  case (12 q x)
-  then show ?case
-    sorry
-next
-  case (13 q x)
-  then show ?case
-    sorry
-next
-  case (14 q)
-  then show ?case
-    sorry
-next
-  case (15 q)
-  then show ?case
-    sorry
+    by(auto split: prod.splits)
 qed
 
 
