@@ -22,7 +22,7 @@ proof(induction stack)
     by auto
 qed
 
-lemma not_empty_2: "\<not> Stack.isEmpty stack \<Longrightarrow> Stack.toList stack  \<noteq> []"
+lemma not_empty_2: "\<not> isEmpty stack \<Longrightarrow> toList stack  \<noteq> []"
   apply (induction stack)
   by auto
 

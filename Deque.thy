@@ -48,10 +48,11 @@ fun dequeueLeft' :: "'a deque \<Rightarrow> 'a * 'a deque" where
     if 3 * (leftLength - 1) \<ge> rightLength 
     then (x, Deque (Norm left (leftLength - 1)) (Norm right rightLength))
     else if leftLength \<ge> 2
-    then let (left, newRight) =
-           sixTicks (RevS1 (Current [] 0 left (2 * leftLength - 1)) left [])
-                    (RevB  (Current [] 0 right (rightLength - leftLength)) right [] (rightLength - leftLength)) 
-         in (x, Deque left newRight)
+    then 
+        let left = RevS1 (Current [] 0 left (2 * leftLength - 1)) left [] in
+        let right = RevB (Current [] 0 right (rightLength - leftLength)) right [] (rightLength - leftLength) in
+        let (left, right) = sixTicks left right
+        in (x, Deque left right)
     else case right of Stack r1 r2 \<Rightarrow> (x, toSmallDeque r1 r2)
   )"
 | "dequeueLeft' (Deque left right) = (
@@ -87,9 +88,11 @@ fun enqueueLeft :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
     let left = push x left in 
       if 3 * rightLength \<ge> Suc leftLength
       then Deque (Norm left (Suc leftLength)) (Norm right rightLength)
-      else let (left, right) = sixTicks (RevB  (Current [] 0 left (leftLength - rightLength)) left [] (leftLength - rightLength))
-                                              (RevS1 (Current [] 0 right (2 * rightLength + 1)) right [])
-            in Deque left right
+      else 
+      let left = RevB   (Current [] 0 left (leftLength - rightLength)) left [] (leftLength - rightLength) in
+      let right = RevS1 (Current [] 0 right (2 * rightLength + 1)) right [] in
+      let (left, right) = sixTicks left right
+      in Deque left right
   )"
 | "enqueueLeft x (Deque left right) = (
     let (left, right) = fourTicks (pushState x left) right 
