@@ -1,13 +1,36 @@
 theory Deque
-  imports State
+  imports State2
 begin
 
+datatype 'a transformation =
+    Left "'a stateS" "'a stateB"
+    | Right "'a stateB" "'a stateS"
+
+fun tListLeft :: "'a transformation \<Rightarrow> 'a list" where
+  "tListLeft (Left small big)  = sToList small @ (rev (bToList big))"
+| "tListLeft (Right big small) = bToList big @ (rev (sToList small))"
+
+fun tListRight :: "'a transformation \<Rightarrow> 'a list" where
+  "tListRight (Left small big)  =  bToList big @ (rev (sToList small))"
+| "tListRight (Right big small) =  sToList small @ (rev (bToList big))"
+
+fun ticks :: "'a transformation \<Rightarrow> 'a transformation" where
+  "ticks (Left small big) = (case State2.ticks big small of (big, small) \<Rightarrow> Left small big)"
+| "ticks (Right big small) = (case State2.ticks big small of (big, small) \<Rightarrow> Right big small)"
+
+fun fourTicks where
+  "fourTicks transformation = (ticks (ticks (ticks (ticks transformation))))"
+
+fun sixTicks where
+  "sixTicks transformation = ticks (ticks (fourTicks transformation))"
+
 datatype 'a deque =
-  Empty
+    Empty
   | One 'a
   | Two 'a 'a
   | Three 'a 'a 'a 
-  | Deque "'a state" "'a state"
+  | Idle "'a idle" "'a idle"
+  | Transforming "'a transformation"
 
 definition empty where
   "empty \<equiv> Empty"
@@ -21,8 +44,11 @@ fun swap :: "'a deque \<Rightarrow> 'a deque" where
 | "swap (One x) = One x"
 | "swap (Two x y) = Two y x"
 | "swap (Three x y z) = Three z y x"
-| "swap (Deque left right) = Deque right left"
+| "swap (Idle left right) = Idle right left"
+| "swap (Transforming (Left small big)) = (Transforming (Right big small))"
+| "swap (Transforming (Right big small)) = (Transforming (Left small big))"
 
+(* TODO: *)
 fun toSmallDeque :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a deque" where
   "toSmallDeque []     [] = Empty"
 
@@ -42,23 +68,39 @@ fun dequeueLeft' :: "'a deque \<Rightarrow> 'a * 'a deque" where
   "dequeueLeft' (One x) = (x, Empty)"
 | "dequeueLeft' (Two x y) = (x, One y)"
 | "dequeueLeft' (Three x y z) = (x, Two y z)"
-| "dequeueLeft' (Deque (Norm left leftLength) (Norm right rightLength)) = (
+| "dequeueLeft' (Idle (idle.Idle left leftLength) (idle.Idle right rightLength)) = (
    let x = first left in
    let left = pop left in
     if 3 * (leftLength - 1) \<ge> rightLength 
-    then (x, Deque (Norm left (leftLength - 1)) (Norm right rightLength))
+    then (x, Idle (idle.Idle left (leftLength - 1)) (idle.Idle right rightLength))
     else if leftLength \<ge> 2
     then 
-        let left = RevS1 (Current [] 0 left (2 * leftLength - 1)) left [] in
-        let right = RevB (Current [] 0 right (rightLength - leftLength)) right [] (rightLength - leftLength) in
-        let (left, right) = sixTicks left right
-        in (x, Deque left right)
+        let left = Reverse1 (Current [] 0 left (2 * leftLength - 1)) left [] in
+        let right = Reverse (Current [] 0 right (rightLength - leftLength)) right [] (rightLength - leftLength) in
+        let transformation = Left left right in
+        let transformation = sixTicks transformation
+        in (x, Transforming transformation)
     else case right of Stack r1 r2 \<Rightarrow> (x, toSmallDeque r1 r2)
   )"
-| "dequeueLeft' (Deque left right) = (
-    let (x, left) = popState left in 
-    let (left, right) = fourTicks left right in
-      (x, Deque left right)
+| "dequeueLeft' (Transforming (Left left right)) = (
+    let (x, left) = popS left in 
+    let transformation = fourTicks (Left left right) in
+    case transformation of 
+        Left 
+          (stateS.Common (common.Idle (idle.Idle left leftLength))) 
+          (stateB.Common (common.Idle (idle.Idle right rightLength))) \<Rightarrow>
+            (x, Idle (idle.Idle left leftLength) (idle.Idle right rightLength))
+     | _ \<Rightarrow> (x, Transforming transformation)
+  )"
+| "dequeueLeft' (Transforming (Right left right)) = (
+    let (x, left) = popB left in 
+    let transformation = fourTicks (Right left right) in
+    case transformation of 
+        Right 
+          (stateB.Common (common.Idle (idle.Idle left leftLength))) 
+          (stateS.Common (common.Idle (idle.Idle right rightLength))) \<Rightarrow>
+            (x, Idle (idle.Idle left leftLength) (idle.Idle right rightLength))
+     | _ \<Rightarrow> (x, Transforming transformation)
   )"
 
 fun dequeueRight' :: "'a deque \<Rightarrow> 'a * 'a deque" where
@@ -83,20 +125,37 @@ fun enqueueLeft :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
   "enqueueLeft x Empty = One x"
 | "enqueueLeft x (One y) = Two x y"
 | "enqueueLeft x (Two y z) = Three x y z"
-| "enqueueLeft x (Three a b c) = Deque (Norm (Stack [x, a] []) 2) (Norm (Stack [c, b] []) 2)"
-| "enqueueLeft x (Deque (Norm left leftLength) (Norm right rightLength)) = (
+| "enqueueLeft x (Three a b c) = Idle (idle.Idle (Stack [x, a] []) 2) (idle.Idle (Stack [c, b] []) 2)"
+| "enqueueLeft x (Idle (idle.Idle left leftLength) (idle.Idle right rightLength)) = (
     let left = push x left in 
       if 3 * rightLength \<ge> Suc leftLength
-      then Deque (Norm left (Suc leftLength)) (Norm right rightLength)
+      then Idle (idle.Idle left (Suc leftLength)) (idle.Idle right rightLength)
       else 
-      let left = RevB   (Current [] 0 left (leftLength - rightLength)) left [] (leftLength - rightLength) in
-      let right = RevS1 (Current [] 0 right (2 * rightLength + 1)) right [] in
-      let (left, right) = sixTicks left right
-      in Deque left right
+      let left =  Reverse  (Current [] 0 left (leftLength - rightLength)) left [] (leftLength - rightLength) in
+      let right = Reverse1 (Current [] 0 right (2 * rightLength + 1)) right [] in
+      let transformation = Right left right in
+      let transformation = sixTicks transformation
+      in Transforming transformation
   )"
-| "enqueueLeft x (Deque left right) = (
-    let (left, right) = fourTicks (pushState x left) right 
-    in Deque left right
+| "enqueueLeft x (Transforming (Left left right)) = (
+    let left = pushS x left in 
+    let transformation = fourTicks (Left left right) in
+    case transformation of 
+        Left 
+          (stateS.Common (common.Idle (idle.Idle left leftLength))) 
+          (stateB.Common (common.Idle (idle.Idle right rightLength))) \<Rightarrow>
+            Idle (idle.Idle left leftLength) (idle.Idle right rightLength)
+     | _ \<Rightarrow> Transforming transformation
+  )"
+| "enqueueLeft x (Transforming (Right left right)) = (
+    let left = pushB x left in 
+    let transformation = fourTicks (Right left right) in
+    case transformation of 
+        Right 
+          (stateB.Common (common.Idle (idle.Idle left leftLength))) 
+          (stateS.Common (common.Idle (idle.Idle right rightLength))) \<Rightarrow>
+            Idle (idle.Idle left leftLength) (idle.Idle right rightLength)
+     | _ \<Rightarrow> Transforming transformation
   )"
 
 fun enqueueRight :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
@@ -110,12 +169,12 @@ fun invariant :: "'a deque \<Rightarrow> bool" where
 | "invariant (One _) = True"
 | "invariant (Two _ _) = True"
 | "invariant (Three _ _ _) = True"
-| "invariant (Deque (Norm left leftLength) (Norm right rightLength)) = (
+| "invariant (Idle (idle.Idle left leftLength) (idle.Idle right rightLength)) = (
    size left = leftLength \<and>
    size right = rightLength \<and>
-  (leftLength \<ge> 2 \<or> rightLength \<ge> 2) \<and>
+   (leftLength \<ge> 2 \<or> rightLength \<ge> 2) \<and>
    (3 * rightLength \<ge> Suc leftLength \<or> 3 * leftLength \<ge> Suc rightLength)
-)"
+  )"
 | "invariant _ = True"
 
 fun listLeft :: "'a deque \<Rightarrow> 'a list" where
@@ -123,14 +182,16 @@ fun listLeft :: "'a deque \<Rightarrow> 'a list" where
 | "listLeft (One x) = [x]"
 | "listLeft (Two x y) = [x, y]"
 | "listLeft (Three x y z) = [x, y, z]"
-| "listLeft (Deque left right) = (State.toList left) @ (rev (State.toList right))"
+| "listLeft (Idle left right) = idleToList left @ (rev (idleToList right))"
+| "listLeft (Transforming transformation) = tListLeft transformation"
 
 fun listRight :: "'a deque \<Rightarrow> 'a list" where
   "listRight Empty = []"
 | "listRight (One x) = [x]"
 | "listRight (Two x y) = [y, x]"
 | "listRight (Three x y z) = [z, y, x]"
-| "listRight (Deque left right) = (State.toList right) @ (rev (State.toList left))"
+| "listRight (Idle left right) = idleToList right @ (rev (idleToList left))"
+| "listRight (Transforming transformation) = tListRight transformation"
 
 (*
 For test purposes:

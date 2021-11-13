@@ -34,6 +34,8 @@ lemma head: "xs \<noteq> [] \<Longrightarrow> hd xs = hd (xs @ ys)"
   apply (induction xs arbitrary: ys)
   by auto
 
+value "(enqueueLeft 0 (deque.Idle (idle.Idle (Stack [1::nat] [2, 3]) 3) (idle.Idle (Stack [] []) 0)))"
+
 interpretation RealtimeDeque: Deque where
   empty    = empty    and
   enqueueLeft = enqueueLeft and
@@ -47,89 +49,16 @@ interpretation RealtimeDeque: Deque where
   listRight = listRight and
   invariant = invariant
 proof (standard, goal_cases)
-case 1
-  then show ?case
-    by (simp add: empty_def)
+  case 1
+  then show ?case by (simp add: empty_def)
 next
-case 2
-  then show ?case 
-    by (simp add: empty_def) 
+  case 2
+  then show ?case by (simp add: empty_def)
 next
   case (3 q x)
-  then show ?case 
-    proof (induction q arbitrary: x)
-      case Empty
-      then show ?case by simp 
-    next
-      case (One x)
-      then show ?case by simp
-    next
-      case (Two x y)
-      then show ?case by simp
-    next
-      case (Three x y z)
-      then show ?case by auto
-    next
-      case (Deque left right)
-      then show ?case
-      proof (induction left arbitrary: x)
-        case (Norm leftValues leftSize)
-        then show ?case
-        proof(induction right arbitrary: x)
-          case (Norm rightValues rightSize)
-          then show ?case 
-            apply (auto simp: push Let_def split: prod.splits)
-            sorry
-        next
-          case (RevB x1 x2 x3 x4)
-          then show ?case sorry
-        next
-          case (RevS1 x1 x2 x3)
-          then show ?case sorry
-        next
-          case (RevS2 x1 x2 x3 x4 x5)
-          then show ?case sorry
-        next
-          case (Copy x1 x2 x3 x4)
-          then show ?case sorry
-        qed
-      next
-        case (RevB x1 x2 x3 x4)
-        then show ?case sorry
-      next
-        case (RevS1 x1 x2 x3)
-        then show ?case sorry
-      next
-        case (RevS2 x1 x2 x3 x4 x5)
-        then show ?case sorry
-      next
-        case (Copy x1 x2 x3 x4)
-        then show ?case sorry
-      qed
-    qed
-next
-  case (4 q x)
   then show ?case
-  proof (induction q arbitrary: x)
-      case Empty
-      then show ?case by auto
-    next
-      case (One x)
-      then show ?case by auto
-    next
-      case (Two x y)
-      then show ?case by auto
-    next
-      case (Three x y z)
-      then show ?case by auto
-    next
-      case (Deque left right)
-      then show ?case sorry
-    qed
-next
-  case (5 q)
-  then show ?case 
-  proof(induction q)
+   quickcheck
+  proof(induction q arbitrary: x)
     case Empty
     then show ?case by auto
   next
@@ -142,147 +71,57 @@ next
     case (Three x1 x2a x3)
     then show ?case by auto
   next
-    case (Deque left right)
+    case (Idle left right)
     then show ?case 
-    proof(induction left)
-      case (Norm leftValues leftLength)
-      then show ?case 
-      proof(induction right arbitrary: leftValues leftValues)
-        case (Norm rightValues rightLength)
-        then show ?case
-          (*apply(auto simp: Let_def pop not_empty split: prod.splits stack.splits)*)
-          sorry
-        next
-          case (RevB x1 x2 x3 x4)
-          then show ?case sorry
-        next
-          case (RevS1 x1 x2 x3)
-          then show ?case sorry
-        next
-          case (RevS2 x1 x2 x3 x4 x5)
-          then show ?case sorry
-        next
-          case (Copy x1 x2 x3 x4)
-          then show ?case sorry
-        qed        
-    next
-      case (RevB x1 x2 x3 x4)
-      then show ?case sorry
-    next
-      case (RevS1 x1 x2 x3)
-      then show ?case sorry
-    next
-      case (RevS2 x1 x2 x3 x4 x5)
-      then show ?case sorry
-    next
-      case (Copy x1 x2 x3 x4)
-      then show ?case sorry
-    qed  
+      apply (induction left; induction right arbitrary: x)
+      apply (auto simp: push Let_def split: prod.splits)
+      sorry
+  next
+    case (Transforming t x)
+    then show ?case 
+      apply(induction t arbitrary: x)
+      apply (auto simp: Let_def split: prod.splits stateS.splits common.splits idle.splits stateB.splits)
+      sorry
   qed
+next
+case (4 q x)
+  then show ?case
+    quickcheck
+    sorry
+next
+  case (5 q)
+  then show ?case sorry
 next
   case (6 q)
   then show ?case sorry
 next
   case (7 q)
-  then show ?case
-  proof(induction q)
-    case Empty
-    then show ?case by auto
-  next
-    case (One x)
-    then show ?case by auto
-  next
-    case (Two x1 x2a)
-    then show ?case by auto
-  next
-    case (Three x1 x2a x3)
-    then show ?case by auto
-  next
-    case (Deque left right)
-    then show ?case 
-      apply(induction left; induction right)
-      (*apply(auto simp: Let_def first head not_empty not_empty_2 empty split: prod.splits stack.splits)*)
-      sorry
-  qed
+  then show ?case sorry
 next
   case (8 q)
   then show ?case sorry
 next
   case (9 q)
-  then show ?case 
-  proof induction
-    case Empty
-    then show ?case by auto
-  next
-    case (One x)
-    then show ?case by auto
-  next
-    case (Two x1 x2a)
-    then show ?case by auto
-  next
-    case (Three x1 x2a x3)
-    then show ?case by auto
-  next
-    case (Deque left right)
-    then show ?case 
-  
-      apply auto sorry
-  qed 
+  then show ?case sorry
 next
   case (10 q)
   then show ?case sorry
 next
   case 11
-  then show ?case 
-    by (simp add: empty_def)
+  then show ?case sorry
 next
   case (12 q x)
-  then show ?case
-  proof(induction q arbitrary: x)
-  case Empty
-  then show ?case by auto
-  next
-    case (One x)
-    then show ?case by auto
-  next
-    case (Two x1 x2a)
-    then show ?case by auto
-  next
-    case (Three x1 x2a x3)
-    then show ?case by auto
-  next
-  case (Deque left right)
-  then show ?case
-    sorry
-  qed
+  then show ?case sorry
 next
   case (13 q x)
   then show ?case sorry
 next
   case (14 q)
-  then show ?case
-  proof(induction q)
-    case Empty
-    then show ?case by auto
-  next
-    case (One x)
-    then show ?case by auto
-  next
-    case (Two x1 x2a)
-  then show ?case by auto
-  next
-  case (Three x1 x2a x3)
-  then show ?case by auto
-  next
-  case (Deque left right)
-  then show ?case 
-    apply(induction left; induction right)
-    apply (auto simp: Let_def split: stack.splits prod.splits)
-    sorry
-  qed
+  then show ?case sorry
 next
   case (15 q)
   then show ?case sorry
 qed
+
 
 end

@@ -74,4 +74,6 @@ fun pushState :: "'a \<Rightarrow> 'a state \<Rightarrow> 'a state" where
 | "pushState x (RevS2 a b c d e) = RevS2 (put x a) b c d e"
 | "pushState x (Copy a b c d)    = Copy  (put x a) b c d"
 
+
+
 end
