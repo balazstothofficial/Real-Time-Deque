@@ -7,12 +7,36 @@ datatype 'a transformation =
     | Right "'a stateB" "'a stateS"
 
 fun tListLeft :: "'a transformation \<Rightarrow> 'a list" where
-  "tListLeft (Left small big)  = sToList small @ (rev (bToList big))"
-| "tListLeft (Right big small) = bToList big @ (rev (sToList small))"
+  "tListLeft (Left small big)  = (
+      case small of
+         Common _ \<Rightarrow> 
+            (case big of stateB.Common _ \<Rightarrow> sToList small True  @ (rev (bToList big True)) 
+                                     | _ \<Rightarrow> sToList small False  @ (rev (bToList big False)))
+         | _ \<Rightarrow>  sToList small False  @ (rev (bToList big False)) 
+     )"  
+  | "tListLeft (Right big small) = (
+      case small of
+         Common _ \<Rightarrow> 
+            (case big of stateB.Common _ \<Rightarrow>  bToList big True @ (rev (sToList small True)) 
+                                     | _ \<Rightarrow> bToList big False @ (rev (sToList small False)))
+         | _ \<Rightarrow>   bToList big False @ (rev (sToList small False)) 
+     )"
 
 fun tListRight :: "'a transformation \<Rightarrow> 'a list" where
-  "tListRight (Left small big)  =  bToList big @ (rev (sToList small))"
-| "tListRight (Right big small) =  sToList small @ (rev (bToList big))"
+  "tListRight (Left small big)  = (
+      case small of
+         Common _ \<Rightarrow> 
+            (case big of stateB.Common _ \<Rightarrow> bToList big True @ (rev (sToList small True)) 
+                                     | _ \<Rightarrow> bToList big False @ (rev (sToList small False)))
+         | _ \<Rightarrow>  bToList big False @ (rev (sToList small False))
+     )"  
+  | "tListRight (Right big small) = (
+      case small of
+         Common _ \<Rightarrow> 
+            (case big of stateB.Common _ \<Rightarrow>  sToList small True @ (rev (bToList big True)) 
+                                     | _ \<Rightarrow>  sToList small False @ (rev (bToList big False)))
+         | _ \<Rightarrow>  sToList small False @ (rev (bToList big False))
+     )"
 
 fun ticks :: "'a transformation \<Rightarrow> 'a transformation" where
   "ticks (Left small big) = (case State2.ticks big small of (big, small) \<Rightarrow> Left small big)"
@@ -134,7 +158,7 @@ fun enqueueLeft :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
       let left =  Reverse  (Current [] 0 left (leftLength - rightLength)) left [] (leftLength - rightLength) in
       let right = Reverse1 (Current [] 0 right (2 * rightLength + 1)) right [] in
       let transformation = Right left right in
-      let transformation = sixTicks transformation
+      let transformation =  (sixTicks transformation)
       in Transforming transformation
   )"
 | "enqueueLeft x (Transforming (Left left right)) = (

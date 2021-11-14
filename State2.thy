@@ -11,9 +11,13 @@ datatype 'a common =
     Copy "'a current" "'a list" "'a list" nat
   | Idle "'a idle"
 
-fun commonToList :: "'a common \<Rightarrow> 'a list" where
-  "commonToList (Idle idle) = idleToList idle"
-| "commonToList (Copy current _ _ _) = toList current"
+fun commonToList :: "'a common \<Rightarrow> bool \<Rightarrow> 'a list" where
+  "commonToList (Idle idle) _ = idleToList idle"
+| "commonToList (Copy current old new _) takeNew = (
+  if takeNew
+   then rev old @ new
+   else toList current
+)"
 
 fun normalize :: "'a common \<Rightarrow> 'a common" where
   "normalize (Copy current old new moved) = (
@@ -48,9 +52,9 @@ datatype 'a stateB =
      Reverse "'a current" "'a stack" "'a list" nat
    | Common "'a common"
 
-fun bToList :: "'a stateB \<Rightarrow> 'a list" where
-  "bToList (Common common) = commonToList common"
-| "bToList (Reverse current _ _ _) = toList current"
+fun bToList :: "'a stateB \<Rightarrow> bool \<Rightarrow> 'a list" where
+  "bToList (Common common) takeNew = commonToList common takeNew"
+| "bToList (Reverse current _ _ _) _ = toList current"
 
 fun tickB :: "'a stateB \<Rightarrow> 'a stateB" where
   "tickB (Common state) = Common (tickCommon state)"
@@ -70,10 +74,10 @@ datatype 'a stateS =
  | Reverse2 "'a current" "'a list" "'a stack" "'a list" nat
  | Common "'a common"
 
-fun sToList :: "'a stateS \<Rightarrow> 'a list" where
-  "sToList (Common common) = commonToList common"
-| "sToList (Reverse1 current _ _ ) = toList current"
-| "sToList (Reverse2 current _ _ _ _) = toList current"
+fun sToList :: "'a stateS \<Rightarrow> bool \<Rightarrow> 'a list" where
+  "sToList (Common common) takeNew = commonToList common takeNew"
+| "sToList (Reverse1 current _ _ ) _ = toList current"
+| "sToList (Reverse2 current _ _ _ _) _ = toList current"
 
 fun tickS :: "'a stateS \<Rightarrow> 'a stateS" where
   "tickS (Common state) = Common (tickCommon state)"
