@@ -30,6 +30,26 @@ lemma size_push: "size (push x stack) = Suc (size stack)"
   apply(induction stack arbitrary: x)
   by auto
 
+lemma size_pop: "\<not> isEmpty stack \<Longrightarrow> size (pop stack) = size stack - Suc 0"
+proof(induction stack)
+  case (Stack left right)
+  then show ?case 
+  proof(induction left)
+    case Nil
+    then show ?case 
+    proof(induction right)
+      case Nil
+      then show ?case by auto
+    next
+      case (Cons a right)
+      then show ?case by auto
+    qed
+    next
+    case (Cons a left)
+    then show ?case by auto
+  qed
+qed
+
 lemma first: "\<not> isEmpty stack \<Longrightarrow> first stack = hd (toList stack)"
 proof(induction stack)
   case (Stack left right)
