@@ -8,19 +8,20 @@ lemma ticks: "toListLeft (ticks transformation) = toListLeft transformation"
 proof(induction transformation rule: toListLeft.induct)
   case (1 small big)
   
-  have "\<And>x1 x2. 
-        ticksHelper big small = (x1, x2) \<Longrightarrow>
-        Small.toList small @ rev (Big.toList big) = Small.toList x2 @ rev (Big.toList x1)"
+  have "\<And>right left. 
+        ticksHelper big small = (right, left) \<Longrightarrow>
+        Small.toList small @ rev (Big.toList big) = Small.toList left @ rev (Big.toList right)"
     apply(induction big small rule: ticksHelper.induct)
     by(auto simp: tick split: current.splits)
 
-  then show ?case by (auto split: prod.splits)
+  then show ?case
+    by (auto split: prod.splits)
 next
   case (2 big small)
 
-  have "\<And>x1 x2. 
-        ticksHelper big small = (x1, x2) \<Longrightarrow>
-        Big.toList big @ rev (Small.toList small) = Big.toList x1 @ rev (Small.toList x2)"
+  have "\<And>left right. 
+        ticksHelper big small = (left, right) \<Longrightarrow>
+        Big.toList big @ rev (Small.toList small) = Big.toList left @ rev (Small.toList right)"
     apply(induction big small rule: ticksHelper.induct)
     by(auto simp: tick split: current.splits)
 
@@ -28,6 +29,7 @@ next
     by(auto split: prod.splits)
 qed
 
+(* TODO: *)
 lemma ticks_helper: "\<lbrakk>
   ticksHelper
          (Reverse (Current [] 0 (Stack.push x leftValues) (Stack.size leftValues - Stack.size rightValues)) (Stack.push x leftValues) [] (Stack.size leftValues - Stack.size rightValues))
