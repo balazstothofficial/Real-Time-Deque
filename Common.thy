@@ -30,12 +30,12 @@ fun tick :: "'a state \<Rightarrow> 'a state" where
 
 fun push :: "'a \<Rightarrow> 'a state \<Rightarrow> 'a state" where
   "push x (Idle current (idle.Idle stack stackSize)) = 
-      Idle current (idle.Idle (Stack.push x stack) (Suc stackSize))"
+      Idle (put x current) (idle.Idle (Stack.push x stack) (Suc stackSize))"
 | "push x (Copy current aux new moved) = Copy (put x current) aux new moved"
 
 fun pop :: "'a state \<Rightarrow> 'a * 'a state" where
   "pop (Idle current (idle.Idle stack stackSize)) = 
-      (first stack, Idle current (idle.Idle (Stack.pop stack) (stackSize - 1)))"
+      (first stack, Idle (bottom current) (idle.Idle (Stack.pop stack) (stackSize - 1)))"
 | "pop (Copy current aux new moved) = 
       (top current, Copy (bottom current) aux new moved)"
 

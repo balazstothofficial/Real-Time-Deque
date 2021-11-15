@@ -99,6 +99,7 @@ fun firstLeft :: "'a deque \<Rightarrow> 'a" where
 fun firstRight :: "'a deque \<Rightarrow> 'a" where
   "firstRight deque = (let (x, _) = dequeueRight' deque in x)" 
 
+(* TODO: Remove redundancy *)
 fun enqueueLeft :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
   "enqueueLeft x Empty = One x"
 | "enqueueLeft x (One y) = Two x y"
@@ -142,6 +143,7 @@ fun enqueueRight :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
     in swap deque
   )"
 
+(* Try out what is needed here (The bottom one is probably not needed)*)
 fun invariant :: "'a deque \<Rightarrow> bool" where
   "invariant Empty = True"
 | "invariant (One _) = True"

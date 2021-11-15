@@ -41,7 +41,7 @@ next
     proof(induction x "Idle left right" rule: enqueueLeft.induct)
       case (5 x left leftLength right rightLength)
       then show ?case 
-        by (auto simp: push Let_def all_ticks split: prod.splits)
+        by (auto simp: push Let_def all_ticks ticks_helper split: prod.splits)
     qed
   next
     case (Transforming t x)
@@ -49,12 +49,12 @@ next
     proof(induction t arbitrary: x)
       case (Left left right)
       then show ?case 
-        apply(auto simp: Let_def split: prod.splits state_splits)
-        sorry
+        apply(auto simp: Let_def something ticks_help ticks_help2 split: prod.splits state_splits)
+        using test by fastforce+
     next
       case (Right left right)
       then show ?case
-         apply(auto simp: Let_def split: prod.splits state_splits)
+         apply(auto simp: Let_def ticks_help ticks_help2 split: prod.splits state_splits)
         sorry
     qed
   qed

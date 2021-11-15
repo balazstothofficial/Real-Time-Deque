@@ -25,8 +25,6 @@ fun tick :: "'a state \<Rightarrow> 'a state" where
     else Reverse2 current auxS (Stack.pop big) ((first big)#newS) (count + 1)
   )"
 
-
-
 fun push :: "'a \<Rightarrow> 'a state \<Rightarrow> 'a state" where
   "push x (Common state) = Common (Common.push x state)"
 | "push x (Reverse1 current small auxS) = Reverse1 (put x current) small auxS"
