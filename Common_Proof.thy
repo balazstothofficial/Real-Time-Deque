@@ -6,10 +6,15 @@ lemma tick: "toList (tick common) = toList common"
   apply(induction common)
   by(auto split: current.splits)
 
-lemma push:  "toList (push x common) = x # toList common"
-  apply(induction common arbitrary: x)
-  apply(auto simp: put)
-  (* TODO: *)
-  by (metis Common.push.simps(1) Common.toList.simps(1) idle.exhaust put)
+lemma tick_2: "Common.tick common = common' \<Longrightarrow> Common.toList common = Common.toList common'"
+  by(auto simp: tick)
+
+lemma pop: "\<lbrakk>\<not> isEmpty common; pop common = (x, common')\<rbrakk> \<Longrightarrow> x # toList common' = toList common"
+  apply(induction common arbitrary: x rule: pop.induct)
+  by(auto simp: get  split: prod.splits)
+
+lemma push: "toList (push x common) = x # toList common"
+  apply(induction x common rule: push.induct)
+  by(auto simp: put)
   
 end

@@ -2,6 +2,23 @@ theory RealTimeDeque_Proof
   imports Deque RealTimeDeque Transformation_Proof 
 begin
 
+(* TODO: Stricter invariant!
+lemma please_1: "\<lbrakk>RealTimeDeque.invariant (Transforming (transformation.Left left right));
+      ticksHelper (right, left) =  (Big.state.Common (state.Idle x21a (idle.Idle x1d x2d)), Small.state.Common (state.Idle x21 (idle.Idle x1c x2c)))\<rbrakk>
+       \<Longrightarrow> Stack.toList x1c @ rev (Stack.toList x1d) = Small.toList left @ rev (Current.toList x21a)"
+  apply(induction "Transforming (transformation.Left left right)" rule: RealTimeDeque.invariant.induct)
+  apply(auto split: if_splits current.splits)
+  sorry
+
+
+lemma please: "\<lbrakk>RealTimeDeque.invariant (Transforming (transformation.Left left right));
+        ticksHelper (x1b, x2b) = (Big.state.Common (state.Idle x21a (idle.Idle x1d x2d)), Small.state.Common (state.Idle x21 (idle.Idle x1c x2c)));
+        ticksHelper (x1a, x2a) = (x1b, x2b); ticksHelper (x1, x2) = (x1a, x2a); ticksHelper (right, left) = (x1, x2)\<rbrakk>
+       \<Longrightarrow> Stack.toList x1c @ rev (Stack.toList x1d) = Small.toList left @ rev (Current.toList x21a)"
+  apply(induction "(right, left)" rule: ticksHelper.induct)
+  apply(auto split: current.splits)
+  sorry *)
+
 interpretation RealTimeDeque: Deque where
   empty    = empty    and
   enqueueLeft = enqueueLeft and
@@ -41,7 +58,7 @@ next
     proof(induction x "Idle left right" rule: enqueueLeft.induct)
       case (5 x left leftLength right rightLength)
       then show ?case 
-        by (auto simp: push Let_def all_ticks ticks_helper split: prod.splits)
+        by (auto simp: Stack_Proof.push Let_def all_ticks ticks_helper split: prod.splits)
     qed
   next
     case (Transforming t x)
@@ -49,8 +66,9 @@ next
     proof(induction t arbitrary: x)
       case (Left left right)
       then show ?case 
-        apply(auto simp: Let_def something ticks_help ticks_help2 split: prod.splits state_splits)
-        using test by fastforce+
+        apply(auto simp: Let_def ticks_help ticks_help2 small_push
+                  split: prod.splits Small.state.splits state_splits)
+        sorry
     next
       case (Right left right)
       then show ?case

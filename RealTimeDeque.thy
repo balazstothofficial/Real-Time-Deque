@@ -99,7 +99,7 @@ fun firstLeft :: "'a deque \<Rightarrow> 'a" where
 fun firstRight :: "'a deque \<Rightarrow> 'a" where
   "firstRight deque = (let (x, _) = dequeueRight' deque in x)" 
 
-(* TODO: Remove redundancy *)
+(* TODO: Remove redundancy + move idle pushing into idle type  *)
 fun enqueueLeft :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
   "enqueueLeft x Empty = One x"
 | "enqueueLeft x (One y) = Two x y"
@@ -155,6 +155,18 @@ fun invariant :: "'a deque \<Rightarrow> bool" where
    (leftLength \<ge> 2 \<or> rightLength \<ge> 2) \<and>
    (3 * rightLength \<ge> Suc leftLength \<or> 3 * leftLength \<ge> Suc rightLength)
   )"
+| "invariant (Transforming (Left (Small.state.Common (Common.Idle currentL idleL)) (Big.state.Common (Common.Idle currentR idleR)))) = 
+    (Current.toList currentR = Idle.toList idleR \<and> Current.toList currentL = Idle.toList idleL)"
+| "invariant (Transforming (Left (Small.state.Common (Common.Idle current idle)) _)) = 
+    (Current.toList current = Idle.toList idle)"
+| "invariant (Transforming (Left _ (Big.state.Common (Common.Idle current idle)))) = 
+    (Current.toList current = Idle.toList idle)"
+| "invariant (Transforming (Right (Big.state.Common (Common.Idle currentL idleL)) (Small.state.Common (Common.Idle currentR idleR)))) = 
+    (Current.toList currentR = Idle.toList idleR \<and> Current.toList currentL = Idle.toList idleL)"
+| "invariant (Transforming (Right _ (Small.state.Common (Common.Idle current idle)))) = 
+    (Current.toList current = Idle.toList idle)"
+| "invariant (Transforming (Right (Big.state.Common (Common.Idle current idle)) _)) = 
+    (Current.toList current = Idle.toList idle)" 
 | "invariant _ = True"
 
 fun listLeft :: "'a deque \<Rightarrow> 'a list" where

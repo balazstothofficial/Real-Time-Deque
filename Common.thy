@@ -35,8 +35,12 @@ fun push :: "'a \<Rightarrow> 'a state \<Rightarrow> 'a state" where
 
 fun pop :: "'a state \<Rightarrow> 'a * 'a state" where
   "pop (Idle current (idle.Idle stack stackSize)) = 
-      (first stack, Idle (bottom current) (idle.Idle (Stack.pop stack) (stackSize - 1)))"
+      (top current, Idle (bottom current) (idle.Idle (Stack.pop stack) (stackSize - 1)))"
 | "pop (Copy current aux new moved) = 
       (top current, Copy (bottom current) aux new moved)"
+
+fun isEmpty :: "'a state \<Rightarrow> bool" where
+  "isEmpty (Idle current _) = Current.isEmpty current"
+| "isEmpty (Copy current _ _ _) = Current.isEmpty current"
 
 end

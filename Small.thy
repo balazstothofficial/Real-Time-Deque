@@ -15,12 +15,12 @@ fun toList :: "'a state \<Rightarrow> 'a list" where
 fun tick :: "'a state \<Rightarrow> 'a state" where
   "tick (Common state) = Common (Common.tick state)"
 | "tick (Reverse1 current small auxS) = (
-    if isEmpty small 
+    if Stack.isEmpty small 
     then Reverse1 current small auxS 
     else Reverse1 current (Stack.pop small) ((first small)#auxS)
   )"
 | "tick (Reverse2 current auxS big newS count) = (
-    if isEmpty big
+    if Stack.isEmpty big
     then Common (normalize (Copy current auxS newS count))
     else Reverse2 current auxS (Stack.pop big) ((first big)#newS) (count + 1)
   )"

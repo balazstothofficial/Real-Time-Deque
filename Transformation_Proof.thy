@@ -4,6 +4,7 @@ begin
 
 lemmas tick = Small_Proof.tick Big_Proof.tick Common_Proof.tick
 
+(* TODO: Naming *)
 lemma ticks_help: "ticksHelper (big, small) = (newBig, newSmall) \<Longrightarrow> Big.toList big = Big.toList newBig"
   apply(induction "(big, small)" rule: ticksHelper.induct)
   by(auto simp: tick split: current.splits if_splits)
@@ -16,12 +17,11 @@ lemma ticks: "toListLeft (ticks transformation) = toListLeft transformation"
   apply(induction transformation rule: toListLeft.induct)
   by(auto simp: ticks_help ticks_help2 split: prod.splits)
 
-
 lemmas all_ticks = tick ticks
 
-lemmas state_splits = idle.splits Common.state.splits Small.state.splits Big.state.splits 
+lemmas state_splits = idle.splits Common.state.splits Small.state.splits Big.state.splits
 
-
+(* TODO: *)
 lemma ticks_helper: "\<lbrakk>
   ticksHelper
          (Reverse (Current [] 0 (Stack.push x leftValues) (Stack.size leftValues - Stack.size rightValues)) (Stack.push x leftValues) [] (Stack.size leftValues - Stack.size rightValues),
@@ -35,7 +35,7 @@ proof(induction
         )
   case 1
   then show ?case 
-    by(auto simp: push)
+    by(auto simp: Stack_Proof.push)
 next
   case ("2_1" vd)
    then have left: "left = Big.tick (Reverse (Current [] 0 (Stack.push x leftValues) (Stack.size leftValues - Stack.size rightValues)) (Stack.push x leftValues) [] (Stack.size leftValues - Stack.size rightValues))"
@@ -43,9 +43,8 @@ next
    then have right: "right = Small.tick (Reverse1 (Current [] 0 rightValues (Suc (2 * Stack.size rightValues))) rightValues [])"
      by (metis "2_1.hyps" "2_1.prems" ticksHelper.simps(2) old.prod.inject)
    from left right show ?case
-     by(auto simp: push split: if_splits)
+     by(auto simp: Stack_Proof.push split: if_splits)
  qed
-
 
 
 lemma test_2_1: "put x current = Current x1 x2 x3 x4 
@@ -54,6 +53,10 @@ lemma test_2_1: "put x current = Current x1 x2 x3 x4
   by auto
 
 lemma small_push: "x # Small.toList small = Small.toList (Small.push x small) "
+  apply(induction x small rule: Small.push.induct)
+  by(auto simp: Common_Proof.push put)
+
+lemma small_push_2: "Small.toList (Small.push x small) = x # Small.toList small"
   apply(induction x small rule: Small.push.induct)
   by(auto simp: Common_Proof.push put)
 
@@ -70,32 +73,32 @@ lemma test: " \<lbrakk>
        \<Longrightarrow> Small.toList small' = x # Small.toList left"
   by (metis ticks_help2 test_2)
 
-lemma something_1_1: "\<lbrakk>
+
+(*lemma something_1_1: "\<lbrakk>
       ticksHelper (right, Small.push x left) = (Big.state.Common (state.Idle x21a (idle.Idle x1e x2f)), Small.state.Common (state.Idle x21 (idle.Idle x1d x2d)))
     \<rbrakk> \<Longrightarrow> Stack.toList x1d  = x # Small.toList left"
-    apply(induction "(right, Small.push x left)" rule: ticksHelper.induct;
-        induction x left rule: Small.push.induct;
-        induction x1d rule: Stack.toList.induct;
-        induction x1e rule: Stack.toList.induct;
-        induction right;
-        induction x21a arbitrary:  x2d x2f rule: Current.toList.induct;
-        induction x21 rule: Current.toList.induct)
-                      apply(auto simp: tick split: if_splits current.splits)
-  
+  sorry*)
+(* lemma something_1_2: "\<lbrakk>ticksHelper (ticksHelper (ticksHelper (ticksHelper (Reverse currentB big auxB 0, Small.push x left)))) =
+        (Big.state.Common (state.Idle x21a (idle.Idle x1e x2f)), Small.state.Common (state.Idle x21 (idle.Idle x1d x2d)))\<rbrakk>
+       \<Longrightarrow> Stack.toList x1d @ rev (Stack.toList x1e) = x # Small.toList left @ rev (Current.toList x21a)"
   sorry
 
-lemma something_1: "\<lbrakk>
+lemma something_1_1: "\<lbrakk>
       ticksHelper (right, Small.push x left) = (Big.state.Common (state.Idle x21a (idle.Idle x1e x2f)), Small.state.Common (state.Idle x21 (idle.Idle x1d x2d)))
     \<rbrakk> \<Longrightarrow> Stack.toList x1d @ rev (Stack.toList x1e) = x # Small.toList left @ rev (Current.toList x21a)"
-  apply(auto simp: something_1_1)
-  apply(induction x1e rule: Stack.toList.induct;
-        induction x21a rule: Current.toList.induct;
-        induction x left rule: Small.push.induct;
-        induction right
-        )
-       apply(auto split: if_splits current.splits)    
-    apply(induction x21 arbitrary: x2f x2d; induction x1d  rule: Stack.toList.induct)
-  
+ 
+  sorry
+
+lemma something_now: "ticksHelper(ticksHelper(ticksHelper(ticksHelper(big, small)))) = (newBig, newSmall) \<Longrightarrow> 
+    Small.toList newSmall @ rev (Big.toList newBig) = Small.toList small @ rev (Big.toList big)"
+  by (metis old.prod.exhaust ticks_help ticks_help2)
+
+
+lemma something_1: "\<lbrakk>
+      ticksHelper(ticksHelper(ticksHelper(ticksHelper (right, Small.push x left)))) = (Big.state.Common (state.Idle x21a (idle.Idle x1e x2f)), Small.state.Common (state.Idle x21 (idle.Idle x1d x2d)))
+    \<rbrakk> \<Longrightarrow> Stack.toList x1d @ rev (Stack.toList x1e) = x # Small.toList left @ rev (Current.toList x21a)"
+  apply(induction x left arbitrary: right x2f x2d rule: Small.push.induct)
+  apply(auto simp: something_now split: if_splits current.splits)
   sorry
 
 lemma something: " \<lbrakk>
@@ -104,12 +107,7 @@ lemma something: " \<lbrakk>
         ticksHelper (x1, x2) = (x1a, x2a); 
       ticksHelper (right, Small.push x left) = (x1, x2)
     \<rbrakk> \<Longrightarrow> Stack.toList x1d @ rev (Stack.toList x1e) = x # Small.toList left @ rev (Current.toList x21a)"
-  apply(induction "(right, Small.push x left)" rule: ticksHelper.induct;
-        induction x1d rule: Stack.toList.induct;
-        induction x1e rule: Stack.toList.induct;
-        induction left arbitrary: x rule: Small.toList.induct)
-  (*apply(auto split: current.splits if_splits)*)
-  sorry
+  by (metis something_1) *)
 
 (*
 lemma test1_1_1: "put x r1 = Current r1' r2' r3' r4' \<Longrightarrow> r1' @ Stack.toList r3' = x # Current.toList r1"

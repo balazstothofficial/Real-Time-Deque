@@ -66,4 +66,8 @@ proof(induction stack)
     by auto
 qed
 
+lemma first_pop: "\<not> isEmpty stack \<Longrightarrow> first stack # Stack.toList (pop stack) = Stack.toList stack"
+  apply(induction stack rule: pop.induct)
+  by auto
+
 end
