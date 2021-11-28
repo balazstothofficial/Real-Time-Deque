@@ -28,11 +28,4 @@ fun size :: "'a stack \<Rightarrow> nat" where
 fun toList :: "'a stack \<Rightarrow> 'a list" where
   "toList (Stack left right) = left @ right"
 
-fun invariant :: "'a stack \<Rightarrow> bool" where
-  "invariant (Stack [] []) = True"
-| "invariant (Stack [] _) = False"
-| "invariant _ = True"
-
-
-
 end

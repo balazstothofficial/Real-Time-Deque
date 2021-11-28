@@ -24,4 +24,9 @@ fun isEmpty :: "'a current \<Rightarrow> bool" where
   "isEmpty (Current [] _ old _) = Stack.isEmpty old"
 | "isEmpty _ = False"
 
+fun invariant :: "'a current \<Rightarrow> bool" where
+  "invariant (Current extra added old remained) \<longleftrightarrow> 
+     length extra = added
+   \<and> Stack.size old = remained"
+
 end

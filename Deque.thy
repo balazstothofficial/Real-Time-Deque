@@ -50,5 +50,7 @@ assumes invariant_dequeueLeft:
  "\<lbrakk>invariant q; \<not> isEmpty q\<rbrakk>  \<Longrightarrow> invariant(dequeueLeft q)"
 assumes invariant_dequeueRight: 
  "\<lbrakk>invariant q; \<not> isEmpty q\<rbrakk>  \<Longrightarrow> invariant(dequeueRight q)"
+assumes listLeft_listRight: 
+ "invariant q \<Longrightarrow> listLeft q = rev (listRight q)"
 
 end

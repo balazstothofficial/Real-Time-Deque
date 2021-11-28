@@ -70,4 +70,8 @@ lemma first_pop: "\<not> isEmpty stack \<Longrightarrow> first stack # Stack.toL
   apply(induction stack rule: pop.induct)
   by auto
 
+lemma size_listLength: "Stack.size stack = List.length (Stack.toList stack)"
+  apply(induction stack)
+  by auto
+
 end
