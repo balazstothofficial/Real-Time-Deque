@@ -48,15 +48,14 @@ fun invariant :: "'a state \<Rightarrow> bool" where
   "invariant (Idle current idle) \<longleftrightarrow> (
      case idle of idle.Idle (Stack left right) idleLength \<Rightarrow>
      case current of Current extra added old remained \<Rightarrow>
-     let idleList = Idle.toList idle in 
-       drop (Stack.size old - List.length right) (Stack.toList old) = drop (List.length right - Stack.size old) right
+       take (List.length right)(Stack.toList old) = take (Stack.size old) right
      \<and> left = extra
      \<and> Idle.invariant idle
      \<and> Current.invariant current
   )"
 | "invariant (Copy current aux new moved) \<longleftrightarrow> (
     case current of Current _ _ old remained \<Rightarrow>
-      Stack.toList old = drop ((List.length aux + moved) - Stack.size old)(rev aux @ new)
+      Stack.toList old = take (Stack.size old)(drop ((length aux + length new) - remained)(rev aux @ new))
     \<and> moved < remained
     \<and> moved = List.length new
     \<and> remained \<le> List.length aux + moved

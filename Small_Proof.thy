@@ -15,18 +15,75 @@ lemma pop: "\<lbrakk>\<not> isEmpty small; pop small = (x, small')\<rbrakk> \<Lo
   by(auto simp: get Common_Proof.pop split: prod.splits current.splits if_splits)
 
 lemma invariant_tick: "invariant state \<Longrightarrow> invariant (tick state)"
-  quickcheck
-  sorry
-
-
-
-value "tick ( Reverse2 (Current [] 0 (Stack [] [a\<^sub>1]) 2) [a\<^sub>1] (Stack [] []) [a\<^sub>1, a\<^sub>2] 2)"
+proof(induction state rule: tick.induct)
+  case (1 state)
+  then show ?case 
+    by (simp add: invariant_tick)
+next
+  case (2 current small auxS)
+  then show ?case 
+    apply(auto simp: Let_def split: current.splits)
+    (* TODO: *)
+    by (metis add_Suc_right first_pop length_Cons size_listLength)
+next
+  case (3 current auxS big newS count)
+  then show ?case 
+    (* TODO: *)
+    apply(auto simp: not_empty size_pop split: current.splits)
+    apply (metis length_0_conv not_empty_2 size_listLength)
+          apply (metis Nat.add_0_right add.commute le_refl not_empty not_gr_zero size_listLength take_all)
+        apply (meson add_decreasing not_empty not_le)
+    by (metis Suc_pred length_greater_0_conv not_empty_2 size_listLength)
+qed
 
 lemma invariant_push: "invariant small \<Longrightarrow> invariant (push x small)"
-  sorry
+proof(induction x small rule: push.induct)
+  case (1 x state)
+then show ?case by(auto simp: invariant_push)
+next
+  case (2 x current small auxS)
+  then show ?case by(auto split: current.splits)
+next
+  case (3 x current auxS big newS count)
+  then show ?case by(auto split: current.splits)
+qed
 
-lemma invariant_pop: "\<lbrakk>\<not> isEmpty small; invariant small; pop_invariant small; pop small = (x, small')\<rbrakk>
-   \<Longrightarrow> invariant small'"
-  sorry
+lemma invariant_pop: "\<lbrakk>
+  \<not> isEmpty small; 
+  invariant small; 
+  pop small = (x, small')
+\<rbrakk> \<Longrightarrow> invariant small'"
+(* TODO: *)
+proof(induction small arbitrary: x rule: pop.induct)
+  case (1 state)
+  then show ?case 
+    by(auto simp: invariant_pop split: prod.splits)
+next
+  case (2 current small auxS)
+  then show ?case 
+  proof(induction current rule: get.induct)
+    case (1 added old remained)
+    then show ?case 
+      apply(auto simp: Let_def)
+      by (smt (verit, ccfv_threshold) Cons_nth_drop_Suc append_Nil diff_Suc_Suc diff_diff_cancel diff_is_0_eq drop_all drop_all_iff first_pop gen_length_def le_add2 le_eq_less_or_eq length_Cons length_append length_code length_drop length_rev list.sel(3) minus_nat.diff_0 nat_le_linear not_less_eq_eq size_listLength tl_append2) 
+  next
+    case (2 x xs added old remained)
+    then show ?case by(auto simp: Let_def)
+  qed
+next
+  case (3 current auxS big newS count)
+  then show ?case
+  proof(induction current rule: get.induct)
+    case (1 added old remained)
+    then show ?case 
+      apply auto
+      apply (metis (no_types, lifting) Stack_Proof.pop Suc_diff_Suc drop_Suc first_pop leD length_Cons not_less_eq size_listLength tl_drop)
+       apply (metis Nat.diff_add_assoc Suc_leI length_greater_0_conv not_empty_2 size_listLength size_pop)
+      by linarith
+  next
+    case (2 x xs added old remained)
+    then show ?case by auto
+  qed
+qed
 
 end

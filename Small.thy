@@ -25,8 +25,6 @@ fun tick :: "'a state \<Rightarrow> 'a state" where
     else Reverse2 current auxS (Stack.pop big) ((first big)#newS) (count + 1)
   )"
 
-value "tick (Reverse2 (Current [] 0 (Stack [] [a\<^sub>1]) 1) [a\<^sub>1] (Stack [] []) [a\<^sub>2] 1)"
-
 fun push :: "'a \<Rightarrow> 'a state \<Rightarrow> 'a state" where
   "push x (Common state) = Common (Common.push x state)"
 | "push x (Reverse1 current small auxS) = Reverse1 (put x current) small auxS"
@@ -51,46 +49,22 @@ fun isEmpty :: "'a state \<Rightarrow> bool" where
 | "isEmpty (Reverse1 current _ _) = Current.isEmpty current"
 | "isEmpty (Reverse2 current _ _ _ _) = Current.isEmpty current"
 
-(* TODO: *)
 fun invariant :: "'a state \<Rightarrow> bool" where
   "invariant (Common state) = Common.invariant state"
 | "invariant (Reverse1 current small auxS) = (
    case current of Current _ _ old remained \<Rightarrow>
    let smallSize = Stack.size small in
-      drop (remained - smallSize) (Stack.toList old) = drop (smallSize - remained) (Stack.toList small)
-    \<and> Stack.toList old = drop ((List.length auxS + smallSize) - remained) (rev auxS @ Stack.toList small)
+      Stack.toList old = drop ((List.length auxS + smallSize) - (Stack.size old)) (rev auxS @ Stack.toList small)
     \<and> Current.invariant current
   )"
 | "invariant (Reverse2 current auxS big newS count) = (
    case current of Current _ _ old remained \<Rightarrow>
-       Stack.toList old = drop (List.length auxS - remained) (rev auxS)
-    \<and> remained > Stack.size old
-    \<and> remained \<ge> count + Stack.size big
+       Stack.toList old = drop (List.length auxS - (Stack.size old)) (rev auxS)
+    \<and> remained = count + Stack.size big + Stack.size old
     \<and> remained \<le> List.length auxS + count + Stack.size big
-    \<and> count + Stack.size big > Stack.size old
     \<and> count = List.length newS
     \<and> Current.invariant current
 )"
-
-(* 
-
-fun invariant :: "'a state \<Rightarrow> bool" where
-  "invariant (Common state) \<longleftrightarrow> Common.invariant state"
-| "invariant (Reverse current big auxB count) \<longleftrightarrow> (
-   case current of Current extra added old remained \<Rightarrow>
-       Stack.toList old = drop ((List.length auxB + count) - remained) (rev auxB @ (take count (Stack.toList big)))
-    \<and> Current.invariant current
-    \<and> List.length auxB \<ge> remained - count
-    \<and> remained \<ge> count
-    \<and> count \<le> Stack.size big
-)"
-
-*)
-
-fun pop_invariant :: "'a state \<Rightarrow> bool" where
-  "pop_invariant (Common state) = True"
-| "pop_invariant (Reverse1 current _ _) \<longleftrightarrow> True"
-| "pop_invariant (Reverse2 (Current _ _ _ remained) _ _ _ count) \<longleftrightarrow> remained > count"
 
 fun remainingSteps :: "'a state \<Rightarrow> nat" where
   "remainingSteps (Common state) = Common.remainingSteps state"
