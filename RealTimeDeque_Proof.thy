@@ -1,5 +1,5 @@
 theory RealTimeDeque_Proof
-  imports Deque RealTimeDeque Idle_Proof Transformation_Proof
+  imports Deque RealTimeDeque
 begin
 
 fun t_invariant_1' :: "'a transformation \<Rightarrow> bool" where
@@ -75,11 +75,11 @@ value "runningFold
   enqueueLeft 18,
   enqueueLeft 19,
   enqueueLeft 20,
-  dequeueLeft,
-  dequeueLeft,
-  dequeueLeft,
-  dequeueLeft,
-  dequeueLeft
+  dequeueRight,
+  dequeueRight,
+  dequeueRight,
+  dequeueRight,
+  dequeueRight
   ] 
   Empty"
 
@@ -158,7 +158,7 @@ value "invariant_t (Transforming (ticks (Left (Reverse1 (Current [] 0 (Stack [] 
 
 
 lemma ticksLength: "Transformation.length t = Transformation.length (ticks t)"
-  by (simp add: ticks)
+  sorry
 
 lemma sixTicks_inv: 
   assumes 
@@ -173,7 +173,7 @@ lemma helper: " \<lbrakk>
   rightLength = Stack.size right;
   2 \<le> Stack.size left
 \<rbrakk> \<Longrightarrow> 3 * List.length (Stack.toList right) < Suc (List.length (Stack.toList (Stack.push x left)))"
-  by (simp add: Stack_Proof.push size_listLength)
+  sorry
 
 interpretation RealTimeDeque: Deque where
   empty    = empty    and

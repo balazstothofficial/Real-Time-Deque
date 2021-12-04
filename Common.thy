@@ -10,7 +10,7 @@ fun toList :: "'a state \<Rightarrow> 'a list" where
   "toList (Idle current idle) = Current.toList current"
 | "toList (Copy current old new _) = Current.toList current"
 
-(* TODO: unnecessary function *)
+(* TODO: unnecessary function \<rightarrow> Should be inlined *)
 fun normalize :: "'a state \<Rightarrow> 'a state" where
   "normalize (Copy current old new moved) = (
       case current of Current extra added _ remained \<Rightarrow> 
@@ -41,20 +41,25 @@ fun pop :: "'a state \<Rightarrow> 'a * 'a state" where
       (top current, normalize (Copy (bottom current) aux new moved))"
 
 fun isEmpty :: "'a state \<Rightarrow> bool" where
-  "isEmpty (Idle current _) = Current.isEmpty current"
-| "isEmpty (Copy current _ _ _) = Current.isEmpty current"
+  "isEmpty (Idle current idle)  \<longleftrightarrow> Current.isEmpty current \<or> Idle.isEmpty idle"
+| "isEmpty (Copy current _ _ _) \<longleftrightarrow> Current.isEmpty current"
 
 fun invariant :: "'a state \<Rightarrow> bool" where
-  "invariant (Idle current idle) \<longleftrightarrow> 
-     Current.toList current = Idle.toList idle 
-   \<and> Idle.invariant idle
-   \<and> Current.invariant current"
+  "invariant (Idle current idle) \<longleftrightarrow> (
+     case idle of idle.Idle (Stack left right) idleLength \<Rightarrow>
+     case current of Current extra added old remained \<Rightarrow>
+     let idleList = Idle.toList idle in 
+       drop (Stack.size old - List.length right) (Stack.toList old) = drop (List.length right - Stack.size old) right
+     \<and> left = extra
+     \<and> Idle.invariant idle
+     \<and> Current.invariant current
+  )"
 | "invariant (Copy current aux new moved) \<longleftrightarrow> (
     case current of Current _ _ old remained \<Rightarrow>
-    let aux = take (remained - moved) aux in
-      Stack.toList old = rev aux @ new
+      Stack.toList old = drop ((List.length aux + moved) - Stack.size old)(rev aux @ new)
     \<and> moved < remained
     \<and> moved = List.length new
+    \<and> remained \<le> List.length aux + moved
     \<and> Current.invariant current
  )"
 

@@ -18,7 +18,9 @@ lemma invariant_tick: "invariant state \<Longrightarrow> invariant (tick state)"
   quickcheck
   sorry
 
-value "tick (Reverse2 (Current [] 0 (Stack [] [a\<^sub>1]) 1) [a\<^sub>1] (Stack [] []) [a\<^sub>2] 1)"
+
+
+value "tick ( Reverse2 (Current [] 0 (Stack [] [a\<^sub>1]) 2) [a\<^sub>1] (Stack [] []) [a\<^sub>1, a\<^sub>2] 2)"
 
 lemma invariant_push: "invariant small \<Longrightarrow> invariant (push x small)"
   sorry

@@ -21,82 +21,119 @@ lemma push: "toList (push x common) = x # toList common"
 lemma take_hd: "xs \<noteq> [] \<Longrightarrow> take (Suc 0) xs = [hd xs]"
   apply(induction xs)
   by auto
-
+ 
 lemma invariant_tick: "invariant common \<Longrightarrow> invariant (tick common)" 
-  apply(induction common rule: tick.induct)
-   apply(auto split: current.splits)
-    (* TODO: *)
-  apply (metis Suc_diff_Suc append_Nil diff_is_0_eq' nat_neq_iff rev_append rev_rev_ident size_listLength take_Nil take_hd)
-    by (metis Suc_diff_Suc gen_length_def hd_Cons_tl hd_take le_SucI length_append length_code length_rev list.size(3) nat_le_linear not_le rev.simps(2) size_listLength take_tl zero_less_Suc)
-
+proof(induction "common" rule: invariant.induct)
+  case (1 current idle)
+  then show ?case
+    by auto
+next
+  case (2 current aux new moved)
+  then show ?case
+  proof(induction current)
+    case (Current extra added old remained)
+    then show ?case
+    proof(induction aux)
+      case Nil
+      then show ?case
+        by auto
+    next
+      case (Cons a as)
+      then show ?case
+        apply auto
+        (* TODO: *)
+        by (smt (verit, del_insts) Nat.add_diff_assoc add.commute add_Suc diff_is_0_eq' drop_Cons' le_add1 le_add_diff_inverse2 length_Cons length_append length_drop length_rev nat_less_le not_le size_listLength)
+    qed
+  qed
+qed
+  
 lemma invariant_push: "invariant common \<Longrightarrow> invariant (push x common)"
   apply(induction x common rule: push.induct)
-  by(auto simp: invariant_put size_push put Stack_Proof.push split: current.splits)
+  by(auto split: stack.splits current.splits)
 
-(* TODO: *)
-
-lemma helper_2: "n < length xs \<Longrightarrow> tl (rev (take (Suc n) xs)) = rev (take n xs)"
-  apply(induction xs; induction n)
-     apply auto
-  by (metis Suc_diff_Suc drop_Suc gr_implies_not0 length_0_conv old.nat.distinct(2) rev_is_Nil_conv rev_take take_eq_Nil tl_append2 tl_drop)
-
-lemma helper_1: 
-assumes
-  "\<not> Stack.isEmpty old"
-  "Stack.toList old = rev (take (Stack.size old - length new) aux) @ new"
-  "length new < Stack.size old"
-  "common' = Copy (Current [] 0 (Stack.pop old) (Stack.size old - Suc 0)) aux new (length new)" 
-  "\<not> Stack.size old - Suc 0 \<le> length new"
-  "x = first old"
-  "extra' = []" 
-  "added' = 0" 
-  "old' = Stack.pop old"
-  "remaining' = Stack.size old - Suc 0"
-shows
-  "Stack.toList (Stack.pop old) = rev (take (Stack.size old - Suc (length new)) aux) @ new"
-proof -
-  from assms have tl: "Stack.toList (Stack.pop old) = tl (Stack.toList old)"
-    by(auto simp: Stack_Proof.pop)
-  
-  with assms have "tl (rev (take (Stack.size old - length new) aux)) = 
-                       rev (take (Stack.size old - Suc (length new)) aux)"
-    by (smt (z3) Suc_diff_Suc Suc_le_lessD append_eq_conv_conj diff_le_self helper_2 length_drop length_rev length_rotate rev_take rotate_append size_listLength)
-
-  with assms tl have "tl (rev (take (Stack.size old - length new) aux) @ new) = 
-                       rev (take (Stack.size old - Suc (length new)) aux) @ new"
-    by (metis append_Nil nat_neq_iff size_listLength tl_append2)
-
-  with assms tl show ?thesis
-    by auto
-  
+lemma invariant_pop: "\<lbrakk>
+  \<not> isEmpty common; 
+  invariant common;
+   pop common = (x, common')
+\<rbrakk> \<Longrightarrow> invariant common'"
+proof(induction common arbitrary: x rule: pop.induct)
+  case (1 current stack stackSize)
+  then show ?case 
+  proof(induction current)
+    case (Current extra added old remained)
+    then show ?case
+    proof(induction "Current extra added old remained" rule: get.induct)
+      case 1
+      then show ?case 
+      proof(induction stack arbitrary: x rule: Stack.pop.induct)
+        case (1 x left right)
+        then show ?case by auto
+      next
+        case (2 x right)
+        then show ?case
+        proof(induction old arbitrary: x rule: Stack.pop.induct)
+          case (1 x' left' right')
+          then show ?case 
+            apply auto
+            (* TODO: *)
+            by (smt (z3) Cons_nth_drop_Suc add.commute add_diff_cancel_right' diff_commute diff_less_Suc drop_Suc_Cons drop_append length_Cons length_append list.inject)
+        next
+          case (2 x' right')
+          then show ?case 
+            apply auto 
+            (* TODO: *)
+            by (metis Cons_nth_drop_Suc diff_less_Suc drop_Suc_Cons length_Cons list.sel(3))
+        next
+          case 3
+          then show ?case by auto
+        qed
+      next
+        case 3
+        then show ?case by auto
+      qed
+    next
+      case (2 x xs)
+      then show ?case
+        by(auto split: stack.splits)
+    qed
+  qed
+next
+  case (2 current aux new moved)
+  then show ?case 
+  (* TODO: *)
+  proof(induction current rule: get.induct)
+    case (1 added old remained)
+    then show ?case 
+    proof(induction "Stack.size old < length new")
+      case True
+      then show ?case 
+        apply auto
+        apply (smt (z3) Cons_nth_drop_Suc Suc_diff_le Suc_pred diff_Suc_Suc diff_diff_cancel diff_is_0_eq' drop0 first_pop length_greater_0_conv less_imp_le list.inject not_empty_2 not_le size_listLength size_pop)
+        apply (smt (verit) Cons_nth_drop_Suc Suc_diff_le Suc_n_not_le_n add_diff_cancel_right' append_self_conv2 diff_Suc_Suc diff_is_0_eq diff_le_mono2 drop_all first_pop le_eq_less_or_eq length_rev linear list.inject minus_nat.diff_0 not_empty_2 size_pop)
+        by (meson diff_le_self le_trans)
+    next
+      case False
+      then show ?case
+      proof(induction "Stack.size (Stack.pop old) < length new")
+        case True
+        then show ?case 
+          apply auto
+          apply (smt (z3) append_Nil diff_add_inverse diff_diff_cancel drop0 drop_Suc_Cons drop_all first_pop le_less_Suc_eq le_refl length_Cons length_rev nat_less_le nat_neq_iff size_listLength size_pop zero_less_diff) 
+          apply (metis Suc_diff_le append_Nil diff_add_inverse2 diff_self_eq_0 drop0 drop_Suc_Cons drop_all_iff first_pop le_refl length_Cons length_rev nat_neq_iff not_less_eq size_listLength)
+          using diff_le_self le_trans by blast
+      next
+        case False
+        then show ?case 
+          apply auto
+          apply (smt (verit, ccfv_threshold) Stack_Proof.pop Suc_le_lessD Suc_pred add_diff_inverse_nat append_eq_append_conv append_take_drop_id diff_add_inverse2 drop_all_iff length_append length_drop length_greater_0_conv size_listLength size_pop tl_append2)
+          apply (smt (z3) Cons_nth_drop_Suc Suc_le_lessD diff_add_inverse2 diff_is_0_eq diff_zero drop_all_iff first_pop le_eq_less_or_eq length_Cons length_append length_drop length_rev list.sel(3) nat_neq_iff size_listLength tl_append2)
+          by presburger
+      qed
+    qed
+  next
+    case (2 x xs added old remained)
+    then show ?case by auto
+  qed
 qed
-
-lemma helper: 
-  assumes
-  "\<not> Current.isEmpty (Current extra (length extra) old (Stack.size old))"
-  "get (Current extra (length extra) old (Stack.size old)) = (x, Current extra' added' old' remaining')"
-  "Stack.toList old = rev (take (Stack.size old - length new) aux) @ new"
-  "length new < Stack.size old"
-  "common' = Copy (Current extra' added' old' remaining') aux new (length new)"
-  " \<not> remaining' \<le> length new"
-  shows 
-  "Stack.toList old' = rev (take (remaining' - length new) aux) @ new"
-  using assms apply(induction extra)
-  by(auto simp: helper_1)
   
-
-lemma invariant_pop: "\<lbrakk>\<not> isEmpty common; invariant common; pop common = (x, common')\<rbrakk>
-   \<Longrightarrow> invariant common'"
-  apply(induction common arbitrary: x rule: pop.induct)
-   apply(auto simp:  invariant_get get Stack_Proof.pop size_pop empty not_empty split: prod.splits current.splits)
-    (* TODO: *)   
-         apply (metis Stack_Proof.pop get length_Cons list.sel(3) not_empty size_listLength zero_less_Suc)
-        apply (metis empty get list.discI size_pop)
-  apply (smt (verit, ccfv_threshold) Current.invariant.simps Current.isEmpty.elims(1) Current.toList.simps append_eq_append_conv current.simps(1) get get.simps(1) get.simps(2) invariant_get leD length_Cons not_less_eq_eq order_class.order.antisym prod.simps(1) self_append_conv2 size_listLength)
-    apply (meson Current.invariant.simps invariant_get)
-  apply (meson Current.invariant.simps invariant_get)
-    apply(simp add: helper)
-   apply (meson Current.invariant.simps invariant_get)
-  by (meson Current.invariant.simps invariant_get)
-
 end

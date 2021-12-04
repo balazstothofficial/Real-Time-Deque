@@ -154,7 +154,6 @@ fun enqueueRight :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
     in swap deque
   )"
 
-(* Try out what is needed here (The bottom one is probably not needed)*)
 fun invariant :: "'a deque \<Rightarrow> bool" where
   "invariant Empty = True"
 | "invariant (One _) = True"

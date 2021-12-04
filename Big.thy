@@ -35,21 +35,17 @@ fun length :: "'a state \<Rightarrow> nat" where
 fun invariant :: "'a state \<Rightarrow> bool" where
   "invariant (Common state) \<longleftrightarrow> Common.invariant state"
 | "invariant (Reverse current big auxB count) \<longleftrightarrow> (
-   case current of Current extra added old remained \<Rightarrow>
-      Current.toOldList current = take remained ((take count (Stack.toList big)) @ rev auxB)
+   case current of Current _ _ old remained \<Rightarrow>
+       Stack.toList old = drop ((List.length auxB + count) - remained) (rev auxB @ (take count (Stack.toList big)))
     \<and> Current.invariant current
     \<and> List.length auxB \<ge> remained - count
     \<and> remained \<ge> count
+    \<and> count \<le> Stack.size big
 )"
-
-lemma "invariant (Reverse (Current [] 0 (Stack [a\<^sub>1] [a\<^sub>2]) 2) (Stack [] [a\<^sub>1]) [a\<^sub>2] 1)"
-  sorry
 
 fun pop_invariant :: "'a state \<Rightarrow> bool" where
   "pop_invariant (Common state) = True"
-| "pop_invariant (Reverse current big auxB count) \<longleftrightarrow> (
-   case current of Current extra added old remained \<Rightarrow> remained > count
-)"
+| "pop_invariant (Reverse (Current _ _ _ remained) _ _ count) \<longleftrightarrow> remained > count"
 
 fun remainingSteps :: "'a state \<Rightarrow> nat" where
   "remainingSteps (Common state) = Common.remainingSteps state"

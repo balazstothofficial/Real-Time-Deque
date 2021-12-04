@@ -59,15 +59,33 @@ fun invariant :: "'a state \<Rightarrow> bool" where
    let smallSize = Stack.size small in
       drop (remained - smallSize) (Stack.toList old) = drop (smallSize - remained) (Stack.toList small)
     \<and> Stack.toList old = drop ((List.length auxS + smallSize) - remained) (rev auxS @ Stack.toList small)
-    \<and> remained > Stack.size old
+    \<and> Current.invariant current
   )"
 | "invariant (Reverse2 current auxS big newS count) = (
    case current of Current _ _ old remained \<Rightarrow>
        Stack.toList old = drop (List.length auxS - remained) (rev auxS)
     \<and> remained > Stack.size old
     \<and> remained \<ge> count + Stack.size big
+    \<and> remained \<le> List.length auxS + count + Stack.size big
+    \<and> count + Stack.size big > Stack.size old
     \<and> count = List.length newS
+    \<and> Current.invariant current
 )"
+
+(* 
+
+fun invariant :: "'a state \<Rightarrow> bool" where
+  "invariant (Common state) \<longleftrightarrow> Common.invariant state"
+| "invariant (Reverse current big auxB count) \<longleftrightarrow> (
+   case current of Current extra added old remained \<Rightarrow>
+       Stack.toList old = drop ((List.length auxB + count) - remained) (rev auxB @ (take count (Stack.toList big)))
+    \<and> Current.invariant current
+    \<and> List.length auxB \<ge> remained - count
+    \<and> remained \<ge> count
+    \<and> count \<le> Stack.size big
+)"
+
+*)
 
 fun pop_invariant :: "'a state \<Rightarrow> bool" where
   "pop_invariant (Common state) = True"
