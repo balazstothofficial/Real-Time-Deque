@@ -23,8 +23,8 @@ next
   then show ?case 
     apply(auto split: current.splits)
     (* TODO: *)
-    apply (metis Stack_Proof.pop Zero_not_Suc bot_nat_0.extremum_uniqueI empty first list.size(3) size_listLength take_Suc)
-    by (metis (no_types, lifting) One_nat_def Suc_diff_eq_diff_pred Zero_not_Suc bot_nat_0.extremum_uniqueI diff_is_0_eq empty length_greater_0_conv list.size(3) size_listLength size_pop)
+     apply (metis Stack_Proof.pop Zero_not_Suc bot_nat_0.extremum_uniqueI empty first list.size(3) size_listLength take_Suc)
+    by (metis (no_types, lifting) One_nat_def Stack_Proof.size_pop Suc_diff_eq_diff_pred Zero_not_Suc bot_nat_0.extremum_uniqueI diff_is_0_eq empty length_greater_0_conv list.size(3) size_listLength)
 qed
 
 lemma pop: "\<lbrakk>\<not> isEmpty big; pop big = (x, big')\<rbrakk> \<Longrightarrow> x # toList big' = toList big"

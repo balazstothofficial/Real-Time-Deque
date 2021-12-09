@@ -39,8 +39,8 @@ fun pop :: "'a state \<Rightarrow> 'a * 'a state" where
     (top current, Reverse1 (bottom current) small auxS)"
 | "pop (Reverse2 current auxS big newS count) = 
     (top current, Reverse2 (bottom current) auxS big newS count)"
-
-(* Just for proof *)
+ 
+(* Just for proof: *)
 fun length :: "'a state \<Rightarrow> nat" where
   "length small = List.length (toList small)"
 
@@ -56,19 +56,27 @@ fun invariant :: "'a state \<Rightarrow> bool" where
    let smallSize = Stack.size small in
       Stack.toList old = drop ((List.length auxS + smallSize) - (Stack.size old)) (rev auxS @ Stack.toList small)
     \<and> Current.invariant current
+    \<and> remained \<ge> Stack.size old
+    \<and> smallSize + List.length auxS \<ge> Stack.size old
   )"
 | "invariant (Reverse2 current auxS big newS count) = (
    case current of Current _ _ old remained \<Rightarrow>
        Stack.toList old = drop (List.length auxS - (Stack.size old)) (rev auxS)
     \<and> remained = count + Stack.size big + Stack.size old
-    \<and> remained \<le> List.length auxS + count + Stack.size big
+    \<and> remained \<ge> Stack.size old
     \<and> count = List.length newS
     \<and> Current.invariant current
+    \<and> List.length auxS \<ge> Stack.size old
 )"
 
 fun remainingSteps :: "'a state \<Rightarrow> nat" where
   "remainingSteps (Common state) = Common.remainingSteps state"
 | "remainingSteps (Reverse1 _ small _) = Stack.size small"
 | "remainingSteps (Reverse2 _ _ big _ _) = Stack.size big"
+
+fun minNewSize :: "'a state \<Rightarrow> nat" where
+  "minNewSize (Common state) = Common.minNewSize state"
+| "minNewSize (Reverse1 (Current _ _ _ remained) _ _) = remained"
+| "minNewSize (Reverse2 (Current _ _ _ remained) _ _ _ _) = remained"
 
 end

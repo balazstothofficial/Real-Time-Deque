@@ -28,10 +28,6 @@ fun isEmpty :: "'a state \<Rightarrow> bool" where
   "isEmpty (Common state) = Common.isEmpty state"
 | "isEmpty (Reverse current _ _ _) = Current.isEmpty current"
 
-(* Just for proof *)
-fun length :: "'a state \<Rightarrow> nat" where
-  "length big = List.length (toList big)"
-
 fun invariant :: "'a state \<Rightarrow> bool" where
   "invariant (Common state) \<longleftrightarrow> Common.invariant state"
 | "invariant (Reverse current big auxB count) \<longleftrightarrow> (
@@ -47,8 +43,17 @@ fun pop_invariant :: "'a state \<Rightarrow> bool" where
   "pop_invariant (Common state) = True"
 | "pop_invariant (Reverse (Current _ _ _ remained) _ _ count) \<longleftrightarrow> remained > count"
 
+(* Just for proof *)
+fun length :: "'a state \<Rightarrow> nat" where
+  "length big = List.length (toList big)"
+
 fun remainingSteps :: "'a state \<Rightarrow> nat" where
   "remainingSteps (Common state) = Common.remainingSteps state"
 | "remainingSteps (Reverse _ _ _ count) = count"
+
+fun minNewSize :: "'a state \<Rightarrow> nat" where
+  "minNewSize (Common state) = Common.minNewSize state"
+| "minNewSize (Reverse (Current _ _ _ remained) _ _ _) = remained"
+
 
 end

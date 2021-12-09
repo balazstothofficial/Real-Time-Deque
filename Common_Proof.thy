@@ -1,5 +1,5 @@
 theory Common_Proof
-  imports Common Current_Proof
+  imports Common Idle_Proof Current_Proof
 begin
 
 lemma tick: "toList (tick common) = toList common"
@@ -46,8 +46,6 @@ next
      qed
   qed
 qed
-
-value "tick ( Copy (Current [] 0 (Stack [] [a\<^sub>1]) 1) [a\<^sub>2, a\<^sub>1] [] 0)"
   
 lemma invariant_push: "invariant common \<Longrightarrow> invariant (push x common)"
   apply(induction x common rule: push.induct)
@@ -57,25 +55,27 @@ lemma helper_x: " \<not> Stack.isEmpty stack \<Longrightarrow> Suc (Stack.size (
   apply(induction stack rule: Stack.pop.induct)
   by auto
 
-lemma helper_x2: "\<lbrakk>
-  \<not> length new < Stack.size (Stack.pop old);
-  \<not> length new < Stack.size old;
+lemma helper_y: " \<lbrakk>
   \<not> Stack.isEmpty old;
   Stack.toList old = take (Stack.size old) (drop (length aux + length new - remained) (rev aux)) @ take (Stack.size old + length new - remained) new;
   x = first old;
   common' = Copy (Current [] 0 (Stack.pop old) (remained - Suc 0)) aux new (length new); 
-  length new < remained; 
-  moved = length new;
-  remained \<le> length aux + length new; added = 0;
+  length new < remained; moved = length new;
+  remained \<le> length aux + length new;
+  added = 0;
   \<not> remained - Suc 0 \<le> length new
 \<rbrakk> \<Longrightarrow> Stack.toList (Stack.pop old) =
          take (Stack.size (Stack.pop old)) (drop (Suc (length aux + length new) - remained) (rev aux)) @
-         take (Stack.size old + length new - remained) new"
-  apply(induction old rule: Stack.pop.induct)
-    apply auto
-  apply (smt (z3) Nat.diff_diff_right Suc_diff_le diff_diff_cancel diff_is_0_eq drop_Suc drop_all_iff leD le_diff_conv length_rev less_or_eq_imp_le list.sel(3) old.nat.distinct(2) take_eq_Nil take_tl tl_append2 tl_drop)
-  (* TODO: *)
-  sorry
+         take (Suc (Stack.size (Stack.pop old) + length new) - remained) new"
+proof(induction "Stack.size (Stack.pop old)")
+  case 0
+  then show ?case apply auto
+    by (metis length_0_conv size_listLength)
+next
+  case (Suc xa)
+  then show ?case apply auto
+    by (smt (z3) Nat.diff_diff_right Stack_Proof.pop Suc_diff_le diff_diff_cancel diff_is_0_eq drop_Suc drop_all_iff first_pop helper_x leD le_diff_conv length_Cons length_rev less_or_eq_imp_le size_listLength take_eq_Nil take_tl tl_append2 tl_drop zero_less_Suc)
+qed
 
 (* TODO: *)
 lemma invariant_pop: "\<lbrakk>
@@ -91,8 +91,9 @@ proof(induction common arbitrary: x rule: pop.induct)
     then show ?case
       apply(auto split: stack.splits current.splits prod.splits)
       apply (metis Stack.pop.simps(2) Stack.toList.simps Stack_Proof.pop append.left_neutral first_pop length_Cons size_listLength stack.inject take_tl)
-      using Stack.isEmpty.simps(1) Stack.pop.elims apply blast
-      using size_pop by fastforce
+      using Stack.isEmpty.simps(1) Stack.pop.elims 
+       apply blast
+      using Stack_Proof.size_pop by fastforce
   next
     case (2 x xs added old remained)
     then show ?case by(auto split: stack.splits current.splits prod.splits)
@@ -103,33 +104,25 @@ next
   proof(induction current rule: get.induct)
     case (1 added old remained)
     then show ?case
-    proof(induction "length new < Stack.size old")
+    proof(induction "length new < Stack.size (Stack.pop old)")
       case True
       then show ?case 
-        apply(auto simp: size_pop)
-        apply (smt (z3) One_nat_def Suc_diff_Suc append_eq_conv_conj append_self_conv2 append_take_drop_id diff_Suc_eq_diff_pred diff_diff_cancel diff_is_0_eq' drop_Suc_Cons drop_rev first_pop le_diff_conv length_drop length_rev less_imp_le less_imp_le_nat ordered_cancel_comm_monoid_diff_class.diff_diff_right size_listLength take0 take_all)
-        apply (smt (z3) Cons_nth_drop_Suc Nat.diff_diff_right Stack_Proof.pop Suc_diff_Suc Suc_diff_le diff_less diff_zero drop_all_iff length_greater_0_conv length_rev less_add_same_cancel2 less_le_trans less_or_eq_imp_le list.sel(3) list.size(3) not_le take_eq_Nil take_tl tl_append2 zero_less_diff)
-        by (meson diff_le_self order_trans)
+        apply auto
+        apply (smt (verit) Nat.add_0_right Nat.diff_diff_right Stack_Proof.pop Stack_Proof.size_pop Suc_diff_Suc Suc_diff_diff Suc_diff_le Suc_leI add_Suc_right append.right_neutral append_Nil2 append_take_drop_id bot_nat_0.extremum diff_Suc_Suc diff_add_inverse diff_diff_cancel diff_diff_left diff_is_0_eq' first_pop le0 le_diff_conv length_Cons length_append length_drop length_rev less_or_eq_imp_le list.size(3) list.size(3) nat.inject nat_less_le nat_neq_iff not_le old.nat.inject size_listLength)
+        apply(simp add: helper_y)
+        by (meson diff_le_self le_trans)
     next
       case False
-      then show ?case
-       proof(induction "length new < Stack.size (Stack.pop old)")
-         case True
-         then show ?case 
-           by(auto simp: size_pop)
-       next
-         case False
-         then show ?case  
-           apply(auto simp: helper_x)
-           apply (smt (verit, ccfv_SIG) Cons_nth_drop_Suc Stack_Proof.pop Suc_leI Suc_pred append_self_conv2 diff_diff_cancel drop_all_iff leD le_eq_less_or_eq length_drop length_greater_0_conv length_rev less_le_trans list.sel(3) nat_le_linear not_empty_2 ordered_cancel_comm_monoid_diff_class.diff_diff_right size_listLength size_pop take_all tl_append2)
-           by(auto simp: helper_x2)
-       qed
+      then show ?case 
+        apply auto
+        apply (smt (verit, best) Cons_nth_drop_Suc Stack_Proof.pop Stack_Proof.size_pop Suc_pred add_diff_cancel_right' append_Nil2 append_eq_append_conv2 diff_diff_cancel diff_diff_left diff_is_0_eq' le_diff_conv length_0_conv length_drop length_rev less_imp_le list.sel(3) not_le ordered_cancel_comm_monoid_diff_class.diff_diff_right same_append_eq size_listLength take_all take_eq_Nil tl_append2 zero_less_diff)
+        apply(simp add: helper_y)
+        using diff_le_self dual_order.trans by blast
     qed
   next
     case (2 x xs added old remained)
     then show ?case by auto
   qed   
 qed
-
 
 end

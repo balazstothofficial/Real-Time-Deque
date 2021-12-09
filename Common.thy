@@ -66,4 +66,8 @@ fun remainingSteps :: "'a state \<Rightarrow> nat" where
   "remainingSteps (Idle current idle) = 0"
 | "remainingSteps (Copy (Current _ _ _ remained) aux new moved) = remained - moved"
 
+fun minNewSize :: "'a state \<Rightarrow> nat" where
+  "minNewSize (Idle (Current _ _ _ r) _) = r"
+| "minNewSize (Copy (Current _ _ _ r) _ _ _) = r"
+
 end
