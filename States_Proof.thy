@@ -45,7 +45,7 @@ next
 next
   case ("2_2" v right)
   then show ?case 
-    by(auto simp: invariant_ticks)
+    by(auto simp: invariant_ticks split: Small.state.splits current.splits)
 next
   case ("2_3" left v va vb vc vd)
   then show ?case
@@ -191,11 +191,8 @@ next
       apply(auto simp: Stack_Proof.size_pop split: state_splits current.splits)
       apply (metis One_nat_def Stack_Proof.pop Suc_diff_eq_diff_pred Suc_diff_le drop_Suc length_greater_0_conv not_empty_2 size_listLength tl_drop)
       apply (metis Nat.add_diff_assoc Suc_pred diff_is_0_eq length_greater_0_conv nat_le_linear not_empty_2 size_listLength)
-      using diff_le_mono le_add2 apply presburger
-          apply linarith
       apply (metis One_nat_def Stack_Proof.pop Suc_diff_eq_diff_pred Suc_diff_le drop_Suc length_greater_0_conv not_empty_2 size_listLength tl_drop)
-        apply (metis Nat.diff_add_assoc Suc_leI gr0I not_empty_2 rev_is_Nil_conv rev_take take_eq_Nil)
-      by simp+
+      by (metis Nat.diff_add_assoc Suc_leI gr0I not_empty_2 rev_is_Nil_conv rev_take take_eq_Nil)
   next
     case (2 x xs added old remained)
     then show ?case by(auto split: state_splits)
@@ -224,5 +221,9 @@ next
     then show ?case by auto
   qed
 qed
+
+lemma terminates: "States.invariant states \<Longrightarrow> States.terminateTicks states \<noteq> None"
+  apply(induction states rule: States.terminateTicks.induct)
+  by (simp) (metis States.terminateTicks.simps States_Proof.invariant_tick)+
 
 end

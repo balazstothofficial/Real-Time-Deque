@@ -40,25 +40,47 @@ value "runningFold
   ] 
   Empty"
 
-lemma testing: "
-  invariant ( Transforming (
-      Left 
-      (Small.state.Common (state.Idle currentS (idle.Idle left leftLength)))
-      (Big.state.Common   (state.Idle currentB (idle.Idle right rightLength))
-      )
-    )) \<Longrightarrow>
-  listLeft (
-    Transforming (
-      Left 
-      (Small.state.Common (state.Idle currentS (idle.Idle left leftLength)))
-      (Big.state.Common   (state.Idle currentB (idle.Idle right rightLength))
-      )
-    )
-  )
-    = 
-  listLeft (Idle (idle.Idle left leftLength) (idle.Idle right rightLength))"
-  sorry
+lemma terminates: "invariant (Transforming transformation) \<Longrightarrow>
+   terminateTicks transformation \<noteq> None"
+  apply(induction transformation rule: terminateTicks.induct)
+  using terminates by fastforce+
 
+lemma helping2: "\<lbrakk>
+  invariant (Transforming transformation);
+  tick transfomation = Left (Small.state.Common (state.Idle y left)) (Big.state.Common (state.Idle x right));
+  terminateTicks transformation = Some (left', right')
+\<rbrakk> \<Longrightarrow> left = left'"
+proof(induction transformation)
+  case (Left small big)
+  then show ?case
+    apply(induction "(big, small)" rule: States.terminateTicks.induct)
+         apply(auto split: idle.splits stack.splits current.splits)
+    sorry
+next
+  case (Right x1 x2)
+  then show ?case sorry
+qed
+
+
+lemma helping42: "\<lbrakk>
+  States.terminateTicks (right, left) = Some (right', left');
+ States.tick (right, left) = (Big.state.Common (state.Idle xa x22a), Small.state.Common (state.Idle x21 x22))\<rbrakk>
+       \<Longrightarrow> left' = x22"
+  apply(induction "(right, left)" rule: States.terminateTicks.induct)
+  by(auto split: if_splits)
+
+lemma helping42_1: "\<lbrakk>
+  flip (States.terminateTicks (right, left)) = Some (left', right');
+ States.tick (right, left) = (Big.state.Common (state.Idle xa x22a), Small.state.Common (state.Idle x21 x22))\<rbrakk>
+       \<Longrightarrow> left' = x22"
+  apply(induction "(right, left)" rule: States.terminateTicks.induct)
+  by(auto split: if_splits)
+
+lemma helping420: "\<lbrakk>flip (States.terminateTicks (right, Small.push x left)) = Some (left', right');
+        States.tick (x1b, x2b) = (Big.state.Common (state.Idle x21a x22a), Small.state.Common (state.Idle x21 x22));
+        States.tick (x1a, x2a) = (x1b, x2b); States.tick (x1, x2) = (x1a, x2a); States.tick (right, Small.push x left) = (x1, x2)\<rbrakk>
+       \<Longrightarrow> left' = x22"
+  sorry
 
 interpretation RealTimeDeque: Deque where
   empty        = empty        and
@@ -104,16 +126,32 @@ next
       by (metis Big.toList.simps(2) Current.toList.simps Idle.toList.simps Idle_Proof.push Small.toList.simps(2) append_Cons append_Nil tick_toListBig tick_toListSmall)
   next
     case (6 x left right)
+    obtain left' right' where x: "terminateTicks (Left (Small.push x left) right) = Some (left', right')"
+      by (metis "6.prems" RealTimeDeque.invariant.simps(6) Transformation.invariant.simps(1) Transformation.terminateTicks.simps(1) flip.elims helping_1 invariant_pushSmall)    
+
+    then have "(case fourTicks (transformation.Left (Small.push x left) right) of
+            Left (Small.state.Common (state.Idle _ left))
+                 (Big.state.Common (state.Idle _ right)) \<Rightarrow>
+               left' = left \<and> right' = right
+            | _ \<Rightarrow> True)"
+      apply(auto simp: fourTicks_def split: transformation.splits state_splits prod.splits)
+      sorry
+
+    with 6 have "Idle.toList left' @ rev (Idle.toList right') = x # Small.toList left @ rev (Big.toList right)"
+      apply auto
+      sorry
+
   
-    then have "listLeft
+    with 6 x have "listLeft
       (case fourTicks (transformation.Left (Small.push x left) right) of
             Left (Small.state.Common (state.Idle _ left))
                  (Big.state.Common (state.Idle _ right)) \<Rightarrow>
                Idle left right
             | _ \<Rightarrow> Transforming (fourTicks (transformation.Left (Small.push x left) right))) =
          x # Small.toList left @ rev (Big.toList right)"
-      apply(auto)
+      apply(auto split: transformation.splits)
       sorry
+      
 
     then have "listLeft (enqueueLeft x (Transforming (transformation.Left left right))) 
           = x # Small.toList left @ rev (Big.toList right)"

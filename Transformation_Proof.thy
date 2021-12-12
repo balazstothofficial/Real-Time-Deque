@@ -22,10 +22,12 @@ lemma invariant_tick: "invariant transformation \<Longrightarrow> invariant (tic
 
 lemma invariant_fourTicks: "invariant transformation \<Longrightarrow> invariant (fourTicks transformation)"
   apply(induction transformation rule: tick.induct)
-  by (auto simp: fourTicks_def invariant_tick case_prod_unfold States_Proof.invariant_tick)
+   apply (metis Transformation_Proof.invariant_tick comp_apply fourTicks_def)
+  by (metis Transformation_Proof.invariant_tick comp_apply fourTicks_def)
 
 lemma invariant_sixTicks: "invariant transformation \<Longrightarrow> invariant (sixTicks transformation)"
   apply(induction transformation rule: tick.induct)
-  by (auto simp: sixTicks_def invariant_tick case_prod_unfold States_Proof.invariant_tick)
+   apply (metis Transformation_Proof.invariant_tick comp_apply sixTicks_def)
+  by (metis Transformation_Proof.invariant_tick comp_apply sixTicks_def)
 
 end

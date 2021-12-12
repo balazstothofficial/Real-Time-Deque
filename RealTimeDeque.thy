@@ -150,29 +150,7 @@ fun enqueueRight :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
     let deque = enqueueLeft x (swap deque) 
     in swap deque
   )"    
-
-
-fun allTicks :: "'a states \<Rightarrow> ('a idle * 'a idle) option" where
-  "allTicks (Big.Common   (Common.Idle _ left), Small.Common (Common.Idle _ right)) = Some (left, right)"
-| "allTicks states = (if States.invariant states then allTicks (States.tick states) else None)"
  
-
-fun invariant :: "'a deque \<Rightarrow> bool" where
-  "invariant Empty = True"
-| "invariant (One _) = True"
-| "invariant (Two _ _) = True"
-| "invariant (Three _ _ _) = True"
-| "invariant (Idle left right) = (
-   Idle.invariant left \<and>
-   Idle.invariant right \<and>
-   (Idle.size left \<ge> 2 \<or> Idle.size right \<ge> 2)
-  )"
-| "invariant (Transforming transformation) = (
-  Transformation.invariant transformation
-)"
-
-(* (let (small, big) = minNewSize transformation in 3 * small \<ge> big \<and> big > 1 \<and> small < big)*)
-
 fun listLeft :: "'a deque \<Rightarrow> 'a list" where
   "listLeft Empty = []"
 | "listLeft (One x) = [x]"
@@ -188,5 +166,21 @@ fun listRight :: "'a deque \<Rightarrow> 'a list" where
 | "listRight (Three x y z) = [z, y, x]"
 | "listRight (Idle left right) = Idle.toList right @ (rev (Idle.toList left))"
 | "listRight (Transforming transformation) = toListRight transformation"
+
+fun invariant :: "'a deque \<Rightarrow> bool" where
+  "invariant Empty = True"
+| "invariant (One _) = True"
+| "invariant (Two _ _) = True"
+| "invariant (Three _ _ _) = True"
+| "invariant (Idle left right) = (
+   Idle.invariant left \<and>
+   Idle.invariant right \<and>
+   (Idle.size left \<ge> 2 \<or> Idle.size right \<ge> 2)
+  )"
+| "invariant (Transforming transformation) = (
+    Transformation.invariant transformation
+  \<and> (case terminateTicks transformation of
+       Some (left, right) \<Rightarrow> listLeft (Idle left right) = listLeft (Transforming transformation))
+)"
 
 end

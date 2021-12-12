@@ -28,6 +28,14 @@ fun invariant :: "'a transformation \<Rightarrow> bool" where
   "invariant (Left small big)  \<longleftrightarrow> States.invariant (big, small)"
 | "invariant (Right big small) \<longleftrightarrow> States.invariant (big, small)"
 
+fun flip :: "('a * 'a) option \<Rightarrow> ('a * 'a) option" where
+  "flip (Some (a, b)) = Some (b, a)"
+| "flip None = None"
+
+fun terminateTicks where
+  "terminateTicks (Left small big) = flip (States.terminateTicks (big, small))"
+| "terminateTicks (Right big small) = States.terminateTicks (big, small)"
+
 (* Probably not needed: *)
 
 fun minNewSize:: "'a transformation \<Rightarrow> (nat * nat)" where
@@ -36,10 +44,5 @@ fun minNewSize:: "'a transformation \<Rightarrow> (nat * nat)" where
 
 fun length :: "'a transformation \<Rightarrow> nat" where
   "length transformation = List.length (toListLeft transformation)"
-
-fun remainingSteps :: "'a transformation \<Rightarrow> nat" where
-  "remainingSteps (Left small big) = max (Small.remainingSteps small) (Big.remainingSteps big)"
-| "remainingSteps (Right big small) = max (Small.remainingSteps small) (Big.remainingSteps big)"
-
 
 end

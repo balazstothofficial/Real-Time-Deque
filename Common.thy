@@ -10,7 +10,7 @@ fun toList :: "'a state \<Rightarrow> 'a list" where
   "toList (Idle current idle) = Current.toList current"
 | "toList (Copy current old new _) = Current.toList current"
 
-(* TODO: unnecessary function \<rightarrow> Should be inlined *)
+(* TODO: Maybe inline function? *)
 fun normalize :: "'a state \<Rightarrow> 'a state" where
   "normalize (Copy current old new moved) = (
       case current of Current extra added _ remained \<Rightarrow> 
@@ -24,9 +24,11 @@ fun tick :: "'a state \<Rightarrow> 'a state" where
   "tick (Idle current idle) = Idle current idle"
 | "tick (Copy current aux new moved) = (
     case current of Current _ _ _ remained \<Rightarrow>
-      if moved < remained
-      then normalize (Copy current (tl aux) ((hd aux)#new) (moved + 1))
-      else normalize (Copy current aux new moved)
+      normalize (
+        if moved < remained
+        then Copy current (tl aux) ((hd aux)#new) (moved + 1)
+        else Copy current aux new moved
+      )
   )"
 
 fun push :: "'a \<Rightarrow> 'a state \<Rightarrow> 'a state" where
@@ -65,6 +67,14 @@ fun invariant :: "'a state \<Rightarrow> bool" where
 fun remainingSteps :: "'a state \<Rightarrow> nat" where
   "remainingSteps (Idle current idle) = 0"
 | "remainingSteps (Copy (Current _ _ _ remained) aux new moved) = remained - moved"
+
+function (sequential) terminateTicks :: "'a state \<Rightarrow> 'a idle option" where
+  "terminateTicks (Idle _ idle) = Some idle"
+| "terminateTicks state = (if invariant state then terminateTicks (tick state) else None)"
+  by pat_completeness auto
+  termination
+    apply (relation "measure remainingSteps")
+    by(auto split: current.splits) 
 
 fun minNewSize :: "'a state \<Rightarrow> nat" where
   "minNewSize (Idle (Current _ _ _ r) _) = r"
