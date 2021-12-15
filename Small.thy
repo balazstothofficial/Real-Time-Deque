@@ -69,9 +69,4 @@ fun invariant :: "'a state \<Rightarrow> bool" where
     \<and> List.length auxS \<ge> Stack.size old
 )"
 
-fun minNewSize :: "'a state \<Rightarrow> nat" where
-  "minNewSize (Common state) = Common.minNewSize state"
-| "minNewSize (Reverse1 (Current _ _ _ remained) _ _) = remained"
-| "minNewSize (Reverse2 (Current _ _ _ remained) _ _ _ _) = remained"
-
 end

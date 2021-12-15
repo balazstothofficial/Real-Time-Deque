@@ -69,15 +69,16 @@ fun remainingSteps :: "'a state \<Rightarrow> nat" where
 | "remainingSteps (Copy (Current _ _ _ remained) aux new moved) = remained - moved"
 
 function (sequential) terminateTicks :: "'a state \<Rightarrow> 'a idle option" where
-  "terminateTicks (Idle _ idle) = Some idle"
-| "terminateTicks state = (if invariant state then terminateTicks (tick state) else None)"
+ "terminateTicks state = (
+    if invariant state 
+    then case state of 
+      Idle _ idle \<Rightarrow> Some idle
+    | _ \<Rightarrow> terminateTicks (tick state)     
+    else None
+  )"
   by pat_completeness auto
   termination
     apply (relation "measure remainingSteps")
-    by(auto split: current.splits) 
-
-fun minNewSize :: "'a state \<Rightarrow> nat" where
-  "minNewSize (Idle (Current _ _ _ r) _) = r"
-| "minNewSize (Copy (Current _ _ _ r) _ _ _) = r"
+    by(auto split: current.splits)
 
 end

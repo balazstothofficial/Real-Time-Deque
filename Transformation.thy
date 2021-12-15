@@ -9,6 +9,14 @@ datatype 'a transformation =
 fun toListLeft :: "'a transformation \<Rightarrow> 'a list" where
   "toListLeft (Left small big)  = Small.toList small @ (rev (Big.toList big))"
 | "toListLeft (Right big small) = Big.toList big @ (rev (Small.toList small))"
+
+fun toListLeft' :: "'a transformation \<Rightarrow> 'a list" where
+  "toListLeft' (Left (Small.state.Common (state.Idle _ small)) 
+                     (Big.state.Common   (state.Idle _ big)))
+     = Idle.toList small @ (rev (Idle.toList big))"
+| "toListLeft' (Right (Big.state.Common   (state.Idle _ big)) 
+                      (Small.state.Common (state.Idle _ small)))
+     = Idle.toList big @ (rev (Idle.toList small))"
  
 fun toListRight :: "'a transformation \<Rightarrow> 'a list" where
   "toListRight (Left small big)  = Big.toList big @ (rev (Small.toList small))"
@@ -28,19 +36,19 @@ fun invariant :: "'a transformation \<Rightarrow> bool" where
   "invariant (Left small big)  \<longleftrightarrow> States.invariant (big, small)"
 | "invariant (Right big small) \<longleftrightarrow> States.invariant (big, small)"
 
-fun flip :: "('a * 'a) option \<Rightarrow> ('a * 'a) option" where
-  "flip (Some (a, b)) = Some (b, a)"
-| "flip None = None"
-
 fun terminateTicks where
-  "terminateTicks (Left small big) = flip (States.terminateTicks (big, small))"
-| "terminateTicks (Right big small) = States.terminateTicks (big, small)"
+  "terminateTicks (Left small big) = (
+    case States.terminateTicks (big, small) of 
+        Some (big, small) \<Rightarrow> Some (Left small big)
+      | None \<Rightarrow> None
+  )"
+| "terminateTicks (Right big small) = (
+    case States.terminateTicks (big, small) of 
+        Some (big, small) \<Rightarrow> Some (Right big small)
+      | None \<Rightarrow> None
+  )"
 
 (* Probably not needed: *)
-
-fun minNewSize:: "'a transformation \<Rightarrow> (nat * nat)" where
-  "minNewSize (Left small big)  = (Small.minNewSize small, Big.minNewSize big)"
-| "minNewSize (Right big small) = (Small.minNewSize small, Big.minNewSize big)"
 
 fun length :: "'a transformation \<Rightarrow> nat" where
   "length transformation = List.length (toListLeft transformation)"

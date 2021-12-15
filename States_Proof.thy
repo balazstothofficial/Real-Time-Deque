@@ -27,14 +27,14 @@ proof(induction states rule: tick.induct)
 (* TODO: *)
 case (1 currentB big auxB currentS uu auxS)
   then show ?case 
-    apply(auto split: current.splits)
+    apply(auto simp: invariant_def split: current.splits)
       apply (metis length_0_conv size_listLength)
      apply (metis le_refl size_listLength take_all)
     by (metis length_0_conv size_listLength)
 next
   case ("2_1" v va vb vd right)
   then show ?case 
-    apply(auto simp: invariant_ticks split: current.splits)
+    apply(auto simp: invariant_def invariant_ticks split: current.splits)
       apply (metis Stack_Proof.pop Zero_not_Suc bot_nat_0.extremum_uniqueI empty first list.size(3) size_listLength take_Suc)
     apply (metis One_nat_def Stack_Proof.size_pop Suc_diff_eq_diff_pred diff_is_0_eq less_le_trans not_empty zero_less_Suc)
     apply(auto simp: Let_def split: state_splits current.splits)
@@ -45,12 +45,13 @@ next
 next
   case ("2_2" v right)
   then show ?case 
-    by(auto simp: invariant_ticks split: Small.state.splits current.splits)
+    by(auto simp: invariant_def invariant_ticks split: Small.state.splits current.splits)
 next
   case ("2_3" left v va vb vc vd)
   then show ?case
-    apply(auto simp: invariant_ticks split: state_splits current.splits) 
-    apply (metis (full_types) length_0_conv not_empty_2 size_listLength)+
+    apply(auto simp:  invariant_ticks split: state_splits current.splits) 
+    sorry
+    (*apply (metis (full_types) length_0_conv not_empty_2 size_listLength)+
     using not_empty apply blast
     apply (metis diff_diff_left diff_zero empty le_refl list.size(3) size_listLength take_all)
     apply (meson not_empty)
@@ -69,37 +70,37 @@ next
     using not_empty apply blast
     apply (meson add_decreasing not_empty not_le_imp_less)
     apply (simp add: Stack_Proof.size_pop)
-    by (metis first_pop length_Cons size_listLength)
+    by (metis first_pop length_Cons size_listLength)*)
 next
   case ("2_4" left v)
   then show ?case
-    by(auto simp: invariant_ticks split: state_splits)
+    by(auto simp: invariant_def invariant_ticks split: state_splits)
 qed
 
 lemma invariant_pushSmall: "invariant (big, small) \<Longrightarrow> invariant (big, Small.push x small)"
 proof(induction x small rule: Small.push.induct)
   case (1 x state)
   then show ?case 
-    by(auto simp: Common_Proof.invariant_push split: state_splits)
+    by(auto simp: invariant_def Common_Proof.invariant_push split: state_splits)
 next
   case (2 x current small auxS)
   then show ?case 
-    by(auto split: state_splits current.splits)
+    by(auto simp: invariant_def split: state_splits current.splits)
 next
   case (3 x current auxS big newS count)
   then show ?case
-    by(auto split: state_splits current.splits)
+    by(auto simp: invariant_def split: state_splits current.splits)
 qed
 
 lemma invariant_pushBig: "invariant (big, small) \<Longrightarrow> invariant (Big.push x big, small)"
 proof(induction x big rule: Big.push.induct)
   case (1 x state)
   then show ?case 
-    by(auto simp: Common_Proof.invariant_push)
+    by(auto simp: invariant_def Common_Proof.invariant_push)
 next
   case (2 x current big auxB count)
   then show ?case
-    by(auto split: current.splits)
+    by(auto simp: invariant_def  split: current.splits)
 qed
 
 (* TODO: Pops not yet fully proven! *)
@@ -169,18 +170,19 @@ lemma invariant_popSmall: "\<lbrakk>
 proof(induction small rule: Small.pop.induct)
   case (1 state)
   then show ?case
-    by(auto simp: Common_Proof.invariant_pop split: state_splits current.splits prod.splits)
+    by(auto simp: invariant_def  Common_Proof.invariant_pop split: state_splits current.splits prod.splits)
 next
   case (2 current small auxS)
   then show ?case
   proof(induction current rule: get.induct)
     case (1 added old remained)
     then show ?case 
-      apply(auto simp: helper_2 helper Let_def Stack_Proof.size_pop split: state_splits current.splits) 
-      by (metis Suc_pred length_0_conv neq0_conv not_empty_2 size_listLength)
+      sorry
+      (*apply(auto simp: invariant_def helper_2 helper Let_def Stack_Proof.size_pop split: state_splits current.splits)
+      by (metis Suc_pred length_0_conv neq0_conv not_empty_2 size_listLength)*)
   next
     case (2 x xs added old remained)
-    then show ?case by(auto simp: Let_def split: state_splits)
+    then show ?case by(auto simp: invariant_def Let_def split: state_splits)
   qed
 next
   case (3 current auxS big newS count)
@@ -188,14 +190,14 @@ next
   proof(induction current rule: get.induct)
     case (1 added old remained)
     then show ?case 
-      apply(auto simp: Stack_Proof.size_pop split: state_splits current.splits)
+      apply(auto simp: invariant_def Stack_Proof.size_pop split: state_splits current.splits)
       apply (metis One_nat_def Stack_Proof.pop Suc_diff_eq_diff_pred Suc_diff_le drop_Suc length_greater_0_conv not_empty_2 size_listLength tl_drop)
       apply (metis Nat.add_diff_assoc Suc_pred diff_is_0_eq length_greater_0_conv nat_le_linear not_empty_2 size_listLength)
       apply (metis One_nat_def Stack_Proof.pop Suc_diff_eq_diff_pred Suc_diff_le drop_Suc length_greater_0_conv not_empty_2 size_listLength tl_drop)
       by (metis Nat.diff_add_assoc Suc_leI gr0I not_empty_2 rev_is_Nil_conv rev_take take_eq_Nil)
   next
     case (2 x xs added old remained)
-    then show ?case by(auto split: state_splits)
+    then show ?case by(auto simp: invariant_def split: state_splits)
   qed
 qed
 
@@ -207,7 +209,7 @@ lemma invariant_popBig: "\<lbrakk>
 proof(induction big arbitrary: x small rule: Big.pop.induct)
 case (1 state)
   then show ?case
-    by(auto simp: Common_Proof.invariant_pop split: prod.splits)
+    by(auto simp: invariant_def Common_Proof.invariant_pop split: prod.splits)
 next
   case (2 current big auxB count)
   then show ?case
@@ -218,12 +220,19 @@ next
          sorry
   next
     case (2 x xs added old remained)
-    then show ?case by auto
+    then show ?case  by(auto simp: invariant_def)
   qed
 qed
 
-lemma terminates: "States.invariant states \<Longrightarrow> States.terminateTicks states \<noteq> None"
-  apply(induction states rule: States.terminateTicks.induct)
-  by (simp) (metis States.terminateTicks.simps States_Proof.invariant_tick)+
+
+lemma invariant_terminates: "\<not> States.invariant states \<Longrightarrow> States.terminateTicks states = undefined"
+  apply(induction states)
+  by auto
+  
+lemma invariant_terminates_1: "States.invariant states \<Longrightarrow> States.terminateTicks states \<noteq> undefined"
+  apply(induction states rule: terminateTicks.induct)
+  apply(auto simp: States_Proof.invariant_tick split: if_splits)
+  sorry
+  
 
 end

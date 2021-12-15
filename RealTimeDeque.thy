@@ -167,6 +167,22 @@ fun listRight :: "'a deque \<Rightarrow> 'a list" where
 | "listRight (Idle left right) = Idle.toList right @ (rev (Idle.toList left))"
 | "listRight (Transforming transformation) = toListRight transformation"
 
+fun terminateTicks where
+  "terminateTicks (Left small big) = (
+    case States.terminateTicks (big, small) of 
+        Some (big, small) \<Rightarrow> Some (Left small big)
+      | None \<Rightarrow> None
+  )"
+| "terminateTicks (Right big small) = (
+    case States.terminateTicks (big, small) of 
+        Some (big, small) \<Rightarrow> Some (Right big small)
+      | None \<Rightarrow> None
+  )"
+
+fun isSomeAnd :: "('a \<Rightarrow> bool) \<Rightarrow> 'a option \<Rightarrow> bool" where
+  "isSomeAnd _ None \<longleftrightarrow> False"
+| "isSomeAnd predicate (Some a) \<longleftrightarrow> predicate a"
+
 fun invariant :: "'a deque \<Rightarrow> bool" where
   "invariant Empty = True"
 | "invariant (One _) = True"
@@ -178,9 +194,7 @@ fun invariant :: "'a deque \<Rightarrow> bool" where
    (Idle.size left \<ge> 2 \<or> Idle.size right \<ge> 2)
   )"
 | "invariant (Transforming transformation) = (
-    Transformation.invariant transformation
-  \<and> (case terminateTicks transformation of
-       Some (left, right) \<Rightarrow> listLeft (Idle left right) = listLeft (Transforming transformation))
+    isSomeAnd (\<lambda> t. toListLeft' t = toListLeft transformation) (terminateTicks transformation) 
 )"
 
 end
