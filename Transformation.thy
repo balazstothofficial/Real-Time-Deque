@@ -27,30 +27,17 @@ fun tick :: "'a transformation \<Rightarrow> 'a transformation" where
 | "tick (Right big small) = (case States.tick (big, small) of (big, small) \<Rightarrow> Right big small)"  
 
 definition fourTicks where
-  "fourTicks \<equiv> tick o tick o tick o tick"
+  "fourTicks \<equiv> tick^^4"
 
 definition sixTicks where
-  "sixTicks \<equiv> tick o tick o tick o tick o tick o tick"
+  "sixTicks \<equiv> tick^^6"
 
 fun invariant :: "'a transformation \<Rightarrow> bool" where
   "invariant (Left small big)  \<longleftrightarrow> States.invariant (big, small)"
 | "invariant (Right big small) \<longleftrightarrow> States.invariant (big, small)"
 
-fun terminateTicks where
-  "terminateTicks (Left small big) = (
-    case States.terminateTicks (big, small) of 
-        Some (big, small) \<Rightarrow> Some (Left small big)
-      | None \<Rightarrow> None
-  )"
-| "terminateTicks (Right big small) = (
-    case States.terminateTicks (big, small) of 
-        Some (big, small) \<Rightarrow> Some (Right big small)
-      | None \<Rightarrow> None
-  )"
-
-(* Probably not needed: *)
-
-fun length :: "'a transformation \<Rightarrow> nat" where
-  "length transformation = List.length (toListLeft transformation)"
+fun remainingSteps where
+  "remainingSteps (Left small big) = States.remainingSteps (big, small)"
+| "remainingSteps (Right big small) = States.remainingSteps (big, small)"
 
 end

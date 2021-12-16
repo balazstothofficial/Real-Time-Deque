@@ -69,4 +69,53 @@ next
   qed
 qed
 
+lemma remainingSteps: "remainingSteps state > 0
+   \<Longrightarrow> remainingSteps state = Suc (remainingSteps (tick state))"
+proof(induction state rule: tick.induct)
+  case (1 state)
+  then show ?case
+    by(auto simp: remainingSteps)
+next
+  case (2 current uu auxB)
+  then show ?case 
+    by(auto split: current.splits)
+next
+  case (3 current big auxB count)
+  then show ?case
+    apply(induction count)
+     apply auto
+     apply (metis Big.remainingSteps.simps(2) Current.toList.cases add_Suc)
+    by (metis Big.remainingSteps.simps(2) Current.toList.cases add_Suc)
+qed
+
+lemma tickN: "invariant state
+   \<Longrightarrow> \<exists>current idle. (tick^^ remainingSteps state) state = Common (Idle current idle)"
+proof(induction "remainingSteps state" arbitrary: state)
+  case 0
+  then show ?case
+    apply(induction state)
+    apply(auto split: current.splits)
+    using tickN by fastforce
+next
+  case (Suc x)
+  obtain state' where state': "state' = tick state"
+    by auto
+  
+  then have "invariant state'"
+    by(auto simp: Suc.prems invariant_tick)
+  
+  have x: "(tick^^ x) state' = (tick^^ Suc x) state"
+    by(auto simp: state' funpow_swap1)
+  
+  then have "remainingSteps state' = x"
+    by (metis Suc.hyps(2) nat.inject remainingSteps state' zero_less_Suc)
+
+  then have "\<exists>current idle. (tick^^ x) state' = Common (Idle current idle)"
+    using Suc.hyps(1) \<open>invariant state'\<close> by blast
+
+  then show ?case
+    by (simp add: Suc.hyps(2) x)
+qed
+
+
 end

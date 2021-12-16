@@ -125,4 +125,40 @@ next
   qed   
 qed
 
+lemma invariant_ticks: "invariant common \<Longrightarrow> invariant ((tick^^n) common)"
+  apply(induction n)
+  by(auto simp: invariant_tick)
+
+lemma remainingSteps: "remainingSteps state > 0 \<Longrightarrow> remainingSteps state = Suc (remainingSteps (tick state))"
+  apply(induction state rule: remainingSteps.induct)
+  by auto
+
+lemma tickN: "invariant state
+   \<Longrightarrow> \<exists>current idle. (tick^^ remainingSteps state) state = Idle current idle"
+proof(induction "remainingSteps state" arbitrary: state)
+case 0
+  then show ?case
+    apply(induction state)
+    by(auto split: current.splits)
+next
+  case (Suc x)
+  obtain state' where state': "state' = tick state"
+    by auto
+  
+  then have "invariant state'"
+    by(auto simp: Suc.prems invariant_tick)
+  
+  have x: "(tick^^ x) state' = (tick^^ Suc x) state"
+    by(auto simp: state' funpow_swap1)
+  
+  then have "remainingSteps state' = x"
+    by (metis Suc.hyps(2) nat.inject remainingSteps state' zero_less_Suc)
+
+  then have "\<exists>current idle. (tick^^ x) state' = Idle current idle"
+    using Suc.hyps(1) \<open>Common.invariant state'\<close> by blast
+
+  then show ?case
+    by (simp add: Suc.hyps(2) x)
+qed
+
 end

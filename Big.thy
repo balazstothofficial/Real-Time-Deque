@@ -48,24 +48,4 @@ fun remainingSteps :: "'a state \<Rightarrow> nat" where
   "remainingSteps (Common state) = Common.remainingSteps state"
 | "remainingSteps (Reverse (Current _ _ _ remaining) _ _ count) = count + remaining + 1"
 
-(* TODO: *)
-lemma helper: "\<lbrakk>Stack.toList x3 = drop (length vb + vc - x4) (rev vb) @ take vc (Stack.toList va); x4 - vc \<le> length vb; vc \<le> x4; vc \<le> Stack.size va\<rbrakk>
-       \<Longrightarrow> Big.remainingSteps (Big.tick (Reverse (Current x1 (length x1) x3 x4) va vb vc)) < Suc (vc + x4)"
-proof(induction "Reverse (Current x1 (length x1) x3 x4) va vb vc" rule: Big.tick.induct)
-  case 2
-  then show ?case by auto
-next
-  case (3 v)
-  then show ?case by auto
-qed
-
-
-function (sequential) terminateTicks :: "'a state \<Rightarrow> 'a idle option" where
-  "terminateTicks (Common state) = Common.terminateTicks state"
-| "terminateTicks state = (if invariant state then terminateTicks (tick state) else None)"
-  by pat_completeness auto
-  termination
-    apply (relation "measure remainingSteps")
-    by(auto simp: helper split: current.splits)
-
 end
