@@ -2,13 +2,26 @@ theory Big_Proof
   imports Big Common_Proof
 begin
 
-lemma helper: "Big.toList (Big.tick (Reverse x1 x2a x3 x4)) = Current.toList x1"
+(*lemma helper: "Big.toList (Big.tick (Reverse x1 x2a x3 x4)) = Current.toList x1"
   apply(induction x4)
-  by(auto split: current.splits)
+  by(auto split: current.splits)*)
 
-lemma tick: "toList (tick state) = toList state"
-  apply(induction state)
-  by(auto simp: helper tick)
+value "toList ( (Reverse (Current [] 0 (Stack [a\<^sub>1] [a\<^sub>2]) 2) (Stack [] []) [a\<^sub>2, a\<^sub>1] 0))"
+
+lemma tick: "invariant state \<Longrightarrow> toList (tick state) = toList state"
+proof(induction state rule: tick.induct)
+  case (1 state)
+  then show ?case by(auto simp: tick)
+next
+  case (2 current uu aux)
+  then show ?case by(auto split: current.splits)
+next
+  case (3 current big aux v)
+  then show ?case
+    apply(auto split: current.splits)
+    sorry
+qed
+    
 
 lemma invariant_tick: "invariant state \<Longrightarrow> invariant (tick state)"
 proof(induction state rule: tick.induct)

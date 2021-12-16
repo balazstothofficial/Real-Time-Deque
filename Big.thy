@@ -8,21 +8,24 @@ datatype 'a state =
 
 fun toList :: "'a state \<Rightarrow> 'a list" where
   "toList (Common common) = Common.toList common"
-| "toList (Reverse current _ _ _) = Current.toList current"
+| "toList (Reverse (Current extra _ _ remained) big aux count) = (
+   let reversed = rev (take count (Stack.toList big)) @ aux in
+    extra @ rev (take remained reversed)
+  )"
 
 fun tick :: "'a state \<Rightarrow> 'a state" where
   "tick (Common state) = Common (Common.tick state)"
-| "tick (Reverse current _ auxB 0) = Common (normalize (Copy current auxB [] 0))"
-| "tick (Reverse current big auxB count) = 
-     Reverse current (Stack.pop big) ((first big)#auxB) (count - 1)"
+| "tick (Reverse current _ aux 0) = Common (normalize (Copy current aux [] 0))"
+| "tick (Reverse current big aux count) = 
+     Reverse current (Stack.pop big) ((first big)#aux) (count - 1)"
 
 fun push :: "'a \<Rightarrow> 'a state \<Rightarrow> 'a state" where
   "push x (Common state) = Common (Common.push x state)"
-| "push x (Reverse current big auxB count) = Reverse (put x current) big auxB count"
+| "push x (Reverse current big aux count) = Reverse (put x current) big aux count"
 
 fun pop :: "'a state \<Rightarrow> 'a * 'a state" where
   "pop (Common state) = (let (x, state) = Common.pop state in (x, Common state))"
-| "pop (Reverse current big auxB count) = (top current, Reverse (bottom current) big auxB count)"
+| "pop (Reverse current big aux count) = (top current, Reverse (bottom current) big aux count)"
 
 fun isEmpty :: "'a state \<Rightarrow> bool" where
   "isEmpty (Common state) = Common.isEmpty state"
@@ -30,11 +33,11 @@ fun isEmpty :: "'a state \<Rightarrow> bool" where
 
 fun invariant :: "'a state \<Rightarrow> bool" where
   "invariant (Common state) \<longleftrightarrow> Common.invariant state"
-| "invariant (Reverse current big auxB count) \<longleftrightarrow> (
+| "invariant (Reverse current big aux count) \<longleftrightarrow> (
    case current of Current _ _ old remained \<Rightarrow>
-       Stack.toList old = drop ((List.length auxB + count) - remained) (rev auxB @ (take count (Stack.toList big)))
+       Stack.toList old = drop ((List.length aux + count) - remained) (rev aux @ (take count (Stack.toList big)))
     \<and> Current.invariant current
-    \<and> List.length auxB \<ge> remained - count
+    \<and> List.length aux \<ge> remained - count
     \<and> remained \<ge> count
     \<and> count \<le> Stack.size big
 )"
