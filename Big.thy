@@ -9,9 +9,13 @@ datatype 'a state =
 fun toList :: "'a state \<Rightarrow> 'a list" where
   "toList (Common common) = Common.toList common"
 | "toList (Reverse (Current extra _ _ remained) big aux count) = (
-   let reversed = rev (take count (Stack.toList big)) @ aux in
-    extra @ rev (take remained reversed)
+   let reversed = revN count (Stack.toList big) aux in
+    extra @ (revN remained reversed [])
   )"
+
+fun toCurrentList :: "'a state \<Rightarrow> 'a list" where
+  "toCurrentList (Common common) = Common.toCurrentList common"
+| "toCurrentList (Reverse current _ _ _) = Current.toList current"
 
 fun tick :: "'a state \<Rightarrow> 'a state" where
   "tick (Common state) = Common (Common.tick state)"
@@ -33,15 +37,16 @@ fun isEmpty :: "'a state \<Rightarrow> bool" where
 
 fun invariant :: "'a state \<Rightarrow> bool" where
   "invariant (Common state) \<longleftrightarrow> Common.invariant state"
+(* TODO: Use generic version of old = sth on a higher level *)
 | "invariant (Reverse current big aux count) \<longleftrightarrow> (
    case current of Current _ _ old remained \<Rightarrow>
-       Stack.toList old = drop ((List.length aux + count) - remained) (rev aux @ (take count (Stack.toList big)))
-    \<and> Current.invariant current
+      Current.invariant current
     \<and> List.length aux \<ge> remained - count
     \<and> remained \<ge> count
     \<and> count \<le> Stack.size big
 )"
 
+(* TODO: This should be prevented on a higher level *) 
 fun pop_invariant :: "'a state \<Rightarrow> bool" where
   "pop_invariant (Common state) = True"
 | "pop_invariant (Reverse (Current _ _ _ remained) _ _ count) \<longleftrightarrow> remained > count"

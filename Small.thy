@@ -9,8 +9,14 @@ datatype 'a state =
 
 fun toList :: "'a state \<Rightarrow> 'a list" where
   "toList (Common common) = Common.toList common"
-| "toList (Reverse1 current _ _ ) = Current.toList current"
-| "toList (Reverse2 current _ _ _ _) = Current.toList current"
+| "toList (Reverse2 (Current extra _ _ remained) aux big new count) =
+  extra @ revN (remained - (count + Stack.size big)) aux (rev (Stack.toList big) @ new)
+"
+
+fun toCurrentList :: "'a state \<Rightarrow> 'a list" where
+  "toCurrentList (Common common) = Common.toCurrentList common"
+| "toCurrentList (Reverse2 current _ _ _ _) = Current.toList current"
+| "toCurrentList (Reverse1 current _ _) = Current.toList current"
 
 fun tick :: "'a state \<Rightarrow> 'a state" where
   "tick (Common state) = Common (Common.tick state)"
@@ -53,16 +59,13 @@ fun invariant :: "'a state \<Rightarrow> bool" where
   "invariant (Common state) = Common.invariant state"
 | "invariant (Reverse1 current small auxS) = (
    case current of Current _ _ old remained \<Rightarrow>
-   let smallSize = Stack.size small in
-      Stack.toList old = drop ((List.length auxS + smallSize) - (Stack.size old)) (rev auxS @ Stack.toList small)
-    \<and> Current.invariant current
+      Current.invariant current
     \<and> remained \<ge> Stack.size old
-    \<and> smallSize + List.length auxS \<ge> Stack.size old
+    \<and> Stack.size small + List.length auxS \<ge> Stack.size old
   )"
 | "invariant (Reverse2 current auxS big newS count) = (
    case current of Current _ _ old remained \<Rightarrow>
-       Stack.toList old = drop (List.length auxS - (Stack.size old)) (rev auxS)
-    \<and> remained = count + Stack.size big + Stack.size old
+      remained = count + Stack.size big + Stack.size old
     \<and> remained \<ge> Stack.size old
     \<and> count = List.length newS
     \<and> Current.invariant current

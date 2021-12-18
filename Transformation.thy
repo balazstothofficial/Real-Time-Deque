@@ -7,20 +7,12 @@ datatype 'a transformation =
  | Right "'a Big.state" "'a Small.state"
 
 fun toListLeft :: "'a transformation \<Rightarrow> 'a list" where
-  "toListLeft (Left small big)  = Small.toList small @ (rev (Big.toList big))"
-| "toListLeft (Right big small) = Big.toList big @ (rev (Small.toList small))"
-
-fun toListLeft' :: "'a transformation \<Rightarrow> 'a list" where
-  "toListLeft' (Left (Small.state.Common (state.Idle _ small)) 
-                     (Big.state.Common   (state.Idle _ big)))
-     = Idle.toList small @ (rev (Idle.toList big))"
-| "toListLeft' (Right (Big.state.Common   (state.Idle _ big)) 
-                      (Small.state.Common (state.Idle _ small)))
-     = Idle.toList big @ (rev (Idle.toList small))"
+  "toListLeft (Left small big)  = States.toListSmallFirst (big, small)"
+| "toListLeft (Right big small) = States.toListBigFirst (big, small)"
  
 fun toListRight :: "'a transformation \<Rightarrow> 'a list" where
-  "toListRight (Left small big)  = Big.toList big @ (rev (Small.toList small))"
-| "toListRight (Right big small) = Small.toList small @ (rev (Big.toList big))"
+  "toListRight (Left small big)  = States.toListBigFirst (big, small)"
+| "toListRight (Right big small) = States.toListSmallFirst (big, small)"
 
 fun tick :: "'a transformation \<Rightarrow> 'a transformation" where
   "tick (Left small big) = (case States.tick (big, small) of (big, small) \<Rightarrow> Left small big)"

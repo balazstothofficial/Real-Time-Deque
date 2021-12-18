@@ -21,23 +21,42 @@ fun remainingSteps :: "'a states \<Rightarrow> nat" where
     )"
 
 fun toList :: "'a states \<Rightarrow> 'a list * 'a list" where
-  "toList (Big.state.Common (Idle _ bigIdle), Small.state.Common (Idle _ smallIdle)) = (Idle.toList bigIdle, Idle.toList smallIdle)"
+  "toList (Reverse currentB big auxB count, Reverse1 currentS small auxS) = (
+    Big.toList (Reverse currentB big auxB count),
+    Small.toList (Reverse2 currentS (revN count (Stack.toList small) auxS) ((Stack.pop ^^ count) big) [] 0)
+  )"
+| "toList (big, small) = (Big.toList big, Small.toList small)"
 
+fun toListSmallFirst :: "'a states \<Rightarrow> 'a list" where
+  "toListSmallFirst states = (let (big, small) = toList states in small @ (rev big))"
 
-fun endInvariant :: "'a states \<Rightarrow> bool" where
-  "endInvariant states \<longleftrightarrow> (\<exists> bigCurrent smallCurrent bigIdle smallIdle.
-      (tick ^^ remainingSteps states) states = (
-         Big.state.Common   (Idle bigCurrent  bigIdle),
-         Small.state.Common (Idle smallCurrent smallIdle)
-        ) \<and>  Current.toList smallCurrent @ rev (Current.toList bigCurrent) 
-             = Idle.toList smallIdle @ rev (Idle.toList bigIdle)
-      )"
+fun toListBigFirst :: "'a states \<Rightarrow> 'a list" where
+  "toListBigFirst states = (let (big, small) = toList states in big @ (rev small))"
 
-definition invariant :: "'a states \<Rightarrow> bool" where
+fun toCurrentList :: "'a states \<Rightarrow> 'a list * 'a list" where
+  "toCurrentList (big, small) = (Big.toCurrentList big, Small.toCurrentList small)"
+
+fun toCurrentListSmallFirst :: "'a states \<Rightarrow> 'a list" where
+  "toCurrentListSmallFirst states = (let (big, small) = toCurrentList states in small @ (rev big))"
+
+fun toCurrentListBigFirst :: "'a states \<Rightarrow> 'a list" where
+  "toCurrentListBigFirst states = (let (big, small) = toCurrentList states in big @ (rev small))"
+
+fun invariant :: "'a states \<Rightarrow> bool" where
   "invariant states \<longleftrightarrow> (
     let (big, small) = states in
       Big.invariant big 
-   \<and>  Small.invariant small
+   \<and> Small.invariant small
+   \<and> toListSmallFirst states = toCurrentListSmallFirst states
+   \<and> (case states of 
+        (Reverse _ _ _ _, Reverse1 _ _ _) \<Rightarrow> True
+      | (_, Reverse1 _ _ _) \<Rightarrow> False
+      | _ \<Rightarrow> True
+      )
+   \<and> \<not> Big.isEmpty big
+   \<and> \<not> Small.isEmpty small
+  )"
+(*
    \<and> (
       case states of 
         (Reverse _ big _ count, Reverse1 (Current _ _ old remained) small _) \<Rightarrow>
@@ -45,7 +64,7 @@ definition invariant :: "'a states \<Rightarrow> bool" where
       | (_, Reverse1 _ _ _) \<Rightarrow> False
       | _ \<Rightarrow> True
     )
-   \<and> endInvariant states
-  )"
+  )"*)
+
 
 end

@@ -2,27 +2,29 @@ theory Transformation_Proof
   imports  Transformation States_Proof
 begin
 
-lemma tick: "toListLeft (tick transformation) = toListLeft transformation"
-  apply(induction transformation rule: toListLeft.induct)
-  by(auto simp: tick_toListBig tick_toListSmall split: prod.splits)
-
-lemma nTicks: "toListLeft ((tick^^n) transformation) = toListLeft transformation"
-  apply(induction n arbitrary: transformation)
-  by(auto simp: tick)
-
-lemma fourTicks: "toListLeft (fourTicks transformation) = toListLeft transformation"
-  by(auto simp: fourTicks_def nTicks)
-
-lemma sixTicks: "toListLeft (sixTicks transformation) = toListLeft transformation"
-  by(auto simp: sixTicks_def nTicks)
-
-lemmas ticks = Small_Proof.tick Big_Proof.tick Common_Proof.tick tick nTicks sixTicks fourTicks
-
-lemmas state_splits = idle.splits Common.state.splits Small.state.splits Big.state.splits
-
+(* TODO: important! *)
 lemma invariant_tick: "invariant transformation \<Longrightarrow> invariant (tick transformation)"
   apply(induction transformation rule: tick.induct)
-  by (simp add: States_Proof.invariant_tick case_prod_unfold)+
+   apply (auto simp: States_Proof.invariant_tick  split: prod.splits) 
+  sorry
+
+lemma tick_toList: "invariant transformation \<Longrightarrow> toListLeft (tick transformation) = toListLeft transformation"
+ (* TODO: To be done with States equivalents *)
+  sorry
+
+lemma nTicks: "invariant transformation \<Longrightarrow> toListLeft ((tick^^n) transformation) = toListLeft transformation"
+  apply(induction n arbitrary: transformation)
+  by(auto simp: funpow_swap1 tick_toList invariant_tick)
+
+lemma fourTicks: "invariant transformation \<Longrightarrow> toListLeft (fourTicks transformation) = toListLeft transformation"
+  by(auto simp: fourTicks_def nTicks)
+
+lemma sixTicks: "invariant transformation \<Longrightarrow> toListLeft (sixTicks transformation) = toListLeft transformation"
+  by(auto simp: sixTicks_def nTicks)
+
+lemmas ticks = States_Proof.tick_toList Big_Proof.tick_toList Common_Proof.tick_toList tick_toList nTicks sixTicks fourTicks
+
+lemmas state_splits = idle.splits Common.state.splits Small.state.splits Big.state.splits
 
 lemma invariant_nTicks: "invariant transformation \<Longrightarrow> invariant ((tick^^n) transformation)"
   apply(induction n arbitrary: transformation)

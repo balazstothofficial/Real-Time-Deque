@@ -15,31 +15,132 @@ value "runningFold
   enqueueLeft 1, 
   enqueueLeft 2,
   enqueueLeft 3,
+  dequeueLeft,
+  dequeueRight,
+  enqueueLeft 3,
   enqueueLeft 4,
   enqueueLeft 5,
-  enqueueLeft 6,
-  enqueueLeft 7,
-  enqueueLeft 8,
-  enqueueLeft 9,
-  enqueueLeft 10,
-  enqueueLeft 11,
-  enqueueLeft 12,
-  enqueueLeft 13,
-  enqueueLeft 14,
-  enqueueLeft 15,
-  enqueueLeft 16,
-  enqueueLeft 17,
-  enqueueLeft 18,
-  enqueueLeft 19,
-  enqueueLeft 20,
-  enqueueLeft 21,
-  enqueueLeft 22,
-  enqueueLeft 23,
-  enqueueLeft 24,
-  enqueueLeft 25
+  dequeueRight
   ] 
   Empty"
 
+(* TODO: Clean up! *)
+lemma revN_take: "revN n xs acc = rev (take n xs) @ acc"
+  apply(induction n xs acc rule: revN.induct)
+  by auto
+
+lemma revN_revN: "(revN n (revN n xs []) []) = take n xs"
+  by(auto simp: revN_take)
+
+lemma pop_drop: "Stack.toList ((Stack.pop ^^ n) stack) = drop n (Stack.toList stack)"
+proof(induction n arbitrary: stack)
+  case 0
+  then show ?case 
+    by auto
+next
+  case (Suc n)
+  then show ?case 
+  proof(induction stack rule: Stack.pop.induct)
+    case 1
+    then show ?case 
+      by(auto simp: funpow_swap1)
+  next
+    case (2 x left right)
+    then show ?case 
+      by(auto simp: funpow_swap1)
+  next
+    case (3 x right)
+    then show ?case  
+      by(auto simp: funpow_swap1)
+  qed
+qed
+
+lemma test: "rev (drop n xs) @
+             rev (take n xs) = rev xs"
+  by (metis append_take_drop_id rev_append)
+
+lemma test_2: "List.length (Stack.toList stack) = Stack.size stack"
+  apply(induction stack)
+  by auto
+
+lemma helper_1_4: "\<lbrakk>\<not> leftLength \<le> 3 * Stack.size right; idle.Idle left leftLength = Idle.push x left'; Idle.invariant left'; rightLength = Stack.size right;
+     \<not> Idle.isEmpty left'; \<not> Stack.isEmpty right; \<not> Stack.isEmpty left\<rbrakk>
+    \<Longrightarrow> Stack.size right - (Suc (2 * Stack.size right) - Stack.size ((Stack.pop ^^ (leftLength - Suc (Stack.size right))) left)) = 0"
+proof -
+  assume a1: "Idle.invariant left'"
+  assume a2: "rightLength = Stack.size right"
+  assume "idle.Idle left leftLength = Idle.push x left'"
+  then have f3: "\<And>n. List.length (drop n (Stack.toList left)) = leftLength - n"
+    using a1 by (metis (no_types) Idle.invariant.simps Idle_Proof.invariant_push length_drop size_listLength)
+  moreover
+  { assume "\<exists>n. rightLength + (rightLength + 1) - leftLength = rightLength + n"
+    moreover
+    { assume "\<exists>n. rightLength + (rightLength + 1) - (leftLength - (leftLength - (rightLength + 1))) = rightLength + n"
+      then have "rightLength - (rightLength + (rightLength + 1) - List.length (drop (leftLength - (rightLength + 1)) (Stack.toList left))) = 0"
+        using f3 diff_is_0_eq nat_le_iff_add by presburger }
+    ultimately have "leftLength \<le> rightLength + 1 \<longrightarrow> rightLength - (rightLength + (rightLength + 1) - List.length (drop (leftLength - (rightLength + 1)) (Stack.toList left))) = 0"
+      using diff_zero by fastforce }
+  ultimately show ?thesis
+    using a2 by (smt (z3) Nat.add_diff_assoc Nat.diff_diff_right Suc_1 Suc_eq_plus1_left add.commute add_Suc_right add_diff_cancel_right' cancel_comm_monoid_add_class.diff_cancel mult_2 nat_le_linear pop_drop size_listLength)
+qed
+
+
+lemma helper_1_3: "\<lbrakk>\<not> leftLength \<le> 3 * Stack.size right; idle.Idle left leftLength = Idle.push x left'; Idle.invariant left'; rightLength = Stack.size right;
+     \<not> Idle.isEmpty left'; \<not> Stack.isEmpty right; \<not> Stack.isEmpty left\<rbrakk>
+    \<Longrightarrow> Suc (List.length (Stack.toList right) + Stack.size right) - leftLength = 0"
+  by(auto simp: test_2)
+
+lemma helper_1_2: "\<lbrakk>\<not> leftLength \<le> 3 * Stack.size right; idle.Idle left leftLength = Idle.push x left'; Idle.invariant left'; rightLength = Stack.size right;
+     \<not> Idle.isEmpty left'; \<not> Stack.isEmpty right; \<not> Stack.isEmpty left\<rbrakk>
+    \<Longrightarrow> rev (
+            take 
+               (Suc (2 * Stack.size right) - Stack.size ((Stack.pop ^^ (leftLength - Suc (Stack.size right))) left))
+               (rev (
+                      take (leftLength - Suc (Stack.size right)) (Stack.toList right))
+                    )
+               ) =
+         Stack.toList right"
+  by(auto simp: rev_take helper_1_3 test_2 helper_1_4)
+
+lemma helper_1_1: "\<lbrakk>\<not> leftLength \<le> 3 * Stack.size right; idle.Idle left leftLength = Idle.push x left'; Idle.invariant left'; rightLength = Stack.size right;
+     \<not> Idle.isEmpty left'; \<not> Stack.isEmpty right; \<not> Stack.isEmpty left\<rbrakk>
+    \<Longrightarrow> rev (take (Suc (2 * Stack.size right) - Stack.size ((Stack.pop ^^ (leftLength - Suc (Stack.size right))) left))
+               (rev (take (leftLength - Suc (Stack.size right)) (Stack.toList right)))) @
+         rev (drop (leftLength - Suc (Stack.size right)) (Stack.toList left)) @
+         rev (take (leftLength - Suc (Stack.size right)) (Stack.toList left)) =
+         Stack.toList right @ rev (Stack.toList left)"
+  by(auto simp: test helper_1_2)
+
+lemma helper_1: "\<lbrakk>
+  \<not> leftLength \<le> 3 * Stack.size right; 
+  idle.Idle left leftLength = Idle.push x left'; 
+  Idle.invariant left'; rightLength = Stack.size right;
+  \<not> Idle.isEmpty left'; 
+  \<not> Stack.isEmpty right;
+   \<not> Stack.isEmpty left
+\<rbrakk> \<Longrightarrow> revN (Suc (2 * Stack.size right) - Stack.size ((Stack.pop ^^ (leftLength - Suc (Stack.size right))) left))
+          (revN (leftLength - Suc (Stack.size right)) (Stack.toList right) [])
+          (rev (Stack.toList ((Stack.pop ^^ (leftLength - Suc (Stack.size right))) left))) @
+         rev (take (leftLength - Suc (Stack.size right)) (Stack.toList left)) =
+         Stack.toList right @ rev (Stack.toList left)"
+  by(auto simp: revN_take pop_drop helper_1_1)
+
+lemma helper: "\<lbrakk>
+  \<not> leftLength \<le> 3 * Stack.size right; 
+  idle.Idle left leftLength = Idle.push x left'; 
+  Idle.invariant left'; 
+  rightLength = Stack.size right;
+  \<not> Idle.isEmpty left'; 
+  \<not> Stack.isEmpty right
+\<rbrakk> \<Longrightarrow> revN 
+        (Suc (2 * Stack.size right) - Stack.size ((Stack.pop ^^ (leftLength - Suc (Stack.size right))) left))
+        (revN (leftLength - Suc (Stack.size right)) (Stack.toList right) [])
+        (rev (Stack.toList ((Stack.pop ^^ (leftLength - Suc (Stack.size right))) left)))
+      @ rev (revN (leftLength - Suc (Stack.size right)) (revN (leftLength - Suc (Stack.size right)) (Stack.toList left) []) []) =
+         Stack.toList right @ rev (Stack.toList left)"
+  apply(simp add: revN_revN helper_1)
+  by (smt (verit, ccfv_SIG) Idle.size.simps Idle_Proof.size_push empty helper_1 length_greater_0_conv less_Suc_eq_0_disj size_listLength)
+  
 
 interpretation RealTimeDeque: Deque where
   empty        = empty        and
@@ -75,42 +176,93 @@ next
     case (4 x a b c)
     then show ?case by auto
   next
-    case (5 x left right rightLength)
+    case (5 x left' right rightLength)
     then show ?case 
-      apply(auto simp: Let_def  split: idle.splits prod.splits)
-      apply (metis Idle.toList.simps Idle_Proof.push)
-        apply(auto simp: sixTicks_def split: prod.splits)
-      apply (metis Big.toList.simps(2) Current.toList.simps Idle.toList.simps Idle_Proof.push Small.toList.simps(2) append_Cons append_Nil nTicks toListLeft.simps(2))
-       apply (metis Idle.toList.simps Idle_Proof.push)
-      by (metis Big.toList.simps(2) Current.toList.simps Idle.toList.simps Idle_Proof.push Small.toList.simps(2) append_Cons append_Nil nTicks toListLeft.simps(2))
+    proof(induction "Idle.push x left'")
+      case (Idle left leftLength)
+      then show ?case 
+      proof(induction "3 * rightLength \<ge> leftLength")
+        case True
+        then show ?case
+          apply(auto split: idle.splits)
+          by (metis Idle.toList.simps Idle_Proof.push)+
+      next
+        case False
+        let ?transformation = "(Right 
+            (Reverse (Current [] 0 left (leftLength - Suc (Stack.size right))) left [] (leftLength - Suc (Stack.size right)))
+            (Reverse1 (Current [] 0 right (Suc (2 * Stack.size right))) right []))"
+
+        from False have leftNotEmpty: "\<not> Stack.isEmpty left"
+        proof(induction x left' rule: Idle.push.induct)
+          case (1 x stack stackSize)
+          then show ?case
+            apply(induction x stack rule: Stack.push.induct)
+            by auto
+        qed
+
+        from False have invariant: "Transformation.invariant ?transformation"
+          apply(auto simp: helper leftNotEmpty)
+          by(metis Idle.invariant.simps Idle_Proof.invariant_push diff_le_self)
+
+        then have "toListLeft ?transformation = x # Idle.toList left' @ rev (Stack.toList right)"
+          apply(auto)
+          by (metis Cons_eq_appendI Idle.hyps Idle.toList.simps Idle_Proof.push rev_append rev_rev_ident)
+
+        with invariant have 
+           "toListLeft (sixTicks ?transformation) = x # Idle.toList left' @ rev (Stack.toList right)"
+          by (auto simp: sixTicks)
+
+        with False show ?case
+          by(auto simp: Let_def invariant_sixTicks tick_toList split: idle.splits)
+      qed
+    qed
   next
     case (6 x left right)
+    let ?newLeft = "Small.push x left"
+    let ?newTransfomation = "Left ?newLeft right"
+    let ?tickedTransformation = "fourTicks ?newTransfomation"
 
-    then show ?case
-      apply(auto simp: Let_def split: transformation.splits)
-      subgoal for x11 x12
-        apply(auto split: Small.state.splits Big.state.splits Common.state.splits)
-        apply (metis Small.toList.simps(2) Small_Proof.push append_Cons fourTicks toListLeft.simps(1))
-        apply (metis Small.toList.simps(3) Small_Proof.push append_Cons fourTicks toListLeft.simps(1))
-        apply (metis Common.toList.simps(2) Small.toList.simps(1) Small_Proof.push append_Cons fourTicks toListLeft.simps(1))
-        apply (metis Big.toList.simps(2) Common.toList.simps(1) Cons_eq_appendI Small.toList.simps(1) Small_Proof.push fourTicks toListLeft.simps(1))
-         apply (metis Big.toList.simps(1) Common.toList.simps(1) Common.toList.simps(2) Small.toList.simps(1) Small_Proof.push append_Cons fourTicks toListLeft.simps(1))
-        apply(auto simp: Let_def fourTicks_def invariant_def split: state_splits current.splits)
-        sorry
-      by (metis Small_Proof.push append_Cons fourTicks toListLeft.simps(1) toListLeft.simps(2))
+    from 6 have invariant: "Transformation.invariant ?newTransfomation"
+      by (meson RealTimeDeque.invariant.simps(6) Transformation.invariant.simps(1) invariant_push_small)
+
+    then have toList: "toListLeft ?newTransfomation = x # Small.toCurrentList left @ rev (Big.toCurrentList right)"
+      by(auto simp: push_small currentList_push)
+                          
+    from invariant have fourTicks: "Transformation.invariant ?tickedTransformation"
+      using invariant_fourTicks by blast
+
+    then have "toListLeft ?tickedTransformation = x # Small.toCurrentList left @ rev (Big.toCurrentList right)"
+      using Transformation_Proof.fourTicks invariant toList by fastforce
+
+    with 6 show ?case
+      by(auto simp: Let_def split: transformation.splits state_splits)
   next
     case (7 x left right)
 
-    then show ?case 
-      apply(auto simp: Let_def split: transformation.splits)
-      apply (metis Big_Proof.push Cons_eq_appendI fourTicks toListLeft.simps(1) toListLeft.simps(2))
-      apply(auto split: state_splits current.splits)
-      apply (metis Big.toList.simps(2) Big_Proof.push append_Cons fourTicks toListLeft.simps(2))
-      apply (metis Big.toList.simps(1) Big_Proof.push Common.toList.simps(2) append_Cons fourTicks toListLeft.simps(2))
-      apply (metis Big.toList.simps(1) Big_Proof.push Common.toList.simps(1) Small.toList.simps(2) append_Cons fourTicks toListLeft.simps(2))
-      apply (metis Big.toList.simps(1) Big_Proof.push Common.toList.simps(1) Cons_eq_appendI Small.toList.simps(3) fourTicks toListLeft.simps(2))
-      apply (metis Big.toList.simps(1) Big_Proof.push Common.toList.simps(1) Common.toList.simps(2) Cons_eq_appendI Small.toList.simps(1) fourTicks toListLeft.simps(2))
-      apply(auto simp: Let_def invariant_def fourTicks_def split: state_splits current.splits)
+    let ?newLeft = "Big.push x left"
+    let ?newTransfomation = "Right ?newLeft right"
+    let ?tickedTransformation = "fourTicks ?newTransfomation"
+
+    from 7 have invariant: "Transformation.invariant ?newTransfomation"
+      by (meson RealTimeDeque.invariant.simps Transformation.invariant.simps invariant_push_big)
+
+    then have toListRight: "toListRight ?newTransfomation = Small.toCurrentList right @ rev (Big.toCurrentList (Big.push x left))"
+      by auto
+
+    with invariant have toListLeft: "toListLeft ?newTransfomation = x # Big.toCurrentList left @ rev (Small.toCurrentList right)"
+      apply(auto simp: push_big split: prod.splits)
+      by (metis Big_Proof.currentList_push append_Cons rev_append rev_rev_ident)
+    
+    from invariant have fourTicks: "Transformation.invariant ?tickedTransformation"
+      using invariant_fourTicks by blast
+
+    then have "toListLeft ?tickedTransformation = x # Big.toCurrentList left @ rev (Small.toCurrentList right)"
+      using Transformation_Proof.fourTicks invariant toListLeft by fastforce
+
+
+    with 7 show ?case 
+      apply(auto simp: Let_def invariant_listBigFirst toListLeft toListRight split: transformation.splits prod.splits)
+       apply (metis rev_append rev_rev_ident)
       sorry
   qed
 next
@@ -158,21 +310,12 @@ next
   next
     case (5 x left right rightLength)
     then show ?case 
-      apply(auto simp: Let_def sixTicks_def split: idle.splits)
-          apply (metis Idle.invariant.simps Idle_Proof.invariant_push)
-         apply (metis Idle.size.simps Idle_Proof.size_push le_Suc_eq)
-      subgoal sorry
-      apply (metis Idle.invariant.simps Idle_Proof.invariant_push)
+      apply auto
       sorry
   next
     case (6 x left right)
     then show ?case
-      apply(auto simp: Let_def split: transformation.split state_splits)
-      apply (metis Transformation.invariant.simps(1) invariant_fourTicks invariant_pushSmall)+
-      subgoal sorry
-      subgoal sorry
-      subgoal sorry
-      by (metis Transformation.invariant.simps(1) Transformation.invariant.simps(2) invariant_fourTicks invariant_pushSmall)
+      sorry
   next
     case (7 x left right)
     then show ?case sorry
@@ -209,10 +352,12 @@ next
     then show ?case 
     proof(induction transformation)
       case (Left small big)
-      then show ?case by auto
+      then show ?case by(auto split: prod.splits)
     next
       case (Right big small)
-      then show ?case by auto
+      then show ?case 
+        apply(auto split: prod.splits)
+        by (metis rev_append rev_rev_ident)
       qed
   qed
 qed

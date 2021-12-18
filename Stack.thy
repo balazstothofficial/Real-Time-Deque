@@ -15,7 +15,8 @@ fun push :: "'a \<Rightarrow> 'a stack \<Rightarrow> 'a stack" where
   "push element (Stack left right) = Stack (element#left) right"
 
 fun pop :: "'a stack \<Rightarrow> 'a stack" where
-  "pop (Stack (x#left) right)     = Stack left right"
+  "pop (Stack [] [])     = Stack [] []"
+| "pop (Stack (x#left) right)     = Stack left right"
 | "pop (Stack []       (x#right)) = Stack []   right"
 
 fun first :: "'a stack \<Rightarrow> 'a" where
