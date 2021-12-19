@@ -9,7 +9,6 @@ lemma invariant_listBigFirst: "invariant states \<Longrightarrow> toListBigFirst
   apply(auto split: prod.splits)
   by (metis rev_append rev_rev_ident)
 
-(* TODO: Important! *)
 lemma tick_toList: "invariant states \<Longrightarrow> toList (tick states) = toList states"
 proof(induction states)
   case (Pair big small)
@@ -44,8 +43,8 @@ proof(induction states)
             apply(auto split: current.splits)
 
             using big apply(auto)
-            (* TODO: *)
-            sorry
+            apply (metis empty funpow_swap1 revN.elims revN.simps(2))
+            by (metis first_pop funpow_swap1 revN.simps(3))
         next
           case ("2_1" v small)
           then show ?case by auto
@@ -199,7 +198,7 @@ qed
 
 (*
 TODO:
-(* TODO: pop_invariant here? Or proof this on a higher level? *)
+(* TODO: pop_invariant here? Or prove this on a higher level? *)
 lemma pop_big: "\<lbrakk>
   invariant (big, small);
   Big.pop big = (x, poppedBig);
@@ -336,6 +335,7 @@ qed
 
 (* TODO: Important! *)
 lemma invariant_tick: "invariant states \<Longrightarrow> invariant (tick states)"
+  quickcheck
 proof(induction states rule: tick.induct)
   case (1 currentB big auxB currentS uu auxS)
 then show ?case sorry

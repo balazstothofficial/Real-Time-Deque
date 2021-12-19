@@ -49,13 +49,17 @@ fun invariant :: "'a states \<Rightarrow> bool" where
    \<and> Small.invariant small
    \<and> toListSmallFirst states = toCurrentListSmallFirst states
    \<and> (case states of 
-        (Reverse _ _ _ _, Reverse1 _ _ _) \<Rightarrow> True
+        (Reverse _ big _ count, Reverse1 (Current _ _ old remained) small _) \<Rightarrow> 
+          Stack.size big - count = remained - Stack.size old \<and> count \<ge> Stack.size small
       | (_, Reverse1 _ _ _) \<Rightarrow> False
+      | (Reverse _ _ _ _, _) \<Rightarrow> False
       | _ \<Rightarrow> True
       )
    \<and> \<not> Big.isEmpty big
    \<and> \<not> Small.isEmpty small
   )"
+
+value " (tick  (Reverse (Current [] 0 (Stack [] [a\<^sub>1]) 0) (Stack [] [a\<^sub>1]) [] 0, Reverse1 (Current [] 0 (Stack [] [a\<^sub>1]) 2) (Stack [] []) [a\<^sub>1]))"
 (*
    \<and> (
       case states of 
@@ -65,6 +69,11 @@ fun invariant :: "'a states \<Rightarrow> bool" where
       | _ \<Rightarrow> True
     )
   )"*)
+
+
+value "Big.isEmpty (Big.state.Common (state.Idle (Current [a\<^sub>1] 1 (Stack [] []) 0) (idle.Idle (Stack [a\<^sub>1] []) 1)))"
+
+value "(tick (Reverse (Current [a\<^sub>1] 1 (Stack [] []) 0) (Stack [] []) [] 0, Reverse1 (Current [a\<^sub>1] 1 (Stack [] []) 1) (Stack [] []) []))"
 
 
 end

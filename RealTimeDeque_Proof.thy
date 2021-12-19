@@ -15,9 +15,7 @@ value "runningFold
   enqueueLeft 1, 
   enqueueLeft 2,
   enqueueLeft 3,
-  dequeueLeft,
   dequeueRight,
-  enqueueLeft 3,
   enqueueLeft 4,
   enqueueLeft 5,
   dequeueRight
@@ -202,7 +200,8 @@ next
 
         from False have invariant: "Transformation.invariant ?transformation"
           apply(auto simp: helper leftNotEmpty)
-          by(metis Idle.invariant.simps Idle_Proof.invariant_push diff_le_self)
+            apply (metis Idle.invariant.simps Idle_Proof.invariant_push diff_le_self)
+          by (metis Idle.invariant.simps Idle_Proof.invariant_push add_Suc_right diff_add_inverse)
 
         then have "toListLeft ?transformation = x # Idle.toList left' @ rev (Stack.toList right)"
           apply(auto)
@@ -261,9 +260,8 @@ next
 
 
     with 7 show ?case 
-      apply(auto simp: Let_def invariant_listBigFirst toListLeft toListRight split: transformation.splits prod.splits)
-       apply (metis rev_append rev_rev_ident)
-      sorry
+      apply(auto simp: Let_def split: transformation.split prod.split Big.state.split Common.state.split Small.state.split)
+      by (metis rev_append rev_rev_ident)+
   qed
 next
   case (4 q x)
@@ -283,8 +281,31 @@ next
   then show ?case sorry
 next
   case (9 q)
-  then show ?case 
-    sorry
+  then show ?case
+  proof(induction q)
+    case Empty
+    then show ?case by auto
+  next
+    case (One x)
+    then show ?case by auto
+  next
+    case (Two x1 x2a)
+    then show ?case by auto
+  next
+    case (Three x1 x2a x3)
+    then show ?case by auto
+  next
+    case (Idle x1 x2a)
+    then show ?case 
+      apply auto
+      by (metis Idle.isEmpty.elims(3) Idle.toList.simps not_empty_2)
+  next
+    case (Transforming x)
+    then show ?case 
+      apply(induction x)
+       apply(auto split: prod.splits)
+      sorry
+  qed
 next
   case (10 q)
   then show ?case sorry
@@ -308,17 +329,71 @@ next
     case (4 x a b c)
     then show ?case by auto 
   next
-    case (5 x left right rightLength)
-    then show ?case 
-      apply auto
-      sorry
+    case (5 x left' right rightLength)
+    then show ?case
+    proof(induction "Idle.push x left'")
+      case (Idle left leftLength)
+      then show ?case
+      proof(induction "3 * rightLength \<ge> leftLength")
+        case True
+        then show ?case
+          apply(auto split: idle.splits)
+           apply (metis Idle.invariant.simps Idle_Proof.invariant_push)
+          by (metis Idle.size.simps Idle_Proof.size_push not_empty zero_less_Suc)
+      next
+        case False
+        let ?transformation = "(Right 
+            (Reverse (Current [] 0 left (leftLength - Suc (Stack.size right))) left [] (leftLength - Suc (Stack.size right)))
+            (Reverse1 (Current [] 0 right (Suc (2 * Stack.size right))) right []))"
+
+        from False have leftNotEmpty: "\<not> Stack.isEmpty left"
+          proof(induction x left' rule: Idle.push.induct)
+            case (1 x stack stackSize)
+            then show ?case
+              apply(induction x stack rule: Stack.push.induct)
+              by auto
+          qed
+
+        from False have invariant: "Transformation.invariant ?transformation"
+          apply(auto simp: helper leftNotEmpty)
+            apply (metis Idle.invariant.simps Idle_Proof.invariant_push diff_le_self)
+          by (metis Idle.invariant.simps Idle_Proof.invariant_push Suc_diff_le add_diff_cancel_left' le_add1)
+          
+        then have "Transformation.invariant (sixTicks ?transformation)"
+          using invariant_sixTicks by blast
+        
+        with False show ?case
+          by(auto simp: Let_def split: idle.splits)
+       qed
+    qed
   next
     case (6 x left right)
-    then show ?case
-      sorry
+    let ?newLeft = "Small.push x left"
+    let ?newTransfomation = "Left ?newLeft right"
+    let ?tickedTransformation = "fourTicks ?newTransfomation"
+
+    from 6 have invariant: "Transformation.invariant ?newTransfomation"
+      by (meson RealTimeDeque.invariant.simps(6) Transformation.invariant.simps(1) invariant_push_small)
+
+    then have "Transformation.invariant (fourTicks ?newTransfomation)"
+      using invariant_fourTicks by blast
+    
+    with 6 show ?case
+      by(auto simp: Let_def split: transformation.splits Small.state.split Big.state.split Common.state.split)
   next
     case (7 x left right)
-    then show ?case sorry
+    let ?newLeft = "Big.push x left"
+    let ?newTransfomation = "Right ?newLeft right"
+    let ?tickedTransformation = "fourTicks ?newTransfomation"
+
+    from 7 have invariant: "Transformation.invariant ?newTransfomation"
+      by (meson RealTimeDeque.invariant.simps Transformation.invariant.simps invariant_push_big)
+
+    then have "Transformation.invariant (fourTicks ?newTransfomation)"
+      using invariant_fourTicks by blast
+    
+    with 7 show ?case
+      by(auto simp: Let_def split: transformation.splits Small.state.split Big.state.split Common.state.split)
   qed
 next
   case (13 q x)
