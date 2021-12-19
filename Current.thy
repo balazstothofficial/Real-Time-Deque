@@ -21,7 +21,7 @@ fun toList :: "'a current \<Rightarrow> 'a list" where
   "toList (Current extra _ old _) = extra @ (Stack.toList old)"
 
 fun isEmpty :: "'a current \<Rightarrow> bool" where
-  "isEmpty (Current [] _ old _) = Stack.isEmpty old"
+  "isEmpty (Current [] _ old remained) \<longleftrightarrow> Stack.isEmpty old \<or> remained = 0"
 | "isEmpty _ = False"
 
 fun invariant :: "'a current \<Rightarrow> bool" where

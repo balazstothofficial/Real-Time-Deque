@@ -48,7 +48,10 @@ next
      apply(induction current rule: get.induct)
      apply(auto simp: Stack_Proof.size_pop)
     apply (metis length_greater_0_conv less_eq_Suc_le not_empty_2 ordered_cancel_comm_monoid_diff_class.diff_add_assoc size_listLength)
-    by auto
+    using diff_le_mono le_add2 apply blast
+       apply (meson diff_le_self le_trans)
+    apply (metis Suc_leI length_greater_0_conv not_empty_2 ordered_cancel_comm_monoid_diff_class.diff_add_assoc size_listLength)
+   by auto
 qed
 
 lemma currentList_push: "toCurrentList (push x small) = x # toCurrentList small"

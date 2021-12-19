@@ -333,28 +333,57 @@ next
   qed
 qed
 
-(* TODO: Important! *)
+(* TODO: *)
 lemma invariant_tick: "invariant states \<Longrightarrow> invariant (tick states)"
-  quickcheck
 proof(induction states rule: tick.induct)
   case (1 currentB big auxB currentS uu auxS)
-then show ?case sorry
+  then show ?case 
+    apply(auto split: current.splits)
+    using Current.isEmpty.simps(1) Stack.isEmpty.elims(2) by blast
 next
   case ("2_1" v va vb vd right)
-then show ?case sorry
+  then show ?case 
+    apply(auto simp: Stack_Proof.size_pop not_empty split: current.splits prod.splits Small.state.splits)
+    apply (smt (verit, best) Zero_not_Suc bot_nat_0.extremum_uniqueI empty first_pop funpow_swap1 list.size(3) revN.elims revN.simps(2) revN.simps(3) size_listLength)
+     apply (metis le_SucE not_empty zero_less_Suc)
+    by (metis Zero_not_Suc bot_nat_0.extremum_uniqueI empty first_pop funpow_swap1 list.size(3) revN.simps(3) size_listLength)
 next
   case ("2_2" v right)
-  then show ?case sorry
+  then show ?case
+    apply(auto simp: Common_Proof.invariant_tick Small_Proof.invariant_tick split:)
+    apply (metis "2_2.prems" Big.tick.simps(1) Big.toList.simps(1) Common_Proof.tick_toCurrentList Pair_inject Small_Proof.tick_toCurrentList States.tick.simps(3) States.toList.simps(2) States_Proof.tick_toList)
+      apply(auto simp:  split: Small.state.splits current.splits if_splits)
+    using Common_Proof.some_empty apply blast+
+    using empty apply force
+    using Common_Proof.some_empty by blast
 next
   case ("2_3" left v va vb vc vd)
-  then show ?case sorry
+  then show ?case
+    apply(auto simp: Big_Proof.invariant_tick Small_Proof.invariant_tick split: current.split state_splits)
+    apply (simp add: Common_Proof.tick_toCurrentList Common_Proof.tick_toList size_listLength)
+    using Common_Proof.some_empty apply blast
+    using Current.isEmpty.simps(1) Stack.isEmpty.elims(2) apply blast
+    apply (metis length_0_conv not_empty_2 size_listLength)
+    using not_empty apply blast
+    apply (meson add_decreasing le_less_linear not_empty)
+    using not_empty apply blast
+    apply (metis Common_Proof.tick_toCurrentList Common_Proof.tick_toList Nat.add_0_right add.commute append.left_neutral empty list.size(3) rev.simps(1) size_listLength)
+    using not_empty apply blast
+    using Common_Proof.some_empty apply blast
+    apply (metis Stack_Proof.size_pop Suc_pred)
+        apply (metis first_pop length_Cons size_listLength)
+    apply (smt (z3) Common_Proof.tick_toCurrentList Common_Proof.tick_toList Stack_Proof.size_pop Suc_pred add_diff_cancel_left' append_assoc first_pop rev.simps(2) rev_append rev_rev_ident rev_singleton_conv)
+    apply (metis Common_Proof.tick_toCurrentList Common_Proof.tick_toList append.left_neutral append_Cons append_assoc diff_add_inverse first_pop length_Cons rev.simps(2) size_listLength)
+    using Common_Proof.some_empty apply blast
+    using Common_Proof.some_empty by blast
 next
   case ("2_4" left v)
   then show ?case 
     apply(auto simp: Big_Proof.invariant_tick Common_Proof.invariant_tick)
-       apply(induction v rule: Common.tick.induct)
-    apply auto
-    sorry
+    apply (simp add: Big_Proof.tick_toCurrentList Big_Proof.tick_toList Common_Proof.tick_toCurrentList tick_toList_2)
+    apply(simp split: Big.state.splits)
+    using Big_Proof.some_empty apply blast
+    using Common_Proof.some_empty by blast
 qed
 
 

@@ -2,15 +2,67 @@ theory Transformation_Proof
   imports  Transformation States_Proof
 begin
 
-(* TODO: important! *)
 lemma invariant_tick: "invariant transformation \<Longrightarrow> invariant (tick transformation)"
-  apply(induction transformation rule: tick.induct)
-   apply (auto simp: States_Proof.invariant_tick  split: prod.splits) 
-  sorry
+proof(induction transformation rule: tick.induct)
+  case (1 small big)
+
+  then have "States.invariant (big, small)"
+    by auto
+  
+  then have "States.invariant (States.tick (big, small))"
+    using States_Proof.invariant_tick by blast
+
+  then have "Transformation.invariant (case States.tick (big, small) of (big, small) \<Rightarrow> Left small big)"
+    by(auto split: prod.split)
+
+  then show ?case by auto
+next
+  case (2 big small)
+
+  then have "States.invariant (big, small)"
+    by auto
+  
+  then have "States.invariant (States.tick (big, small))"
+    using States_Proof.invariant_tick by blast
+
+  then have "Transformation.invariant (case States.tick (big, small) of (big, small) \<Rightarrow> Right big small)"
+    by(auto split: prod.split)
+
+  then show ?case by auto
+qed
 
 lemma tick_toList: "invariant transformation \<Longrightarrow> toListLeft (tick transformation) = toListLeft transformation"
- (* TODO: To be done with States equivalents *)
-  sorry
+proof(induction transformation rule: tick.induct)
+  case (1 small big)
+
+  then have "States.toListSmallFirst (big, small) = Small.toCurrentList small @ rev (Big.toCurrentList big)"
+    by auto
+
+  then have "States.toListSmallFirst (States.tick (big, small)) = Small.toCurrentList small @ rev (Big.toCurrentList big)"
+    using "1.prems" States_Proof.tick_toList by force
+
+  then have "toListLeft (case States.tick (big, small) of (big, small) \<Rightarrow> transformation.Left small big) =
+         Small.toCurrentList small @ rev (Big.toCurrentList big)"
+    by(auto split: prod.splits)
+
+  with 1 show ?case 
+    by auto
+next
+  case (2 big small)
+  
+  then have statesToList: "States.toListBigFirst (big, small) = Big.toCurrentList big @ rev (Small.toCurrentList small)"
+    using invariant_listBigFirst by fastforce
+
+  then have "States.toListBigFirst (States.tick (big, small)) = Big.toCurrentList big @ rev (Small.toCurrentList small)"
+    using "2.prems" States_Proof.tick_toList by force
+
+  then have "toListLeft (case States.tick (big, small) of (big, small) \<Rightarrow> Right big small) =
+         Big.toCurrentList big @ rev (Small.toCurrentList small)"
+   by(auto split: prod.splits)
+
+  with 2 show ?case 
+    using statesToList by fastforce
+qed
 
 lemma nTicks: "invariant transformation \<Longrightarrow> toListLeft ((tick^^n) transformation) = toListLeft transformation"
   apply(induction n arbitrary: transformation)

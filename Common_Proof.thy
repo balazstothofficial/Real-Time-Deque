@@ -108,4 +108,8 @@ lemma currentList_push: "toCurrentList (push x left) = x # toCurrentList left"
   apply(induction x left rule: push.induct)
   by(auto simp: put)
 
+lemma some_empty: "\<lbrakk>isEmpty (tick common); \<not> isEmpty common; invariant common\<rbrakk> \<Longrightarrow> False"
+  apply(induction common rule: tick.induct)
+  by(auto split: current.splits if_splits)
+
 end

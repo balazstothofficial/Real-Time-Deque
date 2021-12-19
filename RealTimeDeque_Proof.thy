@@ -201,7 +201,8 @@ next
         from False have invariant: "Transformation.invariant ?transformation"
           apply(auto simp: helper leftNotEmpty)
             apply (metis Idle.invariant.simps Idle_Proof.invariant_push diff_le_self)
-          by (metis Idle.invariant.simps Idle_Proof.invariant_push add_Suc_right diff_add_inverse)
+           apply (metis Idle.invariant.simps Idle_Proof.invariant_push add_Suc_right diff_add_inverse)
+          by (metis Idle.invariant.simps Idle_Proof.invariant_push diff_is_0_eq' diff_zero funpow_0 helper_1_3 helper_1_4 leftNotEmpty length_greater_0_conv less_numeral_extra(3) mult_2 not_empty_2 size_listLength)
 
         then have "toListLeft ?transformation = x # Idle.toList left' @ rev (Stack.toList right)"
           apply(auto)
@@ -357,7 +358,8 @@ next
         from False have invariant: "Transformation.invariant ?transformation"
           apply(auto simp: helper leftNotEmpty)
             apply (metis Idle.invariant.simps Idle_Proof.invariant_push diff_le_self)
-          by (metis Idle.invariant.simps Idle_Proof.invariant_push Suc_diff_le add_diff_cancel_left' le_add1)
+           apply (metis Idle.invariant.simps Idle_Proof.invariant_push Suc_diff_le add_diff_cancel_left' le_add1)
+          by (metis Idle.invariant.simps Idle_Proof.invariant_push diff_is_0_eq funpow_0 helper_1_3 helper_1_4 leftNotEmpty length_greater_0_conv mult_2 not_empty_2 not_less size_listLength)
           
         then have "Transformation.invariant (sixTicks ?transformation)"
           using invariant_sixTicks by blast

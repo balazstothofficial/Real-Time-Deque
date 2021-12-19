@@ -73,4 +73,10 @@ lemma currentList_push: "toCurrentList (push x big) = x # toCurrentList big"
   apply(induction x big rule: push.induct)
   by(auto simp: currentList_push put)
 
+lemma some_empty: "\<lbrakk>isEmpty (tick big); \<not> isEmpty big; invariant big\<rbrakk> \<Longrightarrow> False"
+  apply(induction big rule: tick.induct)
+    apply(auto split: current.splits if_splits)
+  using some_empty apply blast
+  using Current.isEmpty.simps(1) Stack.isEmpty.elims(2) by blast
+
 end
