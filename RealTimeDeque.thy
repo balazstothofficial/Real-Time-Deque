@@ -50,7 +50,7 @@ fun dequeueLeft' :: "'a deque \<Rightarrow> 'a * 'a deque" where
     if 3 * leftLength \<ge> rightLength 
     then 
       (x, Idle (idle.Idle left leftLength) (idle.Idle right rightLength))
-    else if leftLength \<ge> 2
+    else if leftLength \<ge> 1
     then 
       let newLeftLength = 2 * leftLength + 1 in
       let newRightLength = rightLength - leftLength - 1 in
@@ -176,8 +176,12 @@ fun invariant :: "'a deque \<Rightarrow> bool" where
    Idle.invariant left  \<and>
    Idle.invariant right \<and>
    \<not> Idle.isEmpty left  \<and> 
-   \<not> Idle.isEmpty right
+   \<not> Idle.isEmpty right \<and>
+   3 * Idle.size right \<ge> Idle.size left \<and>
+   3 * Idle.size left \<ge> Idle.size right
   )"
-| "invariant (Transforming transformation) = Transformation.invariant transformation"
+| "invariant (Transforming transformation) \<longleftrightarrow>
+   Transformation.invariant transformation \<and> 
+   inSizeWindow transformation"
 
 end

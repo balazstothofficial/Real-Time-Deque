@@ -76,7 +76,14 @@ lemma currentList_push: "toCurrentList (push x big) = x # toCurrentList big"
 lemma some_empty: "\<lbrakk>isEmpty (tick big); \<not> isEmpty big; invariant big\<rbrakk> \<Longrightarrow> False"
   apply(induction big rule: tick.induct)
     apply(auto split: current.splits if_splits)
-  using some_empty apply blast
-  using Current.isEmpty.simps(1) Stack.isEmpty.elims(2) by blast
+  using some_empty by blast
+
+lemma currentList_empty: "\<lbrakk>\<not> isEmpty big; toCurrentList big = []; invariant big\<rbrakk> \<Longrightarrow> False"
+  apply(induction big)
+  using currentList_empty by(auto simp: not_empty_2 split: current.splits)
+
+lemma tick_newSize: "invariant big \<Longrightarrow> newSize big = newSize (tick big)"
+  apply(induction big rule: tick.induct)
+  by(auto simp: tick_newSize split: current.splits)
 
 end

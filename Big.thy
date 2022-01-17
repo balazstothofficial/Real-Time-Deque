@@ -37,7 +37,6 @@ fun isEmpty :: "'a state \<Rightarrow> bool" where
 
 fun invariant :: "'a state \<Rightarrow> bool" where
   "invariant (Common state) \<longleftrightarrow> Common.invariant state"
-(* TODO: Use generic version of old = sth on a higher level *)
 | "invariant (Reverse current big aux count) \<longleftrightarrow> (
    case current of Current _ _ old remained \<Rightarrow>
       Current.invariant current
@@ -55,5 +54,9 @@ fun pop_invariant :: "'a state \<Rightarrow> bool" where
 fun remainingSteps :: "'a state \<Rightarrow> nat" where
   "remainingSteps (Common state) = Common.remainingSteps state"
 | "remainingSteps (Reverse (Current _ _ _ remaining) _ _ count) = count + remaining + 1"
+
+fun newSize :: "'a state \<Rightarrow> nat" where
+  "newSize (Common state) = Common.newSize state"
+| "newSize (Reverse current _ _ _) = Current.newSize current"
 
 end

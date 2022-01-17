@@ -58,4 +58,18 @@ lemma currentList_push: "toCurrentList (push x small) = x # toCurrentList small"
   apply(induction x small rule: push.induct)
   by(auto simp: currentList_push put)
 
+lemma currentList_pop: "\<not> isEmpty small \<Longrightarrow> pop small = (x, small') \<Longrightarrow> toCurrentList small' = tl (toCurrentList small)"
+  apply(induction small arbitrary: x rule: pop.induct)
+    apply(auto simp: currentList_pop put split: prod.splits)
+   apply (metis get list.sel(3))
+  by (metis get list.sel(3))
+
+lemma currentList_empty: "\<lbrakk>\<not> isEmpty small; toCurrentList small = []; invariant small\<rbrakk> \<Longrightarrow> False"
+  apply(induction small)
+  using currentList_empty by(auto simp: not_empty_2 split: current.splits)
+
+lemma tick_newSize: "invariant small \<Longrightarrow> newSize small = newSize (tick small)"
+  apply(induction small rule: tick.induct)
+  by(auto simp: tick_newSize split: current.splits)
+
 end

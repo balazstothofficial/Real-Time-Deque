@@ -32,4 +32,8 @@ fun remainingSteps where
   "remainingSteps (Left small big) = States.remainingSteps (big, small)"
 | "remainingSteps (Right big small) = States.remainingSteps (big, small)"
 
+fun inSizeWindow :: "'a transformation \<Rightarrow> bool" where
+  "inSizeWindow (Left small big) = States.inSizeWindow (big, small)"
+| "inSizeWindow (Right big small) = States.inSizeWindow (big, small)"
+
 end

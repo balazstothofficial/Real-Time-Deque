@@ -72,4 +72,9 @@ fun invariant :: "'a state \<Rightarrow> bool" where
     \<and> List.length auxS \<ge> Stack.size old
 )"
 
+fun newSize :: "'a state \<Rightarrow> nat" where
+  "newSize (Common state) = Common.newSize state"
+| "newSize (Reverse2 current _ _ _ _) = Current.newSize current"
+| "newSize (Reverse1 current _ _) = Current.newSize current"
+
 end

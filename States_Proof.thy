@@ -69,6 +69,10 @@ proof(induction states)
       apply (meson not_empty)
       apply (metis add.left_neutral empty neq0_conv not_empty rev.simps(1) self_append_conv2)
       apply (smt (z3) Stack_Proof.size_pop Suc_pred append_assoc diff_add_inverse first_pop rev.simps(2) rev_append rev_rev_ident rev_singleton_conv)
+      apply (metis (no_types, hide_lams) add.commute add_diff_cancel_right' append.left_neutral append_Cons append_assoc first_pop length_Cons rev.simps(2) size_listLength)
+      using not_empty apply blast
+      apply (metis (no_types, lifting) Stack_Proof.size_pop Suc_pred append_Cons append_eq_append_conv2 diff_add_inverse first_pop rev.simps(2) self_append_conv2)
+      apply (metis (no_types, hide_lams) Nil_is_rev_conv add_cancel_right_left empty length_0_conv self_append_conv2 size_listLength)
       by (smt (z3) Nitpick.size_list_simp(2) Stack_Proof.pop append_assoc diff_add_inverse first_pop not_empty_2 rev.simps(2) rev_append rev_rev_ident rev_singleton_conv size_listLength)
   next
     case (Common x)
@@ -196,8 +200,8 @@ next
   qed
 qed
 
+
 (*
-TODO:
 (* TODO: pop_invariant here? Or prove this on a higher level? *)
 lemma pop_big: "\<lbrakk>
   invariant (big, small);
@@ -206,8 +210,19 @@ lemma pop_big: "\<lbrakk>
   toList (big, small) = (big', small'')
 \<rbrakk> \<Longrightarrow> (x # poppedBig', small') = (big', small'')"
 proof(induction "(poppedBig, small)" arbitrary: x rule: toList.induct)
-  case (1 currentB big auxB count currentS small auxS)
-  then show ?case sorry
+  case (1 currentB big' auxB count currentS small auxS)
+  then show ?case
+  proof(induction big arbitrary: x rule: Big.pop.induct)
+    case (1 state)
+    then show ?case 
+      by auto
+  next
+    case (2 current big aux count)
+    then show ?case
+      apply(induction current arbitrary: x rule: get.induct)
+       apply(auto split: current.splits)
+      sorry
+  qed
 next
   case ("2_1" v)
   then show ?case sorry
@@ -253,16 +268,29 @@ next
       then show ?case by auto 
     qed 
   qed
-qed
+qed*)
 
+(*
 lemma pop_small: "\<lbrakk>
   invariant (big, small);
   Small.pop small = (x, poppedSmall);
   toList (big, poppedSmall) = (big', poppedSmall');
   toList (big, small) = (big'', small')
 \<rbrakk> \<Longrightarrow> (big', poppedSmall') = (big'', small')"
-  sorry
-*)
+proof(induction poppedSmall)
+  case (Reverse1 x1 x2 x3a)
+  then show ?case sorry
+next
+  case (Reverse2 x1 x2 x3a x4 x5)
+  then show ?case sorry
+next
+  case (Common common)
+  then show ?case 
+    apply(induction common rule: Common.pop.induct)
+     apply(auto split: state_splits prod.splits)
+    sorry
+qed*)
+
 
 lemma invariant_push_big: "invariant (big, small) \<Longrightarrow> invariant (Big.push x big, small)"
 proof(induction x big arbitrary: small rule: Big.push.induct)
@@ -338,8 +366,7 @@ lemma invariant_tick: "invariant states \<Longrightarrow> invariant (tick states
 proof(induction states rule: tick.induct)
   case (1 currentB big auxB currentS uu auxS)
   then show ?case 
-    apply(auto split: current.splits)
-    using Current.isEmpty.simps(1) Stack.isEmpty.elims(2) by blast
+    by(auto split: current.splits)
 next
   case ("2_1" v va vb vd right)
   then show ?case 
@@ -386,5 +413,54 @@ next
     using Common_Proof.some_empty by blast
 qed
 
+lemma tick_newSize_big: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small') \<Longrightarrow> Big.newSize big = Big.newSize big'"
+  apply(induction "(big, small)" rule: tick.induct)
+  by(auto simp: Big_Proof.tick_newSize split: current.splits)
+
+lemma tick_newSize_small: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small') \<Longrightarrow> Small.newSize small = Small.newSize small'"
+  apply(induction "(big, small)" rule: tick.induct)
+  by(auto simp: Small_Proof.tick_newSize split: current.splits)
+
+(* TODO: Clean up! *)
+lemma revN_take: "revN n xs acc = rev (take n xs) @ acc"
+  apply(induction n xs acc rule: revN.induct)
+  by auto
+
+lemma revN_revN: "(revN n (revN n xs []) []) = take n xs"
+  by(auto simp: revN_take)
+
+lemma pop_drop: "Stack.toList ((Stack.pop ^^ n) stack) = drop n (Stack.toList stack)"
+proof(induction n arbitrary: stack)
+  case 0
+  then show ?case 
+    by auto
+next
+  case (Suc n)
+  then show ?case 
+  proof(induction stack rule: Stack.pop.induct)
+    case 1
+    then show ?case 
+      by(auto simp: funpow_swap1)
+  next
+    case (2 x left right)
+    then show ?case 
+      by(auto simp: funpow_swap1)
+  next
+    case (3 x right)
+    then show ?case  
+      by(auto simp: funpow_swap1)
+  qed
+qed
+
+lemma test: "rev (drop n xs) @
+             rev (take n xs) = rev xs"
+  by (metis append_take_drop_id rev_append)
+
+lemma remainingStepsDecline: "invariant states \<Longrightarrow> remainingSteps states = Suc (remainingSteps (tick states))"
+  sorry
+
+lemma tick_inSizeWindow: "invariant states \<Longrightarrow> inSizeWindow states \<Longrightarrow> inSizeWindow (tick states)"
+  using hello remainingStepsDecline
+  by (smt (z3) inSizeWindow'.elims(1) inSizeWindow.simps tick_newSize_big tick_newSize_small)
 
 end

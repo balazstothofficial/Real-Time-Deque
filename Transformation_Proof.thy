@@ -88,4 +88,20 @@ lemma invariant_fourTicks: "invariant transformation \<Longrightarrow> invariant
 lemma invariant_sixTicks: "invariant transformation \<Longrightarrow> invariant (sixTicks transformation)"
   by(auto simp: invariant_nTicks sixTicks_def)
 
+lemma tick_inSizeWindow: "invariant transformation \<Longrightarrow> inSizeWindow transformation \<Longrightarrow> inSizeWindow (tick transformation)"
+  apply(induction transformation)
+  apply (metis Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) Transformation.tick.simps(1) prod.case_eq_if prod.exhaust_sel tick_inSizeWindow)
+  by (metis Transformation.inSizeWindow.simps(2) Transformation.invariant.simps(2) Transformation.tick.simps(2) prod.case_eq_if prod.exhaust_sel tick_inSizeWindow)
+
+lemma nTicks_inSizeWindow: "invariant transformation \<Longrightarrow> inSizeWindow transformation \<Longrightarrow> inSizeWindow ((tick ^^ n) transformation)"
+  apply(induction n)
+   apply(auto simp: funpow_swap1 invariant_nTicks tick_inSizeWindow)
+  by (metis Transformation_Proof.tick_inSizeWindow funpow_swap1 invariant_nTicks)
+
+lemma fourTicks_inSizeWindow: "invariant transformation \<Longrightarrow> inSizeWindow transformation \<Longrightarrow> inSizeWindow (fourTicks transformation)"
+  by(auto simp: nTicks_inSizeWindow fourTicks_def)
+
+lemma sixTicks_inSizeWindow: "invariant transformation \<Longrightarrow> inSizeWindow transformation \<Longrightarrow> inSizeWindow (sixTicks transformation)"
+  by(auto simp: nTicks_inSizeWindow sixTicks_def)
+
 end
