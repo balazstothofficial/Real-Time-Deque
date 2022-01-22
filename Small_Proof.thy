@@ -6,22 +6,54 @@ lemma tick_toCurrentList: "invariant small \<Longrightarrow> toCurrentList (tick
   apply(induction small rule: tick.induct)
   by(auto simp: tick_toCurrentList split: current.splits)
 
+lemma tick_toList: "invariant small \<Longrightarrow> toList (tick small) = toList small"
+proof(induction small rule: toList.induct)
+  case (1 common)
+  then show ?case by(auto simp: tick_toList)
+next
+  case (2 extra uu uv remained aux big new count)
+  then show ?case 
+    apply(auto simp: revN_take)
+    using empty apply blast
+        apply (simp add: not_empty_2 size_listLength)
+    using not_empty apply blast
+      apply (metis Stack_Proof.size_pop Suc_pred add_diff_cancel_left' first_pop rev.simps(2))
+     apply (metis Nat.add_0_right add.commute append_Nil2 empty length_0_conv length_rev not_empty not_gr_zero)
+    by (metis diff_add_inverse first_pop length_Cons rev.simps(2) size_listLength)
+next
+  case (3 v va vb)
+  (* HOW?! *)
+
+  have "Small.toList (Reverse1 v (Stack.pop va) (first va # vb)) = Small.toList (Reverse1 v va vb)"
+    sorry
+
+  show ?case 
+    apply(auto split: current.splits) 
+    sorry
+qed
+
 lemma invariant_tick: "invariant small \<Longrightarrow> invariant (tick small)" 
 proof(induction small rule: tick.induct)
   case (1 state)
   then show ?case 
     by(auto simp: invariant_tick)
 next
-  case (2 current uu aux)
+  case (2 current small aux)
   then show ?case
-    by(auto simp: Stack_Proof.pop size_listLength split: current.splits)
+    apply(auto simp: Stack_Proof.pop size_listLength split: current.splits)
+    sorry
 next
-  case (3 current big aux v)
+  case (3 current auxS big newS count)
   then show ?case
-    apply (auto simp: Stack_Proof.size_pop not_empty not_empty_2 size_listLength split: current.splits)
-    using not_empty_2 apply blast
-     apply (metis add_cancel_left_left empty length_0_conv)
-    by (metis first_pop length_Cons)
+    apply(auto simp: split: current.splits) 
+          apply (metis length_0_conv not_empty_2 size_listLength)
+    using not_empty apply blast
+        apply (meson add_decreasing le_less_linear not_empty)
+    using not_empty apply blast
+      apply(auto simp: revN_take)
+      apply (metis Nat.add_0_right add.commute empty le_refl list.size(3) size_listLength take_all)
+     apply (simp add: Stack_Proof.size_pop)
+    by (metis first_pop length_Cons size_listLength)
 qed
 
 lemma invariant_push: "invariant small \<Longrightarrow> invariant (push x small)"
@@ -41,7 +73,10 @@ next
   case (2 current small aux)
   then show ?case 
     apply(induction current rule: get.induct)
-    by(auto simp: Stack_Proof.size_pop)
+     apply(auto simp: Stack_Proof.size_pop)
+    using diff_le_mono apply blast
+     apply (meson less_Suc_eq_le less_imp_diff_less)
+    sorry
 next
   case (3 current auxS big newS count)
   then show ?case 
@@ -49,10 +84,17 @@ next
      apply(auto simp: Stack_Proof.size_pop)
     apply (metis length_greater_0_conv less_eq_Suc_le not_empty_2 ordered_cancel_comm_monoid_diff_class.diff_add_assoc size_listLength)
     using diff_le_mono le_add2 apply blast
-       apply (meson diff_le_self le_trans)
-    apply (metis Suc_leI length_greater_0_conv not_empty_2 ordered_cancel_comm_monoid_diff_class.diff_add_assoc size_listLength)
-   by auto
+            apply (meson diff_le_self le_trans)
+    sorry
+    (*apply (metis Suc_leI length_greater_0_conv not_empty_2 ordered_cancel_comm_monoid_diff_class.diff_add_assoc size_listLength)
+   by auto *)
 qed
+
+lemma push: "toList (push x small) = x # toList small"
+  sorry
+
+lemma pop: "\<not>isEmpty small \<Longrightarrow> invariant small \<Longrightarrow> pop small = (x, small') \<Longrightarrow> x # toList small' = toList small"
+  sorry
 
 lemma currentList_push: "toCurrentList (push x small) = x # toCurrentList small"
   apply(induction x small rule: push.induct)

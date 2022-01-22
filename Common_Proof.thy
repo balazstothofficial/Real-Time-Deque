@@ -2,9 +2,24 @@ theory Common_Proof
   imports Common Idle_Proof Current_Proof
 begin
 
+lemma revN_take: "revN n xs acc = rev (take n xs) @ acc"
+  apply(induction n xs acc rule: revN.induct)
+  by auto
+
+lemma revN_revN: "(revN n (revN n xs []) []) = take n xs"
+  by(auto simp: revN_take)
+
+lemma tt: "aux \<noteq> [] \<Longrightarrow> take 1 (rev aux) = [last aux]"
+  apply(induction aux)
+   apply auto
+  by (meson Suc_leI length_greater_0_conv)
+
 lemma take_hd: "xs \<noteq> [] \<Longrightarrow> take (Suc 0) xs = [hd xs]"
   apply(induction xs)
   by auto
+
+lemma ttt: "\<not>Stack.isEmpty old \<Longrightarrow> [first old] = take 1 (Stack.toList old)"
+  by(auto simp:  first not_empty_2 take_hd)
 
 lemma tick_toList_helper: "\<lbrakk>a \<le> Suc b; b < a\<rbrakk> \<Longrightarrow> a - b = 1"
   by auto
@@ -60,7 +75,8 @@ next
     next
       case (Cons a as)
       then show ?case
-        by auto
+        apply auto
+        by (metis Suc_diff_Suc le_SucI not_le revN.simps(3))
      qed
   qed
 qed
@@ -71,6 +87,13 @@ lemma invariant_push: "invariant common \<Longrightarrow> invariant (push x comm
    apply(auto simp: invariant_put Stack_Proof.size_push split: stack.splits current.splits)
   by (metis Current.newSize.simps Current.toList.elims Nat.add_0_right One_nat_def add_Suc add_Suc_right put.simps)
 
+
+lemma something: "\<not>Stack.isEmpty old \<Longrightarrow> remained > 0 \<Longrightarrow> first old # take (remained - Suc 0) (Stack.toList (Stack.pop old)) = take remained (Stack.toList old)"
+  apply(induction old rule: Stack.pop.induct)
+    apply auto
+   apply (metis One_nat_def diff_Suc_eq_diff_pred gr_implies_not0 take_Cons' take_append)
+  by (simp add: take_Cons')
+  
 lemma invariant_pop: "\<lbrakk>
   \<not> isEmpty common; 
   invariant common;
@@ -87,20 +110,28 @@ next
   then show ?case 
   proof(induction current rule: get.induct)
     case (1 added old remained)
-    then show ?case
-    proof(induction old rule: Stack.pop.induct)
-      case 1
-      then show ?case 
-        by auto
-    next
-      case (2  x left right)
-      then show ?case
-        by auto
-    next
-      case (3 x right)
-      then show ?case 
-        by auto
-    qed
+    then have t: "x # take (remained - Suc 0) (Stack.toList (Stack.pop old)) = take remained (Stack.toList old)"
+      apply(auto simp: revN_take split: if_splits)
+       apply (metis less_imp_Suc_add something zero_less_Suc)
+      by (metis less_imp_Suc_add something zero_less_Suc)
+
+    from 1 have tt: "take (Stack.size old) (rev (take (remained - length new) aux)) = x # take (Stack.size old - Suc 0) (rev (take (remained - Suc (length new)) aux))"
+      apply(auto simp: revN_take split: if_splits)
+      apply (smt (z3) Suc_leI diff_Suc_eq_diff_pred diff_commute diff_is_0_eq hd_append2 length_greater_0_conv length_take less_add_same_cancel2 less_le_trans list.sel(1) min.absorb2 not_empty_2 rev_is_Nil_conv rev_rev_ident singleton_rev_conv size_listLength t take_all tt zero_less_diff)
+      (* TODO: just times out but works! *)
+      sorry
+ 
+
+    from 1 have ttt: "take (Stack.size old - min (length aux) (remained - length new)) new = take (Stack.size old - Suc (min (length aux) (remained - Suc (length new)))) new"
+      apply(auto split: if_splits)
+       apply (metis One_nat_def Suc_diff_Suc diff_Suc_eq_diff_pred diff_is_0_eq' le_diff_conv min.absorb2)
+      by (simp add: min.absorb2)
+
+    from 1 show ?case
+      apply(auto)
+      apply linarith+
+      apply(auto simp: revN_take Stack_Proof.size_pop t tt ttt)
+      using t by force
   next
     case (2 x xs added old remained)
     then show ?case by auto
@@ -111,23 +142,8 @@ lemma currentList_push: "toCurrentList (push x left) = x # toCurrentList left"
   apply(induction x left rule: push.induct)
   by(auto simp: put)
 
-lemma revN_take: "revN n xs acc = rev (take n xs) @ acc"
-  apply(induction n xs acc rule: revN.induct)
-  by auto
 
-lemma revN_revN: "(revN n (revN n xs []) []) = take n xs"
-  by(auto simp: revN_take)
-
-lemma tt: "aux \<noteq> [] \<Longrightarrow> take 1 (rev aux) = [last aux]"
-  apply(induction aux)
-   apply auto
-  by (meson Suc_leI length_greater_0_conv)
-
-lemma ttt: "\<not>Stack.isEmpty old \<Longrightarrow> [first old] = take 1 (Stack.toList old)"
-  by(auto simp:  first not_empty_2 take_hd)
-
-
-lemma list_pop: "invariant' common \<Longrightarrow> \<not>isEmpty common \<Longrightarrow> pop common = (x, common') \<Longrightarrow>
+lemma list_pop: "invariant common \<Longrightarrow> \<not>isEmpty common \<Longrightarrow> pop common = (x, common') \<Longrightarrow>
    toList common = x # toList common'"
 proof(induction common arbitrary: x rule: pop.induct)
   case (1 current idle)

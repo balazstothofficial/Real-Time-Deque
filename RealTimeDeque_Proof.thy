@@ -209,14 +209,15 @@ lemma list_enqueueLeft: "invariant deque \<Longrightarrow> listLeft (enqueueLeft
 
         from False have invariant: "Transformation.invariant ?transformation"
           apply(auto)
-          apply(auto simp: helper leftNotEmpty)
-            apply (metis Idle.invariant.simps Idle_Proof.invariant_push diff_le_self)
-              apply (metis Idle.invariant.simps Idle_Proof.invariant_push add_Suc_right diff_add_inverse)
-          by (simp add: le_Suc_eq not_empty_2 not_less_eq_eq size_listLength)
-          
+          apply(auto simp: revN_take helper leftNotEmpty)
+              apply (metis Idle.invariant.simps Idle_Proof.invariant_push diff_le_self)
+             apply (simp add: size_listLength)+
+          subgoal (* Just times out *) sorry
+          by (metis Idle.invariant.simps Idle_Proof.invariant_push add_Suc_right diff_add_inverse)
+       
         then have "toListLeft ?transformation = x # Idle.toList left' @ rev (Stack.toList right)"
-          apply(auto)
-          by (metis Cons_eq_appendI Idle.hyps Idle.toList.simps Idle_Proof.push rev_append rev_rev_ident)
+          apply(auto simp: revN_take)
+          by (metis (no_types, lifting) Idle.hyps Idle.toList.simps Idle_Proof.push append_Cons append_assoc rev_append rev_swap)
 
         with invariant have 
            "toListLeft (sixTicks ?transformation) = x # Idle.toList left' @ rev (Stack.toList right)"
@@ -291,7 +292,7 @@ lemma maybe: "\<lbrakk>Idle.pop left = (x, idle.Idle left' leftLength'); Idle.in
   apply auto
   by (metis Stack.isEmpty.elims(2) Stack.pop.simps(1) Stack_Proof.pop empty list.sel(2))
 
-lemma maybe_2_1: "\<lbrakk>\<not> Common.isEmpty common; Common.pop common = (x, common')\<rbrakk> \<Longrightarrow> Common.toList common = x # Common.toList common'"
+(*lemma maybe_2_1: "\<lbrakk>\<not> Common.isEmpty common; Common.pop common = (x, common')\<rbrakk> \<Longrightarrow> Common.toList common = x # Common.toList common'"
 proof(induction common rule: Common.pop.induct)
   case (1 current idle)
   then show ?case
@@ -330,9 +331,9 @@ next
     then show ?case by auto
   qed
 qed
-   
+   *)
 
-lemma maybe_2: "\<lbrakk>
+(*lemma maybe_2: "\<lbrakk>
   left = Small.state.Common x3;
   Common.pop x3 = (x, state);
    Common.invariant x2a;
@@ -363,7 +364,6 @@ next
         apply (smt (verit, best) Suc_diff_Suc diff_Suc_1 diff_self_eq_0 diff_zero leD le_less_Suc_eq length_Cons less_add_same_cancel2 less_le_trans less_nat_zero_code list.sel(3) list.size(3) neq0_conv revN.elims revN.simps(1) tl_append2)
         apply(induction "(remained - Suc (List.length new))" aux new rule: revN.induct)
           apply auto
-        sledgehammer
         sorry
     next
       case (3 x right)
@@ -375,7 +375,7 @@ next
     case (2 x xs added old remained)
     then show ?case by auto
   qed
-qed
+qed*)
  
 
 interpretation RealTimeDeque: Deque where
@@ -450,17 +450,17 @@ next
               (Reverse (Current [] 0 right (Stack.size right - Suc leftLength')) right [] (Stack.size right - Suc leftLength'))"
 
         from True have invariant: "Transformation.invariant ?transformation"
-          apply auto
-          using Idle_Proof.invariant_pop apply fastforce
-          apply (smt (verit, ccfv_threshold) Idle.invariant.simps Idle_Proof.invariant_pop Idle_Proof.size_pop Nat.add_diff_assoc Nat.diff_diff_right One_nat_def RealTimeDeque_Proof.pop_drop RealTimeDeque_Proof.revN_revN RealTimeDeque_Proof.revN_take RealTimeDeque_Proof.test Suc_diff_eq_diff_pred Suc_eq_plus1 Suc_eq_plus1_left Suc_n_not_le_n add_diff_cancel_right' add_leE append.assoc append_Nil2 diff_Suc_1 diff_add_inverse diff_diff_cancel diff_le_self le_add_diff_inverse le_diff_conv length_drop length_rev mult_2 mult_Suc nat_le_linear not_less_eq_eq numeral_2_eq_2 numeral_3_eq_3 rev_swap size_listLength take_all_iff trans_le_add1 zero_less_Suc)
-          apply (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_diff_le add_diff_cancel_right' le_add2 mult_2)
-          apply (metis Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff mult_2 mult_Suc not_less_eq_eq numeral_2_eq_2 numeral_3_eq_3 trans_le_add2)
-          apply (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_le_lessD not_empty)
-          apply (metis Idle.invariant.simps Idle_Proof.invariant_pop le_SucI le_add2 mult_2)
-          apply (smt (verit, ccfv_threshold) Idle.invariant.simps Idle_Proof.invariant_pop Idle_Proof.size_pop Nat.add_diff_assoc Nat.diff_diff_right One_nat_def RealTimeDeque_Proof.pop_drop RealTimeDeque_Proof.revN_revN RealTimeDeque_Proof.revN_take RealTimeDeque_Proof.test Suc_diff_eq_diff_pred Suc_eq_plus1 Suc_eq_plus1_left Suc_n_not_le_n add_diff_cancel_right' add_leE append.assoc append_Nil2 diff_Suc_1 diff_add_inverse diff_diff_cancel diff_le_self le_add_diff_inverse le_diff_conv length_drop length_rev mult_2 mult_Suc nat_le_linear not_less_eq_eq numeral_2_eq_2 numeral_3_eq_3 rev_swap size_listLength take_all_iff trans_le_add1 zero_less_Suc)
-          apply (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_diff_le add_diff_cancel_right' le_add2 mult_2)
-          apply (metis Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 trans_le_add2)
-          by (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_le_lessD not_empty)
+          apply(auto simp: size_listLength)
+          apply (metis RealTimeDeque_Proof.revN_revN RealTimeDeque_Proof.revN_take append_Nil2)
+                  apply (metis Idle.invariant.simps Idle_Proof.invariant_pop eq_imp_le le_SucI mult_2 size_listLength trans_le_add2)
+                 apply(auto simp: revN_take)
+          subgoal sorry (* Just timed out *)
+          apply (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_diff_le diff_add_inverse le_add1 mult_2 size_listLength)
+          apply (metis Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 size_listLength trans_le_add2)
+             apply (metis Idle.invariant.simps Idle_Proof.invariant_pop le_SucI le_add1 mult_2 size_listLength)
+          apply (metis Idle_Proof.pop \<open>\<lbrakk>Suc 0 \<le> leftLength'; \<not> List.length (Stack.toList right) \<le> 3 * leftLength'; Idle.pop left = (x, idle.Idle left' leftLength'); Idle.invariant left; rightLength = List.length (Stack.toList right); \<not> Idle.isEmpty left; \<not> Stack.isEmpty right; Idle.size left \<le> 3 * List.length (Stack.toList right); List.length (Stack.toList right) \<le> 3 * Idle.size left; Idle.toList left \<noteq> []\<rbrakk> \<Longrightarrow> rev (take (Suc (2 * leftLength') - List.length (Stack.toList ((Stack.pop ^^ (List.length (Stack.toList right) - Suc leftLength')) right))) (rev (take (List.length (Stack.toList right) - Suc leftLength') (Stack.toList left')))) @ rev (Stack.toList ((Stack.pop ^^ (List.length (Stack.toList right) - Suc leftLength')) right)) @ rev (take (List.length (Stack.toList right) - Suc leftLength') (Stack.toList right)) = Stack.toList left' @ rev (Stack.toList right)\<close> list.distinct(1))
+          apply (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_diff_le add_diff_cancel_right' le_add2 mult_2 size_listLength)
+          by (metis Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 size_listLength trans_le_add2)
 
         with True have "toListLeft ?transformation = tl (Idle.toList left) @ rev (Stack.toList right)"
           by(auto simp: maybe)
@@ -514,70 +514,13 @@ next
       case (Pair x left')
       let ?newTransfomation = "Left left' right"
       let ?tickedTransformation = "fourTicks ?newTransfomation"
-
-
+  
       from Pair have invariant: "Transformation.invariant ?newTransfomation"
-      proof(induction left')
-        case (Reverse1 x1 x2 x3a)
-        then show ?case sorry
-      next
-        case (Reverse2 x1 x2 x3a x4 x5)
-        then show ?case sorry
-      next
-        case (Common state)
-        then show ?case
-          apply(auto split: prod.splits Big.state.splits current.splits Small.state.splits)
-          apply (meson Common_Proof.invariant_pop)
-          subgoal sorry
-          subgoal sorry
-          apply (meson Common_Proof.invariant_pop)
-          using Common_Proof.currentList_empty \<open>\<And>x3 x2a. \<lbrakk>right = Big.state.Common x2a; left = Small.state.Common x3; Common.invariant x2a; Common.invariant x3; Common.toList x3 @ rev (Common.toList x2a) = Common.toCurrentList x3 @ rev (Common.toCurrentList x2a); \<not> Common.isEmpty x2a; \<not> Common.isEmpty x3; 4 * Common.newSize x3 + max (Common.remainingSteps x2a) (Common.remainingSteps x3) \<le> 4 * Common.newSize x2a; 4 * Common.newSize x2a + max (Common.remainingSteps x2a) (Common.remainingSteps x3) \<le> 12 * Common.newSize x3; Common.pop x3 = (x, state); Common.toCurrentList x3 \<noteq> []\<rbrakk> \<Longrightarrow> Common.toList state @ rev (Common.toList x2a) = Common.toCurrentList state @ rev (Common.toCurrentList x2a)\<close> apply blast
-          by (metis Common_Proof.currentList_empty \<open>\<And>x3 x2a. \<lbrakk>right = Big.state.Common x2a; left = Small.state.Common x3; Common.invariant x2a; Common.invariant x3; Common.toList x3 @ rev (Common.toList x2a) = Common.toCurrentList x3 @ rev (Common.toCurrentList x2a); \<not> Common.isEmpty x2a; \<not> Common.isEmpty x3; 4 * Common.newSize x3 + max (Common.remainingSteps x2a) (Common.remainingSteps x3) \<le> 4 * Common.newSize x2a; 4 * Common.newSize x2a + max (Common.remainingSteps x2a) (Common.remainingSteps x3) \<le> 12 * Common.newSize x3; Common.pop x3 = (x, state); Common.toCurrentList x3 \<noteq> []; Common.isEmpty state\<rbrakk> \<Longrightarrow> False\<close>)
-      qed
-      (*
-      proof(induction left rule: pop.induct)
-        case (1 state)
-        then show ?case 
-        proof(induction state rule: Common.pop.induct)
-          case (1 current idle)
-          then show ?case
-            apply(auto split: prod.splits Big.state.splits)
-            apply (meson Idle_Proof.invariant_pop)
-            apply (meson invariant_get)
-            subgoal sorry
-            apply (metis Idle_Proof.pop get list.distinct(1) list.sel(3) tl_append2)
-            sorry
-        next
-          case (2 current aux new moved)
-          then show ?case
-          proof(induction current rule: get.induct)
-            case (1 added old remained)
-            then show ?case sorry
-          next
-            case (2 x' xs added old remained)
-            then have "remained > 0"
-              by auto
-            with 2 have "(remained > 0 \<and> \<not>Stack.isEmpty old)"
-              by(auto simp: Let_def split: state_splits)
-             
-            with 2 have "\<not> Current.isEmpty (Current xs (List.length xs) old remained)"
-              by (simp add: \<open>(x, left') = Small.pop (Small.state.Common (Copy (Current (x' # xs) added old remained) aux new moved))\<close> \<open>0 < remained \<and> \<not> Stack.isEmpty old\<close> \<open>RealTimeDeque.invariant (Transforming (transformation.Left (Small.state.Common (Copy (Current (x' # xs) added old remained) aux new moved)) right))\<close> \<open>listLeft (Transforming (transformation.Left (Small.state.Common (Copy (Current (x' # xs) added old remained) aux new moved)) right)) \<noteq> []\<close> Current.isEmpty.simps less_numeral_extra(3))
-
-            with 2 show ?case 
-              by(auto simp: Let_def split: state_splits)
-          qed
-        qed
-      next
-        case (2 current small auxS)
-        then show ?case sorry
-      next
-        case (3 current auxS big newS count)
-        then show ?case sorry
-      qed*)
-
-      then have toList: "toListLeft ?newTransfomation =  tl (Small.toCurrentList left) @ rev (Big.toCurrentList right)"
-        apply(auto simp: push_small currentList_pop)
-        by (metis (no_types, lifting) Pair.hyps Pair.prems(1) RealTimeDeque.invariant.simps(6) Small_Proof.currentList_pop States.invariant.elims(2) Transformation.invariant.simps(1) case_prodD)
+        by (metis RealTimeDeque.invariant.simps(6) States.isEmpty.simps Transformation.isEmpty.simps(1) Transformation_Proof.invariant_pop_small)
+     
+      then have toList: "toListLeft ?newTransfomation = tl (Small.toCurrentList left) @ rev (Big.toCurrentList right)"
+        apply(auto)
+        by (metis Pair.hyps Pair.prems(1) RealTimeDeque.invariant.simps(6) Small_Proof.currentList_pop States.isEmpty.simps Transformation.isEmpty.simps(1))
 
       from invariant have fourTicks: "Transformation.invariant ?tickedTransformation"
         using invariant_fourTicks by blast
@@ -595,7 +538,8 @@ next
     qed
   next
     case (6 left right)
-    then show ?case sorry
+    then show ?case 
+      sorry
   next
     case 7
     then show ?case by auto
@@ -713,10 +657,12 @@ next
 
         from False have invariant: "Transformation.invariant ?transformation"
           apply(auto simp: helper leftNotEmpty)
-            apply (metis Idle.invariant.simps Idle_Proof.invariant_push diff_le_self)
-              apply (metis Idle.invariant.simps Idle_Proof.invariant_push Suc_diff_le add_diff_cancel_left' le_add1)
+              apply (metis Idle.invariant.simps Idle_Proof.invariant_push diff_le_self)
+          sorry
+          (*    apply (metis Idle.invariant.simps Idle_Proof.invariant_push Suc_diff_le add_diff_cancel_left' le_add1)
           by (metis Idle.invariant.simps Idle_Proof.invariant_push diff_diff_cancel diff_is_0_eq' funpow_0 helper_1_3 helper_1_4 leftNotEmpty length_greater_0_conv less_numeral_extra(3) mult_2 nat_le_linear not_empty_2 size_listLength)
-
+          *)
+    
         with inSizeWindow have sixTicks_inSizeWindow: "inSizeWindow (sixTicks ?transformation)"
           using sixTicks_inSizeWindow by blast
 

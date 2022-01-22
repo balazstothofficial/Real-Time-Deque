@@ -54,10 +54,12 @@ fun invariant :: "'a states \<Rightarrow> bool" where
       | (_, Reverse1 _ _ _) \<Rightarrow> False
       | (Reverse _ _ _ _, _) \<Rightarrow> False
       | _ \<Rightarrow> True
-      )
+      ))"
+
+(* TODO:
    \<and> \<not> Big.isEmpty big
    \<and> \<not> Small.isEmpty small
-  )"
+  )" *)
 
 fun inSizeWindow' :: "'a states \<Rightarrow> nat \<Rightarrow> bool" where
   "inSizeWindow' (big, small) steps \<longleftrightarrow> 

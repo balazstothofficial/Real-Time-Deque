@@ -69,12 +69,8 @@ proof(induction states)
       apply (meson not_empty)
       apply (metis add.left_neutral empty neq0_conv not_empty rev.simps(1) self_append_conv2)
       apply (smt (z3) Stack_Proof.size_pop Suc_pred append_assoc diff_add_inverse first_pop rev.simps(2) rev_append rev_rev_ident rev_singleton_conv)
-      apply (metis (no_types, hide_lams) add.commute add_diff_cancel_right' append.left_neutral append_Cons append_assoc first_pop length_Cons rev.simps(2) size_listLength)
-      using not_empty apply blast
-      apply (metis (no_types, lifting) Stack_Proof.size_pop Suc_pred append_Cons append_eq_append_conv2 diff_add_inverse first_pop rev.simps(2) self_append_conv2)
-      apply (metis (no_types, hide_lams) Nil_is_rev_conv add_cancel_right_left empty length_0_conv self_append_conv2 size_listLength)
-      by (smt (z3) Nitpick.size_list_simp(2) Stack_Proof.pop append_assoc diff_add_inverse first_pop not_empty_2 rev.simps(2) rev_append rev_rev_ident rev_singleton_conv size_listLength)
-  next
+      by (metis (no_types, hide_lams) add.commute add_diff_cancel_right' append.left_neutral append_Cons append_assoc first_pop length_Cons rev.simps(2) size_listLength)
+   next
     case (Common x)
     then show ?case
       by(auto simp: Big_Proof.tick_toList Common_Proof.tick_toList)
@@ -291,6 +287,33 @@ next
     sorry
 qed*)
 
+lemma invariant_pop_big: "invariant (big, small) \<Longrightarrow> pop_invariant big \<Longrightarrow> \<not>Big.isEmpty big \<Longrightarrow> Big.pop big = (x, big') \<Longrightarrow> invariant (big', small)"
+proof(induction big arbitrary: small x rule: Big.pop.induct)
+  case (1 state)
+  then show ?case
+    apply(auto simp: revN_take split: prod.splits Small.state.splits current.splits)
+    apply (meson Common_Proof.invariant_pop)
+    sorry
+next
+  case (2 current big aux count)
+  then show ?case apply auto
+    sorry
+qed
+
+lemma invariant_pop_small: "invariant (big, small) \<Longrightarrow> \<not>Small.isEmpty small \<Longrightarrow> Small.pop small = (x, small') \<Longrightarrow> invariant (big, small')"
+proof(induction small arbitrary: big x rule: Small.pop.induct)
+  case (1 state)
+  then show ?case 
+    apply auto
+      apply (meson "1.prems"(2) "1.prems"(3) Small.invariant.simps(1) Small_Proof.invariant_pop)
+    sorry
+next
+  case (2 current small auxS)
+  then show ?case sorry
+next
+  case (3 current auxS big newS count)
+  then show ?case sorry
+qed
 
 lemma invariant_push_big: "invariant (big, small) \<Longrightarrow> invariant (Big.push x big, small)"
 proof(induction x big arbitrary: small rule: Big.push.induct)
@@ -366,35 +389,33 @@ lemma invariant_tick: "invariant states \<Longrightarrow> invariant (tick states
 proof(induction states rule: tick.induct)
   case (1 currentB big auxB currentS uu auxS)
   then show ?case 
-    by(auto split: current.splits)
+    apply(auto simp: revN_take split: current.splits)
+      apply (metis length_0_conv minus_nat.diff_0 rev_is_Nil_conv self_append_conv size_listLength take_eq_Nil)
+    apply (metis (no_types, hide_lams) length_rev length_take min.absorb2 nat_le_linear size_listLength take_all take_append)
+    by (metis length_0_conv minus_nat.diff_0 rev_is_Nil_conv self_append_conv size_listLength take_eq_Nil)
 next
   case ("2_1" v va vb vd right)
   then show ?case 
-    apply(auto simp: Stack_Proof.size_pop not_empty split: current.splits prod.splits Small.state.splits)
-    apply (smt (verit, best) Zero_not_Suc bot_nat_0.extremum_uniqueI empty first_pop funpow_swap1 list.size(3) revN.elims revN.simps(2) revN.simps(3) size_listLength)
+    apply(auto split: current.splits)
+         apply (simp add: Stack_Proof.size_pop not_empty)
+    (*apply(auto simp: Stack_Proof.size_pop not_empty split: current.splits prod.splits Small.state.splits)*)
+    sorry
+    (*apply (smt (verit, best) Zero_not_Suc bot_nat_0.extremum_uniqueI empty first_pop funpow_swap1 list.size(3) revN.elims revN.simps(2) revN.simps(3) size_listLength)
      apply (metis le_SucE not_empty zero_less_Suc)
-    by (metis Zero_not_Suc bot_nat_0.extremum_uniqueI empty first_pop funpow_swap1 list.size(3) revN.simps(3) size_listLength)
+    by (metis Zero_not_Suc bot_nat_0.extremum_uniqueI empty first_pop funpow_swap1 list.size(3) revN.simps(3) size_listLength)*)
 next
   case ("2_2" v right)
   then show ?case
     apply(auto simp: Common_Proof.invariant_tick Small_Proof.invariant_tick split:)
     apply (metis "2_2.prems" Big.tick.simps(1) Big.toList.simps(1) Common_Proof.tick_toCurrentList Pair_inject Small_Proof.tick_toCurrentList States.tick.simps(3) States.toList.simps(2) States_Proof.tick_toList)
-      apply(auto simp:  split: Small.state.splits current.splits if_splits)
-    using Common_Proof.some_empty apply blast+
-    using empty apply force
-    using Common_Proof.some_empty by blast
+    by(auto simp:  split: Small.state.splits current.splits if_splits)
 next
   case ("2_3" left v va vb vc vd)
   then show ?case
     apply(auto simp: Big_Proof.invariant_tick Small_Proof.invariant_tick split: current.split state_splits)
     apply (simp add: Common_Proof.tick_toCurrentList Common_Proof.tick_toList size_listLength)
-    using Common_Proof.some_empty apply blast
-    using Current.isEmpty.simps(1) Stack.isEmpty.elims(2) apply blast
-    apply (metis length_0_conv not_empty_2 size_listLength)
-    using not_empty apply blast
-    apply (meson add_decreasing le_less_linear not_empty)
-    using not_empty apply blast
-    apply (metis Common_Proof.tick_toCurrentList Common_Proof.tick_toList Nat.add_0_right add.commute append.left_neutral empty list.size(3) rev.simps(1) size_listLength)
+    sorry
+    (*apply (metis Common_Proof.tick_toCurrentList Common_Proof.tick_toList Nat.add_0_right add.commute append.left_neutral empty list.size(3) rev.simps(1) size_listLength)
     using not_empty apply blast
     using Common_Proof.some_empty apply blast
     apply (metis Stack_Proof.size_pop Suc_pred)
@@ -402,18 +423,16 @@ next
     apply (smt (z3) Common_Proof.tick_toCurrentList Common_Proof.tick_toList Stack_Proof.size_pop Suc_pred add_diff_cancel_left' append_assoc first_pop rev.simps(2) rev_append rev_rev_ident rev_singleton_conv)
     apply (metis Common_Proof.tick_toCurrentList Common_Proof.tick_toList append.left_neutral append_Cons append_assoc diff_add_inverse first_pop length_Cons rev.simps(2) size_listLength)
     using Common_Proof.some_empty apply blast
-    using Common_Proof.some_empty by blast
+    using Common_Proof.some_empty by blast*)
 next
   case ("2_4" left v)
   then show ?case 
     apply(auto simp: Big_Proof.invariant_tick Common_Proof.invariant_tick)
     apply (simp add: Big_Proof.tick_toCurrentList Big_Proof.tick_toList Common_Proof.tick_toCurrentList tick_toList_2)
-    apply(simp split: Big.state.splits)
-    using Big_Proof.some_empty apply blast
-    using Common_Proof.some_empty by blast
+    by(simp split: Big.state.splits)
 qed
 
-lemma tick_newSize_big: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small') \<Longrightarrow> Big.newSize big = Big.newSize big'"
+(*lemma tick_newSize_big: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small') \<Longrightarrow> Big.newSize big = Big.newSize big'"
   apply(induction "(big, small)" rule: tick.induct)
   by(auto simp: Big_Proof.tick_newSize split: current.splits)
 
@@ -461,6 +480,6 @@ lemma remainingStepsDecline: "invariant states \<Longrightarrow> remainingSteps 
 
 lemma tick_inSizeWindow: "invariant states \<Longrightarrow> inSizeWindow states \<Longrightarrow> inSizeWindow (tick states)"
   using hello remainingStepsDecline
-  by (smt (z3) inSizeWindow'.elims(1) inSizeWindow.simps tick_newSize_big tick_newSize_small)
+  by (smt (z3) inSizeWindow'.elims(1) inSizeWindow.simps tick_newSize_big tick_newSize_small)*)
 
 end

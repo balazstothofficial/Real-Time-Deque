@@ -64,6 +64,9 @@ next
     using statesToList by fastforce
 qed
 
+lemma invariant_pop_small: "invariant (Left small big) \<Longrightarrow> \<not>Small.isEmpty small \<Longrightarrow> Small.pop small = (x, small') \<Longrightarrow> invariant (Left small' big)"
+  by (meson Transformation.invariant.simps(1) invariant_pop_small)
+
 lemma nTicks: "invariant transformation \<Longrightarrow> toListLeft ((tick^^n) transformation) = toListLeft transformation"
   apply(induction n arbitrary: transformation)
   by(auto simp: funpow_swap1 tick_toList invariant_tick)
@@ -88,7 +91,7 @@ lemma invariant_fourTicks: "invariant transformation \<Longrightarrow> invariant
 lemma invariant_sixTicks: "invariant transformation \<Longrightarrow> invariant (sixTicks transformation)"
   by(auto simp: invariant_nTicks sixTicks_def)
 
-lemma tick_inSizeWindow: "invariant transformation \<Longrightarrow> inSizeWindow transformation \<Longrightarrow> inSizeWindow (tick transformation)"
+(*lemma tick_inSizeWindow: "invariant transformation \<Longrightarrow> inSizeWindow transformation \<Longrightarrow> inSizeWindow (tick transformation)"
   apply(induction transformation)
   apply (metis Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) Transformation.tick.simps(1) prod.case_eq_if prod.exhaust_sel tick_inSizeWindow)
   by (metis Transformation.inSizeWindow.simps(2) Transformation.invariant.simps(2) Transformation.tick.simps(2) prod.case_eq_if prod.exhaust_sel tick_inSizeWindow)
@@ -102,6 +105,5 @@ lemma fourTicks_inSizeWindow: "invariant transformation \<Longrightarrow> inSize
   by(auto simp: nTicks_inSizeWindow fourTicks_def)
 
 lemma sixTicks_inSizeWindow: "invariant transformation \<Longrightarrow> inSizeWindow transformation \<Longrightarrow> inSizeWindow (sixTicks transformation)"
-  by(auto simp: nTicks_inSizeWindow sixTicks_def)
-
+  by(auto simp: nTicks_inSizeWindow sixTicks_def)*)
 end

@@ -66,6 +66,7 @@ fun invariant :: "'a state \<Rightarrow> bool" where
     \<and> moved = List.length new
     \<and> remained \<le> List.length aux + moved
     \<and> Current.invariant current
+    \<and> take remained (Stack.toList old) = take (Stack.size old) (revN (remained - moved) aux new)
  )"
 
 (* 
@@ -76,13 +77,6 @@ fun invariant :: "'a state \<Rightarrow> bool" where
    (transformation.Right (Big.state.Common (state.Idle (Current [] 0 (Stack [22, 21] [20, 19, 18, 17, 16, 15, 14, 13, 12, 11]) 7) (idle.Idle (Stack [] [22, 21, 20, 19, 18, 17, 16]) 7)))
      (Small.state.Common (Copy (Current [] 0 (Stack [] [7, 8, 9, 10]) 9) [9, 8, 7] [10, 11, 12, 13, 14, 15] 6)))]"
 *)
-
-fun invariant' where
-  "invariant' (Copy current aux new moved) \<longleftrightarrow> invariant (Copy current aux new moved) \<and> (
-     case current of Current _ _ old remained \<Rightarrow>
-     take remained (Stack.toList old) = take (Stack.size old) (revN (remained - moved) aux new)
-  )"
-| "invariant' state = invariant state"
 
 fun remainingSteps :: "'a state \<Rightarrow> nat" where
   "remainingSteps (Idle _ _) = 0"

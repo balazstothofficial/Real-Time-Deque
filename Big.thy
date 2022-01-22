@@ -35,17 +35,39 @@ fun isEmpty :: "'a state \<Rightarrow> bool" where
   "isEmpty (Common state) = Common.isEmpty state"
 | "isEmpty (Reverse current _ _ _) = Current.isEmpty current"
 
+
+(*
+  Transforming
+   (transformation.Right
+     (Reverse (Current [] 0 (Stack [(20,) 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9] [8, 7, 6, 5]) 10) (Stack [14, 13, 12, 11, 10, 9] [8, 7, 6, 5])
+       [15, 16, 17, 18, 19, 20] 4)
+     (Reverse1 (Current [] 0 (Stack [] [0, 1, 2, 3, 4]) 11) (Stack [] []) [4, 3, 2, 1, 0])),
+  Transforming
+   (transformation.Right
+     (Reverse (Current [21] 1 (Stack [20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9] [8, 7, 6, 5]) 10) (Stack [10, 9] [8, 7, 6, 5])
+       [11, 12, 13, 14, 15, 16, 17, 18, 19, 20] 0)
+     (Reverse1 (Current [] 0 (Stack [] [0, 1, 2, 3, 4]) 11) (Stack [] []) [4, 3, 2, 1, 0])),
+
+
+
+  Reverse (Current [] 0 (Stack [] [a\<^sub>1]) 1) (Stack [] [a\<^sub>1]) [a\<^sub>2] 0
+*)
+
+ value "tick (Reverse (Current [] 0 (Stack [] [a\<^sub>1]) 1) (Stack [] [a\<^sub>1]) [a\<^sub>2] 0)"
+
 fun invariant :: "'a state \<Rightarrow> bool" where
   "invariant (Common state) \<longleftrightarrow> Common.invariant state"
 | "invariant (Reverse current big aux count) \<longleftrightarrow> (
-   case current of Current _ _ old remained \<Rightarrow>
+   case current of Current extra added old remained \<Rightarrow>
       Current.invariant current
     \<and> List.length aux \<ge> remained - count
     \<and> remained \<ge> count
     \<and> count \<le> Stack.size big
+    \<and> Stack.toList old = rev (take (Stack.size old) ((rev (Stack.toList big)) @ aux))
+    \<and> take remained (Stack.toList old) = rev (take remained (revN count (Stack.toList big) aux))
 )"
 
-(* TODO: This should be prevented on a higher level *) 
+(* TODO: This should be prevented on a higher level? *) 
 fun pop_invariant :: "'a state \<Rightarrow> bool" where
   "pop_invariant (Common state) = True"
 | "pop_invariant (Reverse (Current _ _ _ remained) _ _ count) \<longleftrightarrow> remained > count"

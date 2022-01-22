@@ -28,6 +28,10 @@ fun invariant :: "'a transformation \<Rightarrow> bool" where
   "invariant (Left small big)  \<longleftrightarrow> States.invariant (big, small)"
 | "invariant (Right big small) \<longleftrightarrow> States.invariant (big, small)"
 
+fun isEmpty :: "'a transformation \<Rightarrow> bool" where
+  "isEmpty (Left small big)  \<longleftrightarrow> States.isEmpty (big, small)"
+| "isEmpty (Right big small) \<longleftrightarrow> States.isEmpty (big, small)"
+
 fun remainingSteps where
   "remainingSteps (Left small big) = States.remainingSteps (big, small)"
 | "remainingSteps (Right big small) = States.remainingSteps (big, small)"

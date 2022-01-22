@@ -23,15 +23,34 @@ next
     by auto
 qed
 
-(* TODO: lemma pop: "pop big = (x, big') \<Longrightarrow> x # toList big' = toList big"
+lemma pop: "\<not>isEmpty big \<Longrightarrow> invariant big \<Longrightarrow> pop big = (x, big') \<Longrightarrow> x # toList big' = toList big"
 proof(induction x big rule: push.induct)
   case (1 x state)
-  then show ?case apply(auto split: prod.splits)
-    sorry
+  then show ?case
+    by(auto simp: list_pop split: prod.splits)
 next
   case (2 x current big aux count)
-  then show ?case sorry
-qed *)
+  then show ?case 
+  proof(induction current rule: get.induct)
+    case (1 added old remained)
+
+    then have "first old # rev (take (remained - Suc (length (Stack.toList big))) aux) = rev (take (remained - length (Stack.toList big)) aux)"
+      apply(auto simp: min_def split: if_splits)
+      sorry
+
+    with 1 have t: " first old #
+         rev (take (remained - Suc (min (length (Stack.toList big)) count)) aux) = rev (take (remained - min (length (Stack.toList big)) count) aux)"
+      apply(auto simp: min_def split: if_splits)
+      sorry
+
+    from 1 show ?case
+      apply(auto simp: t revN_take)
+      by (smt (z3) Suc_pred append_Cons diff_is_0_eq le_Suc_eq length_rev length_take not_Cons_self2 not_less_eq_eq rev_rev_ident t take_all_iff)
+  next
+    case (2 x xs added old remained)
+    then show ?case by auto
+  qed
+qed 
 
 lemma invariant_tick: "invariant big \<Longrightarrow> invariant (tick big)" 
 proof(induction big rule: tick.induct)
@@ -41,11 +60,16 @@ proof(induction big rule: tick.induct)
 next
   case (2 current uu aux)
   then show ?case
-    by(auto split: current.splits)
+    apply(auto simp: revN_take split: current.splits)
+    by (metis length_rev length_take min.absorb2 size_listLength take_append take_take)
 next
   case (3 current big aux v)
   then show ?case
-    by (auto simp: Stack_Proof.size_pop not_empty split: current.splits)
+    apply (auto simp: revN_take Stack_Proof.size_pop not_empty split: current.splits)
+    subgoal 
+     
+      sorry
+    sorry
 qed
 
 lemma invariant_push: "invariant big \<Longrightarrow> invariant (push x big)"
@@ -66,12 +90,20 @@ next
   case (2 current big aux count)
   then show ?case 
     apply(induction current rule: get.induct)
-    by auto
+     apply auto
+       apply linarith+
+    sorry
 qed
 
 lemma currentList_push: "toCurrentList (push x big) = x # toCurrentList big"
   apply(induction x big rule: push.induct)
   by(auto simp: currentList_push put)
+
+lemma currentList_pop: "\<not>isEmpty big \<Longrightarrow> pop big = (x, big') \<Longrightarrow> toCurrentList big' = tl (toCurrentList big)"
+  apply(induction big arbitrary: x rule: pop.induct)
+   apply(auto split: prod.splits)
+   apply (meson currentList_pop)
+  by (metis get list.sel(3))
 
 lemma some_empty: "\<lbrakk>isEmpty (tick big); \<not> isEmpty big; invariant big\<rbrakk> \<Longrightarrow> False"
   apply(induction big rule: tick.induct)

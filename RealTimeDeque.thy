@@ -180,8 +180,9 @@ fun invariant :: "'a deque \<Rightarrow> bool" where
    3 * Idle.size right \<ge> Idle.size left \<and>
    3 * Idle.size left \<ge> Idle.size right
   )"
-| "invariant (Transforming transformation) \<longleftrightarrow>
-   Transformation.invariant transformation \<and> 
-   inSizeWindow transformation"
+| "invariant (Transforming transformation) \<longleftrightarrow> 
+   Transformation.invariant transformation \<and>
+   \<not>Transformation.isEmpty transformation
+"
 
 end
