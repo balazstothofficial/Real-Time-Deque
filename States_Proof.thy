@@ -432,13 +432,13 @@ next
     by(simp split: Big.state.splits)
 qed
 
-lemma tick_newSize_big: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small') \<Longrightarrow> Big.newSize big = Big.newSize big'"
+lemma tick_size_big: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small') \<Longrightarrow> Big.size big = Big.size big'"
   apply(induction "(big, small)" rule: tick.induct)
-  by(auto simp: Big_Proof.tick_newSize split: current.splits)
+  by(auto simp: Big_Proof.tick_size split: current.splits)
 
-lemma tick_newSize_small: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small') \<Longrightarrow> Small.newSize small = Small.newSize small'"
+lemma tick_size_small: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small') \<Longrightarrow> Small.size small = Small.size small'"
   apply(induction "(big, small)" rule: tick.induct)
-  by(auto simp: Small_Proof.tick_newSize split: current.splits)
+  by(auto simp: Small_Proof.tick_size split: current.splits)
 
 (* TODO: Clean up! *)
 lemma revN_take: "revN n xs acc = rev (take n xs) @ acc"
@@ -495,7 +495,7 @@ qed
 
 lemma tick_inSizeWindow: "invariant states \<Longrightarrow> inSizeWindow states \<Longrightarrow> inSizeWindow (tick states)"
   using hello remainingStepsDecline
-  by (smt (verit, best) add.commute diff_add_inverse inSizeWindow'.elims(1) inSizeWindow.elims(1) le_diff_conv le_trans tick_newSize_big tick_newSize_small)
+  by (smt (z3) bot_nat_0.extremum_uniqueI inSizeWindow'.elims(2) inSizeWindow'.elims(3) inSizeWindow.elims(2) inSizeWindow.elims(3) neq0_conv remainingStepsDecline_2 tick_size_big tick_size_small)
 
 lemma tick_not_empty: "invariant states \<Longrightarrow> \<not>isEmpty states \<Longrightarrow> \<not>isEmpty (tick states)"
 proof(induction states) 
@@ -517,6 +517,7 @@ proof(induction states)
   qed
 qed
 
+(* TODO: check if this is still correct! *)
 lemma same: "invariant (big, small) \<Longrightarrow> remainingSteps (big, small) \<ge> 4 \<Longrightarrow> inSizeWindow (big, small) \<Longrightarrow> inSizeWindow ((tick ^^ 4) (big, Small.push x small))"
 proof(induction x small arbitrary: big rule: Small.push.induct)
   case (1 x state)
@@ -535,6 +536,24 @@ qed
 lemma same_2: "invariant (big, small) \<Longrightarrow> remainingSteps (big, small) \<ge> 4 \<Longrightarrow> inSizeWindow (big, small) \<Longrightarrow> Small.pop small = (x, small') \<Longrightarrow> inSizeWindow ((tick ^^ 4) (big, small'))"
   apply auto
   sorry
+
+lemma "invariant (big, small) \<Longrightarrow> 0 < remainingSteps (big, small) \<Longrightarrow> inSizeWindow (big, small) \<Longrightarrow> \<not>Small.isEmpty small"
+proof(induction small arbitrary: big)
+  case (Reverse1 x1 x2 x3a)
+  then show ?case sorry
+next
+case (Reverse2 x1 x2 x3a x4 x5)
+then show ?case sorry
+next
+  case (Common common)
+  
+  then have "Common.size common > 0"
+    by(auto)
+    
+  with Common show ?case 
+    apply(auto simp: max_def split: Big.state.splits if_splits)
+    sorry
+qed
 
 
 

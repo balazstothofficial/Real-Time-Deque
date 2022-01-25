@@ -114,9 +114,9 @@ lemma currentList_empty: "\<lbrakk>\<not> isEmpty big; toCurrentList big = []; i
   apply(induction big)
   using currentList_empty by(auto simp: not_empty_2 split: current.splits)
 
-lemma tick_newSize: "invariant big \<Longrightarrow> newSize big = newSize (tick big)"
+lemma tick_size: "invariant big \<Longrightarrow> size big = size (tick big)"
   apply(induction big rule: tick.induct)
-  by(auto simp: tick_newSize split: current.splits)
+  by(auto simp: tick_size split: current.splits)
 
 lemma tick_not_empty: "invariant big \<Longrightarrow> \<not>isEmpty big \<Longrightarrow> \<not>isEmpty (tick big)"
   apply(induction big rule: tick.induct)

@@ -607,16 +607,10 @@ next
           apply auto 
           by (metis Idle.size.simps Idle_Proof.size_push local.test)
 
-        from False have inSizeWindow: "inSizeWindow ?transformation"
-         apply(auto simp: max_def)
-          subgoal using test suc maybe2[of "Idle.size left'" "Stack.size right"]
-            apply auto 
-            by (simp add: not_empty_2 size_listLength)
-          apply (smt (z3) \<open>\<lbrakk>\<not> leftLength \<le> 3 * Stack.size right; idle.Idle left leftLength = Idle.push x left'; Idle.invariant left'; rightLength = Stack.size right; \<not> Idle.isEmpty left'; \<not> Stack.isEmpty right; Idle.size left' \<le> 3 * Stack.size right; Stack.size right \<le> 3 * Idle.size left'; leftLength + leftLength - Suc (Suc (Stack.size right + Stack.size right)) \<le> Suc (Stack.size left + (Stack.size right + leftLength - Stack.size left))\<rbrakk> \<Longrightarrow> 10 + (8 * Stack.size right + (Stack.size left + (Stack.size right + leftLength - Stack.size left))) \<le> 12 * (leftLength - Suc (Stack.size right))\<close> add_diff_cancel_left' add_leD2 diff_Suc_Suc eval_nat_numeral(3) le_antisym mult.commute mult.left_commute mult_2_right mult_Suc_right not_less_eq_eq numeral_Bit0 suc trans_le_add2)
-         subgoal  using test 
-           apply auto
-           by (smt (z3) Idle.size.simps Idle_Proof.size_push Nat.diff_diff_right Suc_eq_plus1_left add_Suc_right add_diff_cancel_left' diff_commute diff_is_0_eq le_SucI le_add1 le_add2 le_less_Suc_eq mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3)
-         done        
+        from False notEmpty have inSizeWindow: "inSizeWindow ?transformation"
+          apply(auto simp: max_def test suc)
+          sledgehammer
+          sorry       
 
 
         from False have invariant: "Transformation.invariant ?transformation"

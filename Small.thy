@@ -93,9 +93,9 @@ fun invariant :: "'a state \<Rightarrow> bool" where
     \<and> Stack.toList old = rev (take (Stack.size old) (rev (Stack.toList small) @ auxS))
   )"
 
-fun newSize :: "'a state \<Rightarrow> nat" where
-  "newSize (Common state) = Common.newSize state"
-| "newSize (Reverse2 current _ _ _ _) = Current.newSize current"
-| "newSize (Reverse1 current _ _) = Current.newSize current"
+fun size :: "'a state \<Rightarrow> nat" where
+  "size (Common state) = Common.size state"
+| "size (Reverse2 current _ _ _ _) = Current.size current"
+| "size (Reverse1 current _ _) = Current.size current"
 
 end

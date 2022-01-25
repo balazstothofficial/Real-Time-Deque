@@ -183,7 +183,7 @@ fun invariant :: "'a deque \<Rightarrow> bool" where
 | "invariant (Transforming transformation) \<longleftrightarrow> 
    Transformation.invariant transformation \<and>
    inSizeWindow transformation \<and>
-   \<not> Transformation.isEmpty transformation
+   0 < remainingSteps transformation
   "
 
 end

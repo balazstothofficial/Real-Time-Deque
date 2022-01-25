@@ -29,4 +29,7 @@ fun invariant :: "'a current \<Rightarrow> bool" where
 fun newSize :: "'a current \<Rightarrow> nat" where
   "newSize (Current _ added _ remained) = added + remained"
 
+fun size :: "'a current \<Rightarrow> nat" where
+  "size (Current _ added old _) = added + Stack.size old"
+
 end

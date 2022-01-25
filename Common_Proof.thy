@@ -243,7 +243,7 @@ lemma currentList_empty: "\<lbrakk>\<not> Common.isEmpty common; Common.toCurren
   using not_empty_2 apply blast
   by (metis get list.discI surj_pair)
 
-lemma tick_newSize: "invariant common \<Longrightarrow> newSize common = newSize (tick common)"
+lemma tick_size: "invariant common \<Longrightarrow> size common = size (tick common)"
   apply(induction common rule: tick.induct)
   by(auto split: current.splits)
 
