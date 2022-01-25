@@ -432,7 +432,7 @@ next
     by(simp split: Big.state.splits)
 qed
 
-(*lemma tick_newSize_big: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small') \<Longrightarrow> Big.newSize big = Big.newSize big'"
+lemma tick_newSize_big: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small') \<Longrightarrow> Big.newSize big = Big.newSize big'"
   apply(induction "(big, small)" rule: tick.induct)
   by(auto simp: Big_Proof.tick_newSize split: current.splits)
 
@@ -475,11 +475,67 @@ lemma test: "rev (drop n xs) @
              rev (take n xs) = rev xs"
   by (metis append_take_drop_id rev_append)
 
-lemma remainingStepsDecline: "invariant states \<Longrightarrow> remainingSteps states = Suc (remainingSteps (tick states))"
+lemma remainingStepsDecline: "invariant states \<Longrightarrow> remainingSteps states \<ge> remainingSteps (tick states)"
   sorry
+
+lemma remainingStepsDecline_2: "invariant states \<Longrightarrow> remainingSteps states > 0 \<Longrightarrow>  remainingSteps states = Suc (remainingSteps (tick states))"
+  sorry
+
+lemma tick_remainingSteps: "remainingSteps states \<ge> n \<Longrightarrow> invariant states \<Longrightarrow> remainingSteps states = remainingSteps ((tick^^n) states) + n" 
+proof(induction n arbitrary: states)
+  case 0
+  then show ?case by simp
+next
+  case (Suc n)
+  then show ?case
+    using remainingStepsDecline_2[of states] invariant_tick[of states]
+    by (smt (verit, ccfv_SIG) Suc_le_mono add_Suc_right funpow_simps_right(2) le_zero_eq neq0_conv o_apply zero_less_Suc)
+qed
+
 
 lemma tick_inSizeWindow: "invariant states \<Longrightarrow> inSizeWindow states \<Longrightarrow> inSizeWindow (tick states)"
   using hello remainingStepsDecline
-  by (smt (z3) inSizeWindow'.elims(1) inSizeWindow.simps tick_newSize_big tick_newSize_small)*)
+  by (smt (verit, best) add.commute diff_add_inverse inSizeWindow'.elims(1) inSizeWindow.elims(1) le_diff_conv le_trans tick_newSize_big tick_newSize_small)
+
+lemma tick_not_empty: "invariant states \<Longrightarrow> \<not>isEmpty states \<Longrightarrow> \<not>isEmpty (tick states)"
+proof(induction states) 
+  case (Pair big small)
+  then show ?case
+  proof(induction "Big.isEmpty big")
+    case True
+    then show ?thesis sorry
+  next
+    case False
+    then have "\<not>Big.isEmpty (Big.tick big)"
+      using Big_Proof.tick_not_empty by auto
+    with False show ?thesis 
+      apply(auto split: prod.splits Big.state.splits Small.state.splits current.splits)
+      subgoal apply(auto simp: revN_take)
+        sorry
+      using not_empty_2 apply blast
+      using Common_Proof.some_empty by blast
+  qed
+qed
+
+lemma same: "invariant (big, small) \<Longrightarrow> remainingSteps (big, small) \<ge> 4 \<Longrightarrow> inSizeWindow (big, small) \<Longrightarrow> inSizeWindow ((tick ^^ 4) (big, Small.push x small))"
+proof(induction x small arbitrary: big rule: Small.push.induct)
+  case (1 x state)
+  
+  with 1 show ?case 
+    apply(auto simp: max_def split: Big.state.splits prod.splits if_splits)
+    sorry
+next
+  case (2 x current small auxS)
+then show ?case sorry
+next
+  case (3 x current auxS big newS count)
+  then show ?case apply auto sorry
+qed
+
+lemma same_2: "invariant (big, small) \<Longrightarrow> remainingSteps (big, small) \<ge> 4 \<Longrightarrow> inSizeWindow (big, small) \<Longrightarrow> Small.pop small = (x, small') \<Longrightarrow> inSizeWindow ((tick ^^ 4) (big, small'))"
+  apply auto
+  sorry
+
+
 
 end

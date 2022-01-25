@@ -91,7 +91,29 @@ next
 qed
 
 lemma push: "toList (push x small) = x # toList small"
-  sorry
+proof(induction x small rule: push.induct)
+  case (1 x state)
+  then show ?case 
+    apply auto
+    using Common_Proof.push by fastforce
+next
+  case (2 x current small auxS)
+  then show ?case 
+  proof(induction x current rule: put.induct)
+    case (1 element extra added old remained)
+    then show ?case apply auto
+      (* undefined! *)
+      sorry
+  qed
+next
+  case (3 x current auxS big newS count)
+  then show ?case 
+  proof(induction x current rule: put.induct)
+    case (1 element extra added old remained)
+    then show ?case by auto
+  qed
+qed
+
 
 lemma pop: "\<not>isEmpty small \<Longrightarrow> invariant small \<Longrightarrow> pop small = (x, small') \<Longrightarrow> x # toList small' = toList small"
   sorry
@@ -113,5 +135,16 @@ lemma currentList_empty: "\<lbrakk>\<not> isEmpty small; toCurrentList small = [
 lemma tick_newSize: "invariant small \<Longrightarrow> newSize small = newSize (tick small)"
   apply(induction small rule: tick.induct)
   by(auto simp: tick_newSize split: current.splits)
+
+lemma tick_not_empty: "invariant small \<Longrightarrow> \<not>isEmpty small \<Longrightarrow> \<not>isEmpty (tick small)"
+  apply(induction small rule: tick.induct)
+    apply(auto simp: tick_not_empty split: current.splits)
+  using not_empty_2 by blast
+
+lemma push_not_empty: "\<lbrakk>\<not> isEmpty small; isEmpty (push x small)\<rbrakk> \<Longrightarrow> False"
+  apply(induction x small rule: push.induct)
+    apply(auto simp: push_not_empty put_not_empty)
+  apply (meson Common_Proof.push_not_empty)
+  by (meson put_not_empty)+
 
 end

@@ -40,4 +40,9 @@ fun inSizeWindow :: "'a transformation \<Rightarrow> bool" where
   "inSizeWindow (Left small big) = States.inSizeWindow (big, small)"
 | "inSizeWindow (Right big small) = States.inSizeWindow (big, small)"
 
+
+fun inSizeWindow' :: "'a transformation \<Rightarrow> bool" where
+   "inSizeWindow' (Left small big) = States.inSizeWindow' (big, small) 0"
+| "inSizeWindow' (Right big small) = States.inSizeWindow' (big, small) 0"
+
 end

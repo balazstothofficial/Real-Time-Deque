@@ -118,4 +118,8 @@ lemma tick_newSize: "invariant big \<Longrightarrow> newSize big = newSize (tick
   apply(induction big rule: tick.induct)
   by(auto simp: tick_newSize split: current.splits)
 
+lemma tick_not_empty: "invariant big \<Longrightarrow> \<not>isEmpty big \<Longrightarrow> \<not>isEmpty (tick big)"
+  apply(induction big rule: tick.induct)
+  by(auto simp: tick_not_empty split: current.splits)
+
 end

@@ -172,17 +172,18 @@ fun invariant :: "'a deque \<Rightarrow> bool" where
 | "invariant (One _) = True"
 | "invariant (Two _ _) = True"
 | "invariant (Three _ _ _) = True"
-| "invariant (Idle left right) = (
+| "invariant (Idle left right) \<longleftrightarrow>
    Idle.invariant left  \<and>
    Idle.invariant right \<and>
    \<not> Idle.isEmpty left  \<and> 
    \<not> Idle.isEmpty right \<and>
    3 * Idle.size right \<ge> Idle.size left \<and>
    3 * Idle.size left \<ge> Idle.size right
-  )"
+  "
 | "invariant (Transforming transformation) \<longleftrightarrow> 
    Transformation.invariant transformation \<and>
-   \<not>Transformation.isEmpty transformation
-"
+   inSizeWindow transformation \<and>
+   \<not> Transformation.isEmpty transformation
+  "
 
 end

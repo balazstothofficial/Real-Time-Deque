@@ -74,4 +74,8 @@ lemma size_listLength: "Stack.size stack = List.length (Stack.toList stack)"
   apply(induction stack)
   by auto
 
+lemma push_not_empty: "\<lbrakk>\<not> isEmpty stack; isEmpty (push x stack)\<rbrakk> \<Longrightarrow> False"
+  apply(induction x stack rule: push.induct)
+  by auto
+
 end

@@ -56,15 +56,10 @@ fun invariant :: "'a states \<Rightarrow> bool" where
       | _ \<Rightarrow> True
       ))"
 
-(* TODO:
-   \<and> \<not> Big.isEmpty big
-   \<and> \<not> Small.isEmpty small
-  )" *)
-
 fun inSizeWindow' :: "'a states \<Rightarrow> nat \<Rightarrow> bool" where
   "inSizeWindow' (big, small) steps \<longleftrightarrow> 
-      4 * Big.newSize big \<ge> 4 * Small.newSize small + steps
-    \<and> 12 * Small.newSize small \<ge> 4 * Big.newSize big + steps
+      12 * Big.newSize big \<ge> 4 * Small.newSize small + steps + 4
+    \<and> 12 * Small.newSize small \<ge> 4 * Big.newSize big + steps + 4
   "
 
 lemma hello: "inSizeWindow' states (Suc steps) \<Longrightarrow> inSizeWindow' states steps"
@@ -76,5 +71,7 @@ fun inSizeWindow :: "'a states \<Rightarrow> bool" where
 
 fun isEmpty :: "'a states \<Rightarrow> bool" where
   "isEmpty (big, small) \<longleftrightarrow> Big.isEmpty big \<or> Small.isEmpty small"
+
+
 
 end

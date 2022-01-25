@@ -91,7 +91,7 @@ lemma invariant_fourTicks: "invariant transformation \<Longrightarrow> invariant
 lemma invariant_sixTicks: "invariant transformation \<Longrightarrow> invariant (sixTicks transformation)"
   by(auto simp: invariant_nTicks sixTicks_def)
 
-(*lemma tick_inSizeWindow: "invariant transformation \<Longrightarrow> inSizeWindow transformation \<Longrightarrow> inSizeWindow (tick transformation)"
+lemma tick_inSizeWindow: "invariant transformation \<Longrightarrow> inSizeWindow transformation \<Longrightarrow> inSizeWindow (tick transformation)"
   apply(induction transformation)
   apply (metis Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) Transformation.tick.simps(1) prod.case_eq_if prod.exhaust_sel tick_inSizeWindow)
   by (metis Transformation.inSizeWindow.simps(2) Transformation.invariant.simps(2) Transformation.tick.simps(2) prod.case_eq_if prod.exhaust_sel tick_inSizeWindow)
@@ -105,5 +105,27 @@ lemma fourTicks_inSizeWindow: "invariant transformation \<Longrightarrow> inSize
   by(auto simp: nTicks_inSizeWindow fourTicks_def)
 
 lemma sixTicks_inSizeWindow: "invariant transformation \<Longrightarrow> inSizeWindow transformation \<Longrightarrow> inSizeWindow (sixTicks transformation)"
-  by(auto simp: nTicks_inSizeWindow sixTicks_def)*)
+  by(auto simp: nTicks_inSizeWindow sixTicks_def)
+
+lemma tick_not_empty: "invariant transformation \<Longrightarrow> \<not>isEmpty transformation \<Longrightarrow> \<not>isEmpty (tick transformation)"
+proof(induction transformation rule: tick.induct)
+  case (1 small big)
+  then show ?case apply auto
+    sorry
+next
+  case (2 big small)
+  then show ?case sorry
+qed
+
+lemma nTicks_not_empty: "invariant transformation \<Longrightarrow> \<not>isEmpty transformation \<Longrightarrow> \<not>isEmpty ((tick^^n) transformation)"
+  apply(induction n arbitrary: transformation)
+  by(auto simp: tick_not_empty invariant_nTicks)
+
+lemma sixTicks_not_empty: "invariant transformation \<Longrightarrow> \<not>isEmpty transformation \<Longrightarrow> \<not>isEmpty (sixTicks transformation)"
+  by(auto simp: nTicks_not_empty sixTicks_def)
+
+lemma fourTicks_not_empty: "invariant transformation \<Longrightarrow> \<not>isEmpty transformation \<Longrightarrow> \<not>isEmpty (fourTicks transformation)"
+  by(auto simp: nTicks_not_empty fourTicks_def)
+
+
 end

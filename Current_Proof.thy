@@ -29,4 +29,8 @@ lemma invariant_bottom: "\<lbrakk>\<not> isEmpty current; invariant current\<rbr
   apply(induction current rule: get.induct)
   by(auto simp: size_pop)
 
+lemma put_not_empty: "\<lbrakk>\<not> isEmpty current; isEmpty (put x current)\<rbrakk> \<Longrightarrow> False"
+  apply(induction x current rule: put.induct)
+  by auto
+
 end

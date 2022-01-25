@@ -247,4 +247,13 @@ lemma tick_newSize: "invariant common \<Longrightarrow> newSize common = newSize
   apply(induction common rule: tick.induct)
   by(auto split: current.splits)
 
+lemma tick_not_empty: "invariant common \<Longrightarrow> \<not>isEmpty common \<Longrightarrow> \<not>isEmpty (tick common)"
+  apply(induction common rule: tick.induct)
+  by(auto split: current.splits)
+
+lemma push_not_empty: "\<lbrakk>\<not> isEmpty state; isEmpty (push x state)\<rbrakk> \<Longrightarrow> False"
+  apply(induction x state rule: push.induct)
+   apply(auto simp: put_not_empty push_not_empty split: current.splits)
+  using put_not_empty push_not_empty by fastforce+
+
 end
