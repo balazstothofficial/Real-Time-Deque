@@ -86,4 +86,8 @@ fun size :: "'a state \<Rightarrow> nat" where
   "size (Idle current _) = Current.size current"
 | "size (Copy current _ _ _) = Current.size current"
 
+fun newSize :: "'a state \<Rightarrow> nat" where
+  "newSize (Idle current _) = Current.newSize current"
+| "newSize (Copy current _ _ _) = Current.newSize current"
+
 end

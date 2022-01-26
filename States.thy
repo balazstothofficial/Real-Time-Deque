@@ -58,14 +58,10 @@ fun invariant :: "'a states \<Rightarrow> bool" where
 
 fun inSizeWindow' :: "'a states \<Rightarrow> nat \<Rightarrow> bool" where
   "inSizeWindow' (big, small) steps \<longleftrightarrow> 
-      4 * Small.size small + 12 * steps \<le> 12 * Big.size big
-    \<and> 4 * Big.size big + 12 * steps \<le> 12 * Small.size small
-  "
-
-fun inSizeWindow'' :: "'a states \<Rightarrow> nat \<Rightarrow> bool" where
-  "inSizeWindow'' (big, small) steps \<longleftrightarrow> 
-      4 * Small.size small \<ge> steps
-    \<and> 4 * Big.size big \<ge> steps
+      4 * Small.newSize small + steps \<le> 12 * Big.newSize big
+    \<and> 4 * Big.newSize big + steps \<le> 12 * Small.newSize small
+    \<and> steps \<le> 4 * Small.size small
+    \<and> steps \<le> 4 * Big.size big
   "
 
 lemma hello: "inSizeWindow' states (Suc steps) \<Longrightarrow> inSizeWindow' states steps"

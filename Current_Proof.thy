@@ -18,6 +18,13 @@ lemma get_2: "\<lbrakk>invariant current; 0 < size current; get current = (x, cu
    apply auto
   using first_pop not_empty by blast
 
+lemma get_3: "\<lbrakk>invariant current; 0 < newSize current; get current = (x, current')\<rbrakk>
+  \<Longrightarrow> x # Current.toList current' = Current.toList current"
+  apply(induction current arbitrary: x rule: get.induct)
+   apply auto
+  nitpick
+  sorry
+
 lemma bottom: "\<not> isEmpty current \<Longrightarrow> Current.toList (bottom current) = tl (Current.toList current)"
   apply(induction current rule: get.induct)
   by(auto simp: pop)

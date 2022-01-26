@@ -579,7 +579,7 @@ qed
 
 lemma tick_inSizeWindow: "invariant states \<Longrightarrow> inSizeWindow states \<Longrightarrow> inSizeWindow (tick states)"
   using hello remainingStepsDecline
-  by (smt (z3) bot_nat_0.extremum_uniqueI inSizeWindow'.elims(2) inSizeWindow'.elims(3) inSizeWindow.elims(2) inSizeWindow.elims(3) neq0_conv remainingStepsDecline_2 tick_size_big tick_size_small)
+  sorry (* TODO *)
 
 lemma tick_not_empty: "invariant states \<Longrightarrow> \<not>isEmpty states \<Longrightarrow> \<not>isEmpty (tick states)"
 proof(induction states) 
@@ -625,12 +625,12 @@ lemma same_3: "invariant (big, small) \<Longrightarrow> remainingSteps (big, sma
   apply auto
   sorry
 
-lemma sizeWindow_smallSize: "invariant (big, small) \<Longrightarrow> 0 < remainingSteps (big, small) \<Longrightarrow> inSizeWindow (big, small) \<Longrightarrow> 0 < Small.size small"
+lemma sizeWindow_smallSize: "0 < remainingSteps (big, small) \<Longrightarrow> inSizeWindow (big, small) \<Longrightarrow> 0 < Small.size small"
   apply(induction small arbitrary: big)
   by auto
 
-lemma sizeWindow_bigSize: "invariant (big, small) \<Longrightarrow> 0 < remainingSteps (big, small) \<Longrightarrow> inSizeWindow (big, small) \<Longrightarrow> 0 < Big.size big"
-  apply(induction small arbitrary: big)
+lemma sizeWindow_bigSize: "0 < remainingSteps (big, small) \<Longrightarrow> inSizeWindow (big, small) \<Longrightarrow> 0 < Big.size big"
+  apply(induction big arbitrary: small)
   by auto
 
 end

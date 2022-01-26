@@ -3,7 +3,6 @@ theory RealTimeDeque_Proof
 begin
 
 
-
 (* TODO: Clean up! *)
 lemma revN_take: "revN n xs acc = rev (take n xs) @ acc"
   apply(induction n xs acc rule: revN.induct)
@@ -499,9 +498,17 @@ next
     case (Transforming x)
     then show ?case 
       apply(induction x)
-       apply auto
+      apply auto
       using Small_Proof.currentList_empty_2 apply force
-      by (smt (z3) Nil_is_append_conv Small_Proof.currentList_empty_2 add_leD2 case_prod_conv less_le_trans nat_mult_le_cancel_disj not_less not_numeral_le_zero rev.simps(1) rev_rev_ident split_cong)
+      apply(auto simp: max_def split: prod.splits Big.state.splits Small.state.splits if_splits)
+      subgoal apply(auto simp: revN_take split: current.splits) 
+        by (metis bot_nat_0.extremum list.size(3) mult_is_0 not_less_eq_eq size_listLength)
+      subgoal apply(auto simp:  split: current.splits)
+        by (simp add: size_listLength) 
+      subgoal by(auto split: current.splits)
+      subgoal by(auto split: current.splits)
+      apply (meson Common_Proof.currentList_empty_2 less_le_trans nat_0_less_mult_iff)
+      by (metis Common_Proof.currentList_empty_2 Nat.add_0_right le_add2 le_antisym mult_0_right neq0_conv)
   qed
 next
   case (10 q)
@@ -598,15 +605,30 @@ next
         from False leftNotEmpty have " Stack.size right \<le> 3 * Idle.size left'"
           by auto
 
+        have dummy: "4 + 8 * Stack.size right \<le> 12 * (Stack.size left - Suc (Stack.size right)) \<longleftrightarrow>
+              16 + 20 * Stack.size right \<le> 12 * Stack.size left"
+          by auto
 
-        from False leftNotEmpty  have inSizeWindow: "inSizeWindow ?transformation"
-          apply(auto simp: )
-          subgoal apply(auto simp: test max_def) sorry
-          apply(auto simp: test)
-          sorry
+        from False leftNotEmpty have inSizeWindow: "inSizeWindow' ?transformation (remainingSteps ?transformation - 6)"
+          apply(auto simp: test max_def suc)
+          subgoal using local.test suc 
+          proof(induction "Stack.size left + Stack.size right \<le> 4")
+            case True
+            then show ?case
+              apply(auto simp: dummy)
+              by (smt (z3) add_Suc_shift add_diff_cancel_right' add_leE diff_zero first_pop length_Cons less_Suc_eq_le mult.commute mult_2_right mult_Suc_right not_less_eq numeral_3_eq_3 numeral_Bit0 size_listLength)
+          next
+            case False
+            then show ?case
+              by auto
+          qed
+          using local.test suc by linarith+
 
+        then have "inSizeWindow' (sixTicks ?transformation) (remainingSteps (sixTicks ?transformation))"
+          using sizeWindow_steps  invariant remSteps unfolding sixTicks_def by blast
 
-        from invariant have sixTicks_inSizeWindow: "inSizeWindow (sixTicks ?transformation)"
+        then have sixTicks_inSizeWindow: "inSizeWindow (sixTicks ?transformation)"
+          using sizeWindow'_sizeWindow
           using sixTicks_inSizeWindow inSizeWindow by blast
 
         from notEmpty invariant have sixTicks_notEmpty: "\<not>Transformation.isEmpty (sixTicks ?transformation)"
@@ -715,35 +737,55 @@ next
           then show ?case
           proof(induction "1 \<le> iLeftLength")
             case True
-            let ?tranformation = "transformation.Left (Reverse1 (Current [] 0 iLeft (Suc (2 * iLeftLength))) iLeft [])
+            let ?transformation = "transformation.Left (Reverse1 (Current [] 0 iLeft (Suc (2 * iLeftLength))) iLeft [])
               (Reverse (Current [] 0 right (Stack.size right - Suc iLeftLength)) right [] (Stack.size right - Suc iLeftLength))"
 
-            from True have invariant: "Transformation.invariant ?tranformation"
+            from True have invariant: "Transformation.invariant ?transformation"
               apply(auto simp: revN_take size_listLength)
                  apply (metis Idle.invariant.simps Idle_Proof.invariant_pop le_SucI le_add2 mult_2 size_listLength)
               subgoal sorry (* just times out *)
               apply (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_diff_le diff_add_inverse diff_le_self mult_2 size_listLength)
               by (metis Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 size_listLength trans_le_add2)
 
-            then have invariant_six: "Transformation.invariant (sixTicks ?tranformation)"
+            then have invariant_six: "Transformation.invariant (sixTicks ?transformation)"
               using invariant_sixTicks by blast
 
-            from True have "inSizeWindow ?tranformation"
-              apply(auto simp: max_def)
-              by (smt (z3) Idle.invariant.simps Idle.size.simps Idle_Proof.invariant_pop Idle_Proof.size_pop Suc_eq_plus1 add_Suc_right diff_add_inverse2 diff_commute diff_diff_left diff_is_0_eq mult_2 mult_Suc numeral_2_eq_2 numeral_3_eq_3)
+          
 
-            then have sizeWindow: "inSizeWindow (sixTicks ?tranformation)"
-              using invariant sixTicks_inSizeWindow by blast
+          from True have remSteps: "6 < Transformation.remainingSteps ?transformation"
+            by(auto simp: max_def)
 
-            from True have "\<not> Transformation.isEmpty ?tranformation"
+         with invariant have "5 < Transformation.remainingSteps (tick ?transformation)"
+          using remainingStepsDecline_3[of ?transformation 5] by auto
+
+        with invariant have "4 < Transformation.remainingSteps ((tick ^^ 2) ?transformation)"
+          using invariant_nTicks invariant_tick remainingStepsDecline_4[of ?transformation 4 1]
+          by (smt (z3) add.commute add_Suc_right funpow_0 numeral_2_eq_2 numeral_3_eq_3 numeral_Bit0 remSteps remainingStepsDecline_4)
+
+        with remSteps have remStepsEnd: "0 < Transformation.remainingSteps (sixTicks ?transformation)"
+          unfolding sixTicks_def using remainingStepsDecline_4[of ?transformation 5 5] 
+          by (smt (z3) One_nat_def Suc_eq_plus1 add_Suc_right invariant numeral_2_eq_2 numeral_3_eq_3 numeral_Bit0 remainingStepsDecline_4)
+            from True have test: "Stack.size iLeft = iLeftLength"
+              apply auto
+              by (metis Idle.invariant.simps Idle_Proof.invariant_pop)
+
+            from True have inSizeWindow: "inSizeWindow' ?transformation (remainingSteps ?transformation - 6)"
+              apply(auto simp: max_def test)
+              apply (smt (z3) Idle.invariant.simps Idle.size.simps Idle_Proof.invariant_pop Idle_Proof.size_pop Suc_eq_plus1 diff_add_inverse2 diff_commute diff_diff_left diff_is_0_eq mult.commute mult_2_right mult_Suc_right numeral_2_eq_2 numeral_3_eq_3)
+              by (smt (z3) Idle.size.simps Idle_Proof.size_pop add_2_eq_Suc diff_Suc_diff_eq1 diff_add_inverse diff_commute diff_diff_left diff_is_0_eq le_add1 local.test mult_2 mult_Suc mult_Suc_right numeral_2_eq_2 numeral_3_eq_3)
+
+            then have sizeWindow: "inSizeWindow (sixTicks ?transformation)"
+              using sizeWindow_steps invariant remSteps sizeWindow'_sizeWindow unfolding sixTicks_def by blast
+
+            from True have "\<not> Transformation.isEmpty ?transformation"
               apply auto
               by (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_le_lessD not_empty)
 
-            then have "\<not> Transformation.isEmpty (sixTicks ?tranformation)"
+            then have "\<not> Transformation.isEmpty (sixTicks ?transformation)"
               using invariant sixTicks_not_empty by blast
         
             with True invariant_six sizeWindow show ?case
-              by(auto simp: Let_def split: prod.splits)
+              by(auto simp: Let_def remStepsEnd split: prod.splits)
           next
             case False
 
@@ -779,22 +821,13 @@ next
     let ?tickedTransformation = "fourTicks ?newTransfomation"
 
     from 5 t have invariant: "Transformation.invariant ?newTransfomation"
-      by (meson RealTimeDeque.invariant.simps(6) States.isEmpty.simps Transformation.isEmpty.simps(1) Transformation_Proof.invariant_pop_small)
+      by (metis RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(1) Transformation.remainingSteps.simps(1) Transformation_Proof.invariant_pop_small_2 sizeWindow_smallSize)
 
     then have invariant_fourTicks: "Transformation.invariant (fourTicks ?newTransfomation)"
       using invariant_fourTicks by blast
 
-
-    (*from 5 invariant have notEmpty: "\<not>Transformation.isEmpty ?newTransfomation"
-      apply auto
-      by fastforce
-
-
-    from 6 invariant notEmpty have fourTicks_notEmpty: "\<not>Transformation.isEmpty ?tickedTransformation"
-      using fourTicks_not_empty by blast*)
-
     from 5 show ?case
-    proof(induction "remainingSteps (Left left right) \<ge> 4")
+    proof(induction "remainingSteps (Left left right) > 4")
       case True
       then have inv: "States.invariant (right, left)"
         by auto
@@ -806,12 +839,13 @@ next
       from True inv steps t window have newWindow: "inSizeWindow (fourTicks ?newTransfomation)" 
         using same_2[of right left x newLeft] geficke3[of left x newLeft 4 right] unfolding fourTicks_def by auto
 
-      from True window have "\<not>Transformation.isEmpty ?newTransfomation"
-        apply(auto simp: split: Big.state.splits Small.state.splits current.splits)
-            apply(auto simp: revN_take)
-        sorry
 
-      from True show ?case apply auto
+      with invariant_fourTicks show ?case 
+        apply(auto simp: Let_def split: prod.splits transformation.splits)
+        subgoal sorry
+                  apply (simp add: t)
+        using t apply auto
+        sledgehammer
         sorry
     next
       case False

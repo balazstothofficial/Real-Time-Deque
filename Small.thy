@@ -55,24 +55,6 @@ fun isEmpty :: "'a state \<Rightarrow> bool" where
 | "isEmpty (Reverse1 current _ _) = Current.isEmpty current"
 | "isEmpty (Reverse2 current _ _ _ _) = Current.isEmpty current"
 
-(*
-  Transforming
-   (transformation.Right
-     (Reverse (Current [] 0 (Stack [(20,) 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9] [8, 7, 6, 5]) 10) (Stack [14, 13, 12, 11, 10, 9] [8, 7, 6, 5])
-       [15, 16, 17, 18, 19, 20] 4)
-     (Reverse1 (Current [] 0 (Stack [] [0, 1, 2, 3, 4]) 11) (Stack [] []) [4, 3, 2, 1, 0])),
-  Transforming
-   (transformation.Right
-     (Reverse (Current [21] 1 (Stack [20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9] [8, 7, 6, 5]) 10) (Stack [10, 9] [8, 7, 6, 5])
-       [11, 12, 13, 14, 15, 16, 17, 18, 19, 20] 0)
-     (Reverse1 (Current [] 0 (Stack [] [0, 1, 2, 3, 4]) 11) (Stack [] []) [4, 3, 2, 1, 0])),
-  Transforming
-   (transformation.Right
-     (Big.state.Common
-       (Copy (Current [22, 21] 2 (Stack [20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9] [8, 7, 6, 5]) 10) [14, 15, 16, 17, 18, 19, 20] [13, 12, 11] 3))
-     (Reverse2 (Current [] 0 (Stack [] [0, 1, 2, 3, 4]) 11) [4, 3, 2, 1, 0] (Stack [] [7, 6, 5]) [8, 9, 10] 3)),
-*)
-
 
 fun invariant :: "'a state \<Rightarrow> bool" where
   "invariant (Common state) = Common.invariant state"
@@ -97,5 +79,10 @@ fun size :: "'a state \<Rightarrow> nat" where
   "size (Common state) = Common.size state"
 | "size (Reverse2 current _ _ _ _) = Current.size current"
 | "size (Reverse1 current _ _) = Current.size current"
+
+fun newSize :: "'a state \<Rightarrow> nat" where
+  "newSize (Common state) = Common.newSize state"
+| "newSize (Reverse2 current _ _ _ _) = Current.newSize current"
+| "newSize (Reverse1 current _ _) = Current.newSize current"
 
 end

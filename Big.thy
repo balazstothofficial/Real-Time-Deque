@@ -61,4 +61,8 @@ fun size :: "'a state \<Rightarrow> nat" where
   "size (Common state) = Common.size state"
 | "size (Reverse current _ _ _) = Current.size current"
 
+fun newSize :: "'a state \<Rightarrow> nat" where
+  "newSize (Common state) = Common.newSize state"
+| "newSize (Reverse current _ _ _) = Current.newSize current"
+
 end

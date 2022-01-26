@@ -144,4 +144,11 @@ qed
 lemma remainingStepsDecline_4: "invariant transformation \<Longrightarrow> Suc n < remainingSteps ((tick ^^ m) transformation) \<Longrightarrow> n < remainingSteps ((tick ^^ Suc m) transformation)"
   by(auto simp: remainingStepsDecline_3 invariant_nTicks)
 
+lemma sizeWindow_steps: "invariant transformation \<Longrightarrow> n < remainingSteps transformation \<Longrightarrow> inSizeWindow' transformation (remainingSteps transformation - n) \<Longrightarrow> inSizeWindow' ((tick ^^ n) transformation) (remainingSteps ((tick ^^ n) transformation))"
+  sorry
+
+lemma sizeWindow'_sizeWindow: "inSizeWindow' transformation (remainingSteps transformation) = inSizeWindow transformation"
+  apply(induction transformation rule: inSizeWindow.induct)
+  by auto
+
 end
