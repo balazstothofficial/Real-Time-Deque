@@ -62,6 +62,12 @@ fun inSizeWindow' :: "'a states \<Rightarrow> nat \<Rightarrow> bool" where
     \<and> 4 * Big.size big + 12 * steps \<le> 12 * Small.size small
   "
 
+fun inSizeWindow'' :: "'a states \<Rightarrow> nat \<Rightarrow> bool" where
+  "inSizeWindow'' (big, small) steps \<longleftrightarrow> 
+      4 * Small.size small \<ge> steps
+    \<and> 4 * Big.size big \<ge> steps
+  "
+
 lemma hello: "inSizeWindow' states (Suc steps) \<Longrightarrow> inSizeWindow' states steps"
   apply(induction states steps rule: inSizeWindow'.induct)
   by auto

@@ -315,6 +315,85 @@ next
   then show ?case sorry
 qed
 
+lemma invariant_pop_small_2: "invariant (big, small) \<Longrightarrow> 0 < Small.size small \<Longrightarrow> Small.pop small = (x, small') \<Longrightarrow> invariant (big, small')"
+proof(induction small arbitrary: big x rule: Small.pop.induct)
+  case (1 state)
+  then show ?case 
+  proof(induction state rule: Common.pop.induct)
+    case (1 current idle)
+    then show ?case
+    proof(induction idle rule: Idle.pop.induct)
+      case (1 stack stackSize)
+      then show ?case 
+      proof(induction current rule: get.induct)
+        case (1 added old remained)
+        then show ?case
+          apply(auto split: Big.state.splits)
+          apply (metis (no_types, lifting) One_nat_def Stack.isEmpty.elims(2) Stack.pop.elims Stack_Proof.size_pop diff_is_0_eq empty_size list.distinct(1) nat_le_linear not_one_le_zero stack.inject)
+          apply (metis (no_types, lifting) One_nat_def Stack.isEmpty.elims(2) Stack.pop.elims Stack_Proof.size_pop diff_is_0_eq' empty linear list.discI list.size(3) not_one_le_zero size_listLength stack.inject)
+            (* TODO: *)
+          sorry
+      next
+        case (2 x xs added old remained)
+        then show ?case 
+          apply(auto split: Big.state.splits) 
+            apply (metis Stack_Proof.size_pop not_empty zero_less_Suc)
+           apply (metis One_nat_def Stack_Proof.size_pop diff_Suc_1 less_Suc_eq_0_disj not_empty)
+          by (metis Stack_Proof.pop empty_size list.sel(3) nat.discI not_empty_2 tl_append2)
+      qed
+    qed
+  next
+    case (2 current aux new moved)
+    then show ?case 
+    proof(induction current rule: get.induct)
+      case (1 added old remained)
+      then show ?case 
+        apply(auto simp: revN_take split: Big.state.splits) 
+            apply linarith+
+        subgoal sorry (* just times out *)
+        subgoal sorry (* found *)
+        (* found *)
+        sorry
+    next
+      case (2 x xs added old remained)
+      then show ?case by(auto split: Big.state.splits)
+    qed
+  qed
+next
+  case (2 current small auxS)
+  then show ?case
+   proof(induction current rule: get.induct)
+     case (1 added old remained)
+     then show ?case
+       apply(auto simp: revN_take split: Big.state.splits current.splits) 
+           apply (metis Stack_Proof.size_pop diff_le_mono not_empty)
+          apply (metis Stack_Proof.size_pop Suc_leD Suc_pred not_empty)
+         apply (meson Small_Proof.invariant_pop_2_helper)
+       subgoal sorry (* TODO *)
+       by (metis Stack_Proof.size_pop Suc_pred not_empty)
+   next
+     case (2 x xs added old remained)
+     then show ?case  by(auto split: Big.state.splits)
+   qed
+next
+  case (3 current auxS big newS count)
+  then show ?case  
+  proof(induction current rule: get.induct)
+    case (1 added old remained)
+    then show ?case 
+      apply(auto simp: revN_take split: Big.state.splits)
+          apply (simp add: Stack_Proof.size_pop not_empty)
+         apply (simp add: Stack_Proof.size_pop diff_le_mono not_empty)
+        apply (simp add: Stack_Proof.size_pop not_empty)
+      apply (metis One_nat_def Stack_Proof.pop Stack_Proof.size_pop Suc_diff_eq_diff_pred Suc_diff_le drop_Suc not_empty rev_take tl_drop)
+      by (simp add: Stack_Proof.pop Suc_diff_le Suc_pred diff_Suc_Suc drop_Suc not_empty rev_take tl_drop)
+  next
+    case (2 x xs added old remained)
+    then show ?case by(auto split: Big.state.splits)
+  qed
+qed
+
+
 lemma invariant_push_big: "invariant (big, small) \<Longrightarrow> invariant (Big.push x big, small)"
 proof(induction x big arbitrary: small rule: Big.push.induct)
   case (1 x state)
@@ -481,6 +560,11 @@ lemma remainingStepsDecline: "invariant states \<Longrightarrow> remainingSteps 
 lemma remainingStepsDecline_2: "invariant states \<Longrightarrow> remainingSteps states > 0 \<Longrightarrow>  remainingSteps states = Suc (remainingSteps (tick states))"
   sorry
 
+lemma remainingStepsDecline_3: "invariant states \<Longrightarrow> Suc n < remainingSteps states \<Longrightarrow> n < remainingSteps (tick states)"
+  apply(induction n)
+   apply (metis Suc_lessD gr_zeroI less_not_refl3 remainingStepsDecline_2)
+  by (metis Suc_lessD Suc_lessE Suc_lessI dual_order.strict_implies_not_eq remainingStepsDecline_2 zero_less_Suc)
+
 lemma tick_remainingSteps: "remainingSteps states \<ge> n \<Longrightarrow> invariant states \<Longrightarrow> remainingSteps states = remainingSteps ((tick^^n) states) + n" 
 proof(induction n arbitrary: states)
   case 0
@@ -512,8 +596,8 @@ proof(induction states)
       apply(auto split: prod.splits Big.state.splits Small.state.splits current.splits)
       subgoal apply(auto simp: revN_take)
         sorry
-      using not_empty_2 apply blast
-      using Common_Proof.some_empty by blast
+      subgoal using not_empty_2 sorry 
+      using Common_Proof.some_empty sorry
   qed
 qed
 
@@ -537,24 +621,16 @@ lemma same_2: "invariant (big, small) \<Longrightarrow> remainingSteps (big, sma
   apply auto
   sorry
 
-lemma "invariant (big, small) \<Longrightarrow> 0 < remainingSteps (big, small) \<Longrightarrow> inSizeWindow (big, small) \<Longrightarrow> \<not>Small.isEmpty small"
-proof(induction small arbitrary: big)
-  case (Reverse1 x1 x2 x3a)
-  then show ?case sorry
-next
-case (Reverse2 x1 x2 x3a x4 x5)
-then show ?case sorry
-next
-  case (Common common)
-  
-  then have "Common.size common > 0"
-    by(auto)
-    
-  with Common show ?case 
-    apply(auto simp: max_def split: Big.state.splits if_splits)
-    sorry
-qed
+lemma same_3: "invariant (big, small) \<Longrightarrow> remainingSteps (big, small) \<ge> 4 \<Longrightarrow> inSizeWindow (big, small) \<Longrightarrow> inSizeWindow ((tick ^^ 6) (big, Small.push x small))"
+  apply auto
+  sorry
 
+lemma sizeWindow_smallSize: "invariant (big, small) \<Longrightarrow> 0 < remainingSteps (big, small) \<Longrightarrow> inSizeWindow (big, small) \<Longrightarrow> 0 < Small.size small"
+  apply(induction small arbitrary: big)
+  by auto
 
+lemma sizeWindow_bigSize: "invariant (big, small) \<Longrightarrow> 0 < remainingSteps (big, small) \<Longrightarrow> inSizeWindow (big, small) \<Longrightarrow> 0 < Big.size big"
+  apply(induction small arbitrary: big)
+  by auto
 
 end

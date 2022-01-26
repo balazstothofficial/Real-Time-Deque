@@ -105,6 +105,7 @@ proof(induction common arbitrary: x rule: pop.induct)
     apply(induction idle arbitrary: x rule: Idle.pop.induct)
     apply(induction current rule: get.induct)
     by (auto simp: Stack_Proof.size_pop)
+   
 next
   case (2 current aux new moved)
   then show ?case 
@@ -132,6 +133,55 @@ next
       apply linarith+
       apply(auto simp: revN_take Stack_Proof.size_pop t tt ttt)
       using t by force
+  next
+    case (2 x xs added old remained)
+    then show ?case by auto
+  qed
+qed
+
+lemma invariant_pop_2_helper: "\<lbrakk>
+  0 < Current.size current; 
+  Current.invariant current; 
+  newSize current = Stack.size stack; 
+  get current = (x, current')
+\<rbrakk> \<Longrightarrow> newSize current' = Stack.size (Stack.pop stack) "
+proof(induction current rule: get.induct)
+  case (1 added old remained)
+  then show ?case
+    apply auto
+    apply(induction stack rule: Stack.pop.induct)
+    by auto
+next
+  case (2 x xs added old remained)
+  then show ?case 
+    apply auto
+    apply(induction stack rule: Stack.pop.induct)
+    by auto
+qed
+  
+lemma invariant_pop_2: "\<lbrakk>
+  0 < size common; 
+  invariant common;
+  pop common = (x, common')
+\<rbrakk> \<Longrightarrow> invariant common'"
+proof(induction common arbitrary: x rule: pop.induct)
+  case (1 current idle)
+  then show ?case 
+  proof(induction idle rule: Idle.pop.induct)
+    case (1 stack stackSize)
+    then show ?case 
+      apply(auto simp: invariant_pop_2_helper invariant_get_2 split: prod.splits)
+      by (metis (no_types, lifting) One_nat_def Stack.isEmpty.simps(2) Stack.pop.elims Stack.size.simps Stack_Proof.size_pop add.commute diff_is_0_eq empty_size nat_le_linear not_one_le_zero stack.inject)
+  qed
+next
+  case (2 current aux new moved)
+  then show ?case 
+  proof(induction current rule: get.induct)
+    case (1 added old remained)
+    then show ?case 
+      apply(auto simp: revN_take)
+        apply linarith+
+      sorry (* just times out *)
   next
     case (2 x xs added old remained)
     then show ?case by auto
@@ -228,20 +278,34 @@ qed
 lemma currentList_pop: "\<not>isEmpty common \<Longrightarrow> pop common = (x, common') \<Longrightarrow> toCurrentList common' = tl (toCurrentList common)"
   apply(induction common arbitrary: x rule: pop.induct)
    apply(auto simp: get split: prod.splits current.splits if_splits)
-    apply (metis get list.sel(3))
-   apply (metis Current.toList.simps get list.sel(3))
-  by (metis Current.toList.simps get list.sel(3))
+     apply (metis get list.sel(3))
+  by (metis Current.toList.simps get list.sel(3))+ 
+
+lemma currentList_pop_2: "invariant common \<Longrightarrow> 0 < size common \<Longrightarrow> pop common = (x, common') \<Longrightarrow> toCurrentList common' = tl (toCurrentList common)"
+  apply(induction common arbitrary: x rule: pop.induct)
+   apply(auto simp: get_2 split: prod.splits current.splits if_splits)
+      apply (metis get_2 list.sel(3))
+  apply (smt (z3) Current.isEmpty.simps Current.toList.simps append_Cons get less_nat_zero_code list.exhaust_sel list.inject)
+    apply (metis Current.isEmpty.simps Current.toList.simps get less_nat_zero_code list.sel(3) not_empty)
+  apply (metis Current.isEmpty.simps Current.toList.simps get length_0_conv less_irrefl_nat less_or_eq_imp_le list.sel(3) revN.simps(1) revN_revN take_all tl_append2)
+  by (metis Current.isEmpty.simps Current.toList.simps Suc_diff_Suc get list.sel(3) not_empty not_gr_zero zero_diff zero_less_Suc)
 
 lemma some_empty: "\<lbrakk>isEmpty (tick common); \<not> isEmpty common; invariant common\<rbrakk> \<Longrightarrow> False"
   apply(induction common rule: tick.induct)
   by(auto split: current.splits if_splits)
 
+(* Continue here: how to define empty? *)
 lemma currentList_empty: "\<lbrakk>\<not> Common.isEmpty common; Common.toCurrentList common = []; Common.invariant common\<rbrakk>
    \<Longrightarrow> False"
   apply(induction common)
    apply(auto split: current.splits)
   using not_empty_2 apply blast
   by (metis get list.discI surj_pair)
+
+lemma currentList_empty_2: "\<lbrakk>0 < Common.size x; Common.toCurrentList x = []; Common.invariant x\<rbrakk> \<Longrightarrow> False"
+  apply(induction x)
+   apply(auto simp: revN_take split: current.splits)
+  by (metis get_2 list.distinct(1) surj_pair)
 
 lemma tick_size: "invariant common \<Longrightarrow> size common = size (tick common)"
   apply(induction common rule: tick.induct)
@@ -255,5 +319,10 @@ lemma push_not_empty: "\<lbrakk>\<not> isEmpty state; isEmpty (push x state)\<rb
   apply(induction x state rule: push.induct)
    apply(auto simp: put_not_empty push_not_empty split: current.splits)
   using put_not_empty push_not_empty by fastforce+
+
+lemma size_empty: "invariant common \<Longrightarrow> size common = 0 \<Longrightarrow> isEmpty common"
+  apply(induction common)
+  by(auto simp: size_empty empty_size split: current.splits)
+  
 
 end

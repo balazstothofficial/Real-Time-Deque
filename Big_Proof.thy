@@ -45,7 +45,7 @@ next
 
     from 1 show ?case
       apply(auto simp: t revN_take)
-      by (smt (z3) Suc_pred append_Cons diff_is_0_eq le_Suc_eq length_rev length_take not_Cons_self2 not_less_eq_eq rev_rev_ident t take_all_iff)
+      by (smt (z3) Suc_diff_Suc append_Cons diff_is_0_eq diff_zero gr0I le_Suc_eq length_rev length_take list.discI min.absorb2 rev_is_Nil_conv rev_rev_ident size_listLength t take_all_iff take_eq_Nil)
   next
     case (2 x xs added old remained)
     then show ?case by auto
@@ -114,6 +114,13 @@ lemma currentList_empty: "\<lbrakk>\<not> isEmpty big; toCurrentList big = []; i
   apply(induction big)
   using currentList_empty by(auto simp: not_empty_2 split: current.splits)
 
+lemma currentList_empty_2: "\<lbrakk>0 < size big; toCurrentList big = []; invariant big\<rbrakk> \<Longrightarrow> False"
+  apply(induction big)
+    apply(auto  split: current.splits)
+    apply (simp add: size_listLength)
+  apply (simp add: size_listLength)
+  using currentList_empty_2 by blast
+
 lemma tick_size: "invariant big \<Longrightarrow> size big = size (tick big)"
   apply(induction big rule: tick.induct)
   by(auto simp: tick_size split: current.splits)
@@ -121,5 +128,10 @@ lemma tick_size: "invariant big \<Longrightarrow> size big = size (tick big)"
 lemma tick_not_empty: "invariant big \<Longrightarrow> \<not>isEmpty big \<Longrightarrow> \<not>isEmpty (tick big)"
   apply(induction big rule: tick.induct)
   by(auto simp: tick_not_empty split: current.splits)
+
+lemma size_empty: "invariant big \<Longrightarrow> size big = 0 \<Longrightarrow> isEmpty big"
+  apply(induction big)
+   apply(auto simp: size_empty Current_Proof.size_empty split: current.splits)
+  using not_empty_2 by blast
 
 end

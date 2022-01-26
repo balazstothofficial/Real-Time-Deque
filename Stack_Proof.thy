@@ -78,4 +78,23 @@ lemma push_not_empty: "\<lbrakk>\<not> isEmpty stack; isEmpty (push x stack)\<rb
   apply(induction x stack rule: push.induct)
   by auto
 
+lemma empty_size: "size stack = 0 \<longleftrightarrow> isEmpty stack"
+  apply(induction stack rule: isEmpty.induct)
+  by auto
+
+(*lemma isabelle_help: "\<lbrakk>
+  3 + 3 * b \<ge> s; 
+  3 * s \<ge> Suc b;
+  3 * b \<ge> s + 3;
+  3 * s + 1 \<ge> b;
+  3 * b \<ge> s + 1;
+  3 * b \<ge> Suc s;
+  3 + 3 * s \<ge> b;
+  3 * b + 1 \<ge> s;
+  3 * s \<ge> b + 3
+\<rbrakk> \<Longrightarrow> False"
+  apply auto
+  nitpick
+  sorry*)
+
 end

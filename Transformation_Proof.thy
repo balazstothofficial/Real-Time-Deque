@@ -67,6 +67,9 @@ qed
 lemma invariant_pop_small: "invariant (Left small big) \<Longrightarrow> \<not>Small.isEmpty small \<Longrightarrow> Small.pop small = (x, small') \<Longrightarrow> invariant (Left small' big)"
   by (meson Transformation.invariant.simps(1) invariant_pop_small)
 
+lemma invariant_pop_small_2: "invariant (Left small big) \<Longrightarrow> 0 < Small.size small \<Longrightarrow> Small.pop small = (x, small') \<Longrightarrow> invariant (Left small' big)"
+  by (meson Transformation.invariant.simps(1) invariant_pop_small_2)
+
 lemma nTicks: "invariant transformation \<Longrightarrow> toListLeft ((tick^^n) transformation) = toListLeft transformation"
   apply(induction n arbitrary: transformation)
   by(auto simp: funpow_swap1 tick_toList invariant_tick)
@@ -127,5 +130,18 @@ lemma sixTicks_not_empty: "invariant transformation \<Longrightarrow> \<not>isEm
 lemma fourTicks_not_empty: "invariant transformation \<Longrightarrow> \<not>isEmpty transformation \<Longrightarrow> \<not>isEmpty (fourTicks transformation)"
   by(auto simp: nTicks_not_empty fourTicks_def)
 
+lemma remainingStepsDecline_3: "invariant transformation \<Longrightarrow> Suc n < remainingSteps transformation \<Longrightarrow> n < remainingSteps (tick transformation)"
+proof(induction transformation)
+  case (Left small big)
+  then show ?case using remainingStepsDecline_3[of "(big, small)" n] 
+    by(auto split: prod.splits)
+next
+case (Right big small)
+  then show ?case using remainingStepsDecline_3[of "(big, small)" n] 
+    by(auto split: prod.splits)
+qed
+
+lemma remainingStepsDecline_4: "invariant transformation \<Longrightarrow> Suc n < remainingSteps ((tick ^^ m) transformation) \<Longrightarrow> n < remainingSteps ((tick ^^ Suc m) transformation)"
+  by(auto simp: remainingStepsDecline_3 invariant_nTicks)
 
 end

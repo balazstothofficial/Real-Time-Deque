@@ -2,55 +2,7 @@ theory RealTimeDeque_Proof
   imports Deque RealTimeDeque Transformation_Proof
 begin
 
-fun runningFold :: "('a deque \<Rightarrow> 'a deque) list \<Rightarrow> 'a deque \<Rightarrow> 'a deque list" where
-  "runningFold [] _ = []"
-| "runningFold (x#xs) deque = (
-  let deque = x deque 
-  in deque # runningFold xs deque
-)"
 
-value "runningFold 
-  [
-  enqueueLeft (0::int), 
-  enqueueLeft 1, 
-  enqueueLeft 2,
-  enqueueLeft 3,
-  enqueueLeft 4,
-  enqueueLeft 5,
-  enqueueLeft 6,
-  enqueueLeft 7,
-  enqueueLeft 8,
-  enqueueLeft 9,
-  enqueueLeft 10,
-  enqueueLeft 11,
-  enqueueLeft 12,
-  enqueueLeft 13,
-  enqueueLeft 14,
-  enqueueLeft 15,
-  enqueueLeft 16,
-  enqueueLeft 17,
-  enqueueLeft 18,
-  enqueueLeft 19,
-  enqueueLeft 20,
-  enqueueLeft 21,
-  enqueueLeft 22,
-  enqueueLeft 23,
-  enqueueLeft 24,
-  enqueueLeft 25,
-  dequeueRight,
-   dequeueRight,
-   dequeueRight,
-   dequeueRight,
-   dequeueRight,
-   dequeueRight,
-   dequeueRight,
-   dequeueLeft,
-   dequeueLeft,
-   dequeueLeft,
-    dequeueLeft
- 
-  ] 
-  Empty"
 
 (* TODO: Clean up! *)
 lemma revN_take: "revN n xs acc = rev (take n xs) @ acc"
@@ -318,6 +270,22 @@ lemma geficke3:  "Small.pop small =(x, small') \<Longrightarrow> States.inSizeWi
      Transformation.inSizeWindow ((tick ^^ n) (transformation.Left small' right))"
   sorry
 
+(*lemma why: "\<lbrakk>
+  \<not> leftLength \<le> 3 * Stack.size right; 
+  idle.Idle left leftLength = Idle.push x left'; 
+  Idle.invariant left'; 
+  rightLength = Stack.size right;
+  \<not> Idle.isEmpty left'; 
+  \<not> Stack.isEmpty right; 
+  Idle.size left' \<le> 3 * Stack.size right;
+ Stack.size right \<le> 3 * Idle.size left'
+\<rbrakk> \<Longrightarrow> False"
+proof(induction x left' rule: Idle.push.induct)
+  case (1 x stack stackSize)
+  then show ?case apply auto
+    sorry
+qed*)
+
 interpretation RealTimeDeque: Deque where
   empty        = empty        and
   enqueueLeft  = enqueueLeft  and
@@ -440,42 +408,35 @@ next
       case (Pair x left')
       let ?newTransfomation = "Left left' right"
       let ?tickedTransformation = "fourTicks ?newTransfomation"
-  
-      from Pair have invariant: "Transformation.invariant ?newTransfomation"
-      proof(induction left rule: Small.pop.induct)
-        case (1 state)
-        then have "\<not>Common.isEmpty state"
-          by auto
 
-        with 1 show ?case 
-          by (metis RealTimeDeque.invariant.simps(6) Small.isEmpty.simps(1) Transformation_Proof.invariant_pop_small)
-      next
-        case (2 current small auxS)
-        then show ?case 
-          by (metis RealTimeDeque.invariant.simps(6) States.isEmpty.simps Transformation.isEmpty.simps(1) Transformation_Proof.invariant_pop_small)
-      next
-        case (3 current auxS big newS count)
-        then show ?case 
-          by (metis RealTimeDeque.invariant.simps(6) States.isEmpty.simps Transformation.isEmpty.simps(1) Transformation_Proof.invariant_pop_small)
-      qed
+      from Pair have size: "0 < Small.size left"
+        by auto
+
+      with Pair invariant_pop_small_2[of left right x left'] have invariant: "Transformation.invariant ?newTransfomation"
+        by auto
      
       then have toList: "toListLeft ?newTransfomation = tl (Small.toCurrentList left) @ rev (Big.toCurrentList right)"
         apply(auto)
-        by (metis Pair.hyps Pair.prems(1) RealTimeDeque.invariant.simps(6) Small_Proof.currentList_pop States.isEmpty.simps Transformation.isEmpty.simps(1))
+        using size Small_Proof.currentList_pop_2[of left x left']
+        using Pair.hyps Pair.prems(1) by auto
+
+
 
       from invariant have fourTicks: "Transformation.invariant ?tickedTransformation"
         using invariant_fourTicks by blast
 
-      then have "toListLeft ?tickedTransformation = tl (Small.toCurrentList left) @ rev (Big.toCurrentList right)"
+      then have 1: "toListLeft ?tickedTransformation = tl (Small.toCurrentList left) @ rev (Big.toCurrentList right)"
         using Transformation_Proof.fourTicks invariant toList by fastforce
 
-
+      then have 2: "listLeft (dequeueLeft (Transforming (Left left right))) = toListLeft ?tickedTransformation"
+        apply(auto simp: Let_def split: prod.splits transformation.splits Small.state.splits)
+        using Pair.hyps apply fastforce+
+         apply(auto split: Common.state.splits Big.state.splits)
+        using Pair.hyps by fastforce+
+                             
       with Pair show ?case 
-        apply(auto simp: Let_def split: prod.split transformation.split Small.state.split Common.state.split Big.state.split)
-           apply (metis Small_Proof.currentList_empty tl_append2)
-        using Small_Proof.currentList_empty apply fastforce
-            apply (metis Small_Proof.currentList_empty tl_append2)
-        using Small_Proof.currentList_empty by fastforce+
+        apply(auto simp: 1 Let_def split: prod.split transformation.split Small.state.split Common.state.split Big.state.split)
+        by (metis Small_Proof.currentList_empty_2 size tl_append2)
     qed
   next
     case (6 left right)
@@ -538,9 +499,9 @@ next
     case (Transforming x)
     then show ?case 
       apply(induction x)
-      apply auto
-      using Small_Proof.currentList_empty apply blast
-      by (smt (verit, del_insts) Big_Proof.currentList_empty Nil_is_append_conv case_prod_conv old.prod.exhaust rev.simps(1) rev_rev_ident)
+       apply auto
+      using Small_Proof.currentList_empty_2 apply force
+      by (smt (z3) Nil_is_append_conv Small_Proof.currentList_empty_2 add_leD2 case_prod_conv less_le_trans nat_mult_le_cancel_disj not_less not_numeral_le_zero rev.simps(1) rev_rev_ident split_cong)
   qed
 next
   case (10 q)
@@ -594,6 +555,10 @@ next
               by auto
           qed
 
+
+          from False have "0 < leftLength"
+            by auto
+
         from False have notEmpty: "\<not>Transformation.isEmpty ?transformation"
           apply(auto simp:)
           using leftNotEmpty apply fastforce
@@ -605,23 +570,44 @@ next
 
         from False have suc: "Suc (Idle.size left') = leftLength"
           apply auto 
-          by (metis Idle.size.simps Idle_Proof.size_push local.test)
+          by (metis Idle.size.simps Idle_Proof.size_push local.test)    
 
-        from False notEmpty have inSizeWindow: "inSizeWindow ?transformation"
-          apply(auto simp: max_def test suc)
-          sledgehammer
-          sorry       
-
-
+        from False have remSteps: "6 < Transformation.remainingSteps ?transformation"
+          apply(auto simp: max_def)
+          by (smt (z3) add.commute add_2_eq_Suc' diff_add_inverse2 diff_is_0_eq le_less_Suc_eq length_greater_0_conv local.test mult_Suc not_empty_2 not_le not_less_eq numeral_3_eq_3 numeral_Bit0 size_listLength suc)
+          
+        
         from False have invariant: "Transformation.invariant ?transformation"
           apply(auto simp: size_listLength helper leftNotEmpty)
              apply (metis Idle.invariant.simps Idle_Proof.invariant_push diff_le_self size_listLength)
             apply (simp add: RealTimeDeque_Proof.revN_take)
           apply (metis RealTimeDeque_Proof.revN_revN helper_1 leftNotEmpty size_listLength)
           by (metis Idle.invariant.simps Idle_Proof.invariant_push add_Suc_right diff_add_inverse size_listLength)
-    
-        with inSizeWindow have sixTicks_inSizeWindow: "inSizeWindow (sixTicks ?transformation)"
-          using sixTicks_inSizeWindow by blast
+
+        with remSteps have "5 < Transformation.remainingSteps (tick ?transformation)"
+          using remainingStepsDecline_3[of ?transformation 5] by auto
+
+        with invariant have "4 < Transformation.remainingSteps ((tick ^^ 2) ?transformation)"
+          using invariant_nTicks invariant_tick remainingStepsDecline_4[of ?transformation 4 1]
+          by (smt (z3) add.commute add_Suc_right funpow_0 numeral_2_eq_2 numeral_3_eq_3 numeral_Bit0 remSteps remainingStepsDecline_4)
+
+        with remSteps have remStepsEnd: "0 < Transformation.remainingSteps (sixTicks ?transformation)"
+          unfolding sixTicks_def using remainingStepsDecline_4[of ?transformation 5 5] 
+          by (smt (z3) One_nat_def Suc_eq_plus1 add_Suc_right invariant numeral_2_eq_2 numeral_3_eq_3 numeral_Bit0 remainingStepsDecline_4)
+
+        from False leftNotEmpty have " Stack.size right \<le> 3 * Idle.size left'"
+          by auto
+
+
+        from False leftNotEmpty  have inSizeWindow: "inSizeWindow ?transformation"
+          apply(auto simp: )
+          subgoal apply(auto simp: test max_def) sorry
+          apply(auto simp: test)
+          sorry
+
+
+        from invariant have sixTicks_inSizeWindow: "inSizeWindow (sixTicks ?transformation)"
+          using sixTicks_inSizeWindow inSizeWindow by blast
 
         from notEmpty invariant have sixTicks_notEmpty: "\<not>Transformation.isEmpty (sixTicks ?transformation)"
          using sixTicks_not_empty by blast
@@ -630,7 +616,8 @@ next
          using invariant_sixTicks by blast
 
         with False sixTicks_inSizeWindow sixTicks_notEmpty show ?case
-          by(auto simp: Let_def split: idle.splits)
+          apply(auto simp: Let_def split: idle.splits)
+          using remStepsEnd by simp
        qed
     qed
   next
@@ -645,15 +632,6 @@ next
     then have invariant_fourTicks: "Transformation.invariant (fourTicks ?newTransfomation)"
       using invariant_fourTicks by blast
 
-
-    from 6 invariant push_not_empty have notEmpty: "\<not>Transformation.isEmpty ?newTransfomation"
-      apply auto
-      by fastforce
-
-
-    from 6 invariant notEmpty have fourTicks_notEmpty: "\<not>Transformation.isEmpty ?tickedTransformation"
-      using fourTicks_not_empty by blast
-
     
     with 6 invariant_fourTicks show ?case
     proof(induction "remainingSteps (Left left right) \<ge> 4")
@@ -667,8 +645,8 @@ next
       with True have "inSizeWindow ?tickedTransformation"
         using same[of right left x] states_inv states_rem states_window geficke2 unfolding fourTicks_def by auto
 
-      with True  show ?case 
-        unfolding fourTicks_def
+      with True show ?case
+        apply(auto simp: Let_def  split: transformation.splits)
         sorry
     next
       case False
