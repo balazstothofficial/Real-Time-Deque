@@ -10,8 +10,7 @@ datatype 'a state =
 fun toList :: "'a state \<Rightarrow> 'a list" where
   "toList (Common common) = Common.toList common"
 | "toList (Reverse2 (Current extra _ _ remained) aux big new count) =
-  extra @ revN (remained - (count + Stack.size big)) aux (rev (Stack.toList big) @ new)
-"
+  extra @ reverseN (remained - (count + Stack.size big)) aux (rev (Stack.toList big) @ new)"
 
 fun toCurrentList :: "'a state \<Rightarrow> 'a list" where
   "toCurrentList (Common common) = Common.toCurrentList common"

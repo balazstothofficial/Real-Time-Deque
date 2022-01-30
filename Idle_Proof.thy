@@ -2,22 +2,25 @@ theory Idle_Proof
   imports Idle Stack_Proof
 begin
 
-lemma push: "toList (push x idle) = x # toList idle"
+lemma push_toList: "toList (push x idle) = x # toList idle"
   apply(induction idle arbitrary: x)
-  by(auto simp: Stack_Proof.push)
+  by(auto simp: push_toList)
+
+lemma pop_toList: "\<lbrakk>\<not> isEmpty idle; pop idle = (x, idle')\<rbrakk> \<Longrightarrow> x # toList idle' = toList idle"
+  apply(induction idle arbitrary: x)
+  by(auto simp: pop_toList first_pop first_toList toList_isNotEmpty)
+
+lemma pop_toList_2: "\<lbrakk>0 < size idle; pop idle = (x, idle')\<rbrakk> \<Longrightarrow> x # toList idle' = toList idle"
+  apply(induction idle arbitrary: x)
+  by(auto simp: first_pop size_isNotEmpty)
 
 lemma size_push: "size (push x idle) = Suc (size idle)"
   apply(induction idle arbitrary: x)
   by(auto simp: Stack_Proof.size_push)
 
-lemma pop: "\<lbrakk>\<not> isEmpty idle; pop idle = (x, idle')\<rbrakk> \<Longrightarrow> x # toList idle' = toList idle"
-  apply(induction idle arbitrary: x)
-  by(auto simp: pop first_pop first not_empty_2)
-
 lemma size_pop: "\<lbrakk>\<not> isEmpty idle; pop idle = (x, idle')\<rbrakk> \<Longrightarrow> Suc (size idle')  = size idle"
   apply(induction idle arbitrary: x)
-  apply(auto simp: Stack_Proof.size_pop)
-  by (simp add: not_empty_2 size_listLength)
+  by(auto simp: size_listLength pop_listLength)
 
 lemma invariant_push: "invariant idle \<Longrightarrow> invariant (push x idle)"
   apply(induction x idle rule: push.induct)

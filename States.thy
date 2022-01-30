@@ -23,7 +23,7 @@ fun remainingSteps :: "'a states \<Rightarrow> nat" where
 fun toList :: "'a states \<Rightarrow> 'a list * 'a list" where
   "toList (Reverse currentB big auxB count, Reverse1 currentS small auxS) = (
     Big.toList (Reverse currentB big auxB count),
-    Small.toList (Reverse2 currentS (revN count (Stack.toList small) auxS) ((Stack.pop ^^ count) big) [] 0)
+    Small.toList (Reverse2 currentS (reverseN count (Stack.toList small) auxS) ((Stack.pop ^^ count) big) [] 0)
   )"
 | "toList (big, small) = (Big.toList big, Small.toList small)"
 
@@ -64,14 +64,10 @@ fun inSizeWindow' :: "'a states \<Rightarrow> nat \<Rightarrow> bool" where
     \<and> steps \<le> 4 * Big.size big
   "
 
-lemma hello: "inSizeWindow' states (Suc steps) \<Longrightarrow> inSizeWindow' states steps"
-  apply(induction states steps rule: inSizeWindow'.induct)
-  by auto
-
 fun inSizeWindow :: "'a states \<Rightarrow> bool" where
   "inSizeWindow states \<longleftrightarrow> inSizeWindow' states (remainingSteps states)"
 
 fun isEmpty :: "'a states \<Rightarrow> bool" where
   "isEmpty (big, small) \<longleftrightarrow> Big.isEmpty big \<or> Small.isEmpty small"
-
+                                                    
 end

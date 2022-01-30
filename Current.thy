@@ -26,10 +26,10 @@ fun isEmpty :: "'a current \<Rightarrow> bool" where
 fun invariant :: "'a current \<Rightarrow> bool" where
   "invariant (Current extra added old remained) \<longleftrightarrow> length extra = added"
 
-fun newSize :: "'a current \<Rightarrow> nat" where
-  "newSize (Current _ added _ remained) = added + remained"
-
 fun size :: "'a current \<Rightarrow> nat" where
   "size (Current _ added old _) = added + Stack.size old"
+
+fun newSize :: "'a current \<Rightarrow> nat" where
+  "newSize (Current _ added _ remained) = added + remained"
 
 end

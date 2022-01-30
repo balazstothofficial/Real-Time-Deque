@@ -1,20 +1,15 @@
 theory Common
-  imports Current Idle
+  imports Current Idle ReverseN
 begin
 
 datatype 'a state = 
     Copy "'a current" "'a list" "'a list" nat
     | Idle "'a current" "'a idle"
 
-fun revN :: "nat \<Rightarrow> 'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
-  "revN 0 xs acc = acc"
-| "revN n [] acc = acc"
-| "revN (Suc n) (x#xs) acc = revN n xs (x#acc)"
-
 fun toList :: "'a state \<Rightarrow> 'a list" where
   "toList (Idle _ idle) = Idle.toList idle"
 | "toList (Copy (Current extra _ _ remained) old new moved) 
-   = extra @ revN (remained - moved) old new"
+   = extra @ reverseN (remained - moved) old new"
 
 fun toCurrentList :: "'a state \<Rightarrow> 'a list" where
   "toCurrentList (Idle current _) = Current.toList current"
@@ -66,17 +61,8 @@ fun invariant :: "'a state \<Rightarrow> bool" where
     \<and> moved = List.length new
     \<and> remained \<le> List.length aux + moved
     \<and> Current.invariant current
-    \<and> take remained (Stack.toList old) = take (Stack.size old) (revN (remained - moved) aux new)
+    \<and> take remained (Stack.toList old) = take (Stack.size old) (reverseN (remained - moved) aux new)
  )"
-
-(* 
-   Transforming
-   (transformation.Right (Big.state.Common (Copy (Current [] 0 (Stack [23, 22, 21] [20, 19, 18, 17, 16, 15, 14, 13, 12, 11]) 8) [19, 20, 21, 22, 23, 24, 25] [18, 17, 16] 3))
-     (Reverse2 (Current [] 0 (Stack [] [7, 8, 9, 10]) 9) [10, 9, 8, 7] (Stack [] [12, 11]) [13, 14, 15] 3)),
-  Transforming
-   (transformation.Right (Big.state.Common (state.Idle (Current [] 0 (Stack [22, 21] [20, 19, 18, 17, 16, 15, 14, 13, 12, 11]) 7) (idle.Idle (Stack [] [22, 21, 20, 19, 18, 17, 16]) 7)))
-     (Small.state.Common (Copy (Current [] 0 (Stack [] [7, 8, 9, 10]) 9) [9, 8, 7] [10, 11, 12, 13, 14, 15] 6)))]"
-*)
 
 fun remainingSteps :: "'a state \<Rightarrow> nat" where
   "remainingSteps (Idle _ _) = 0"

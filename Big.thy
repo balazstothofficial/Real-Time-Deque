@@ -9,8 +9,8 @@ datatype 'a state =
 fun toList :: "'a state \<Rightarrow> 'a list" where
   "toList (Common common) = Common.toList common"
 | "toList (Reverse (Current extra _ _ remained) big aux count) = (
-   let reversed = revN count (Stack.toList big) aux in
-    extra @ (revN remained reversed [])
+   let reversed = reverseN count (Stack.toList big) aux in
+    extra @ (reverseN remained reversed [])
   )"
 
 fun toCurrentList :: "'a state \<Rightarrow> 'a list" where
@@ -33,7 +33,10 @@ fun pop :: "'a state \<Rightarrow> 'a * 'a state" where
 
 fun isEmpty :: "'a state \<Rightarrow> bool" where
   "isEmpty (Common state) = Common.isEmpty state"
-| "isEmpty (Reverse current _ _ _) = Current.isEmpty current"
+| "isEmpty (Reverse current _ _ count) = (
+    case current of Current extra added old remained \<Rightarrow> 
+      Current.isEmpty current \<or> remained \<le> count
+)"
 
 fun invariant :: "'a state \<Rightarrow> bool" where
   "invariant (Common state) \<longleftrightarrow> Common.invariant state"
@@ -44,7 +47,7 @@ fun invariant :: "'a state \<Rightarrow> bool" where
     \<and> remained \<ge> count
     \<and> count \<le> Stack.size big
     \<and> Stack.toList old = rev (take (Stack.size old) ((rev (Stack.toList big)) @ aux))
-    \<and> take remained (Stack.toList old) = rev (take remained (revN count (Stack.toList big) aux))
+    \<and> take remained (Stack.toList old) = rev (take remained (reverseN count (Stack.toList big) aux))
 )"
 
 (* TODO: This should be prevented on a higher level? *) 

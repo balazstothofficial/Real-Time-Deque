@@ -118,7 +118,7 @@ lemma helper: "\<lbrakk>
       @ rev (revN (leftLength - Suc (Stack.size right)) (revN (leftLength - Suc (Stack.size right)) (Stack.toList left) []) []) =
          Stack.toList right @ rev (Stack.toList left)"
   apply(simp add: revN_revN helper_1)
-  by (smt (verit, ccfv_SIG) Idle.size.simps Idle_Proof.size_push empty helper_1 length_greater_0_conv less_Suc_eq_0_disj size_listLength)
+  by (smt (verit, ccfv_SIG) Idle.size.simps Idle_Proof.size_push toList_isEmpty helper_1 length_greater_0_conv less_Suc_eq_0_disj size_listLength)
 
 lemma list_enqueueLeft: "invariant deque \<Longrightarrow> listLeft (enqueueLeft x deque) = x # listLeft deque"
   proof(induction x deque rule: enqueueLeft.induct)
@@ -242,7 +242,7 @@ lemma swap_2: "invariant (swap q) \<Longrightarrow> listLeft (enqueueLeft x (swa
 lemma maybe: "\<lbrakk>Idle.pop left = (x, idle.Idle left' leftLength'); Idle.invariant left\<rbrakk> \<Longrightarrow>  Stack.toList left' = tl (Idle.toList left)"
   apply(induction left rule: Idle.pop.induct)
   apply auto
-  by (metis Stack.isEmpty.elims(2) Stack.pop.simps(1) Stack_Proof.pop empty list.sel(2))
+  by (metis Stack.isEmpty.elims(2) Stack.pop.simps(1) Stack_Proof.pop_toList toList_isEmpty list.sel(2))
 
 lemma maybe2: "\<lbrakk>
   \<not> Suc l \<le> 3 * r; 
@@ -419,8 +419,6 @@ next
         using size Small_Proof.currentList_pop_2[of left x left']
         using Pair.hyps Pair.prems(1) by auto
 
-
-
       from invariant have fourTicks: "Transformation.invariant ?tickedTransformation"
         using invariant_fourTicks by blast
 
@@ -543,7 +541,7 @@ next
         then show ?case
           apply(auto split: idle.splits)
              apply (metis Idle.invariant.simps Idle_Proof.invariant_push)
-            apply (metis Idle.size.simps Idle_Proof.size_push not_empty zero_less_Suc)
+            apply (metis Idle.size.simps Idle_Proof.size_push size_isNotEmpty zero_less_Suc)
            apply (metis Idle.invariant.simps Idle_Proof.invariant_push)
           by (metis Idle.size.simps Idle_Proof.size_push diff_is_0_eq' le_diff_conv mult.commute mult_Suc zero_le_numeral)
       next
@@ -569,7 +567,7 @@ next
         from False have notEmpty: "\<not>Transformation.isEmpty ?transformation"
           apply(auto simp:)
           using leftNotEmpty apply fastforce
-          by (metis Idle.invariant.simps Idle_Proof.invariant_push diff_is_0_eq funpow_0 helper_1_3 helper_1_4 leftNotEmpty length_greater_0_conv mult_2 not_empty_2 not_le size_listLength)
+          by (metis Idle.invariant.simps Idle_Proof.invariant_push diff_is_0_eq funpow_0 helper_1_3 helper_1_4 leftNotEmpty length_greater_0_conv mult_2 size_isNotEmpty not_le size_listLength)
 
         from False have test: "leftLength = Stack.size left" 
           apply auto
@@ -581,7 +579,7 @@ next
 
         from False have remSteps: "6 < Transformation.remainingSteps ?transformation"
           apply(auto simp: max_def)
-          by (smt (z3) add.commute add_2_eq_Suc' diff_add_inverse2 diff_is_0_eq le_less_Suc_eq length_greater_0_conv local.test mult_Suc not_empty_2 not_le not_less_eq numeral_3_eq_3 numeral_Bit0 size_listLength suc)
+          by (smt (z3) add.commute add_2_eq_Suc' diff_add_inverse2 diff_is_0_eq le_less_Suc_eq length_greater_0_conv local.test mult_Suc size_isNotEmpty not_le not_less_eq numeral_3_eq_3 numeral_Bit0 size_listLength suc)
           
         
         from False have invariant: "Transformation.invariant ?transformation"
@@ -668,7 +666,7 @@ next
         using same[of right left x] states_inv states_rem states_window geficke2 unfolding fourTicks_def by auto
 
       with True show ?case
-        apply(auto simp: Let_def  split: transformation.splits)
+        apply(auto simp: Let_def split: transformation.splits)
         sorry
     next
       case False
@@ -729,7 +727,7 @@ next
           then show ?case 
             apply(auto split: prod.splits)
                apply (meson Idle.invariant.simps Idle_Proof.invariant_pop)
-            apply (metis Idle.invariant.simps Idle_Proof.invariant_pop bot_nat_0.extremum bot_nat_0.not_eq_extremum length_0_conv mult_zero_right not_empty not_empty_2 size_listLength verit_la_disequality)
+            apply (metis Idle.invariant.simps Idle_Proof.invariant_pop bot_nat_0.extremum bot_nat_0.not_eq_extremum length_0_conv mult_zero_right toList_isNotEmpty size_isNotEmpty size_listLength verit_la_disequality)
              apply (metis Idle.size.simps Idle_Proof.size_pop Suc_leD)
             using Idle_Proof.invariant_pop by fastforce
         next
@@ -779,7 +777,7 @@ next
 
             from True have "\<not> Transformation.isEmpty ?transformation"
               apply auto
-              by (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_le_lessD not_empty)
+              by (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_le_lessD size_isNotEmpty)
 
             then have "\<not> Transformation.isEmpty (sixTicks ?transformation)"
               using invariant sixTicks_not_empty by blast
@@ -845,7 +843,6 @@ next
         subgoal sorry
                   apply (simp add: t)
         using t apply auto
-        sledgehammer
         sorry
     next
       case False

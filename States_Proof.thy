@@ -5,6 +5,10 @@ begin
 lemmas state_splits = idle.splits Common.state.splits Small.state.splits Big.state.splits
 lemmas invariant_ticks = Big_Proof.invariant_tick Common_Proof.invariant_tick Small_Proof.invariant_tick
 
+lemma inSizeWindow'_Suc: "inSizeWindow' states (Suc steps) \<Longrightarrow> inSizeWindow' states steps"
+  apply(induction states steps rule: inSizeWindow'.induct)
+  by auto
+
 lemma invariant_listBigFirst: "invariant states \<Longrightarrow> toListBigFirst states = toCurrentListBigFirst states"
   apply(auto split: prod.splits)
   by (metis rev_append rev_rev_ident)
@@ -15,9 +19,7 @@ proof(induction states)
   then show ?case
  proof(induction small)
     case (Reverse1 currentS small auxS)
-
- 
-    from Reverse1 show ?case 
+    then show ?case 
     proof(induction big)
       case (Reverse currentB big aux count)
 
@@ -43,8 +45,8 @@ proof(induction states)
             apply(auto split: current.splits)
 
             using big apply(auto)
-            apply (metis empty funpow_swap1 revN.elims revN.simps(2))
-            by (metis first_pop funpow_swap1 revN.simps(3))
+            apply (metis toList_isEmpty funpow_swap1 reverseN.elims reverseN.simps(2))
+            by (metis first_pop funpow_swap1 reverseN.simps(3))
         next
           case ("2_1" v small)
           then show ?case by auto
@@ -64,10 +66,10 @@ proof(induction states)
     case (Reverse2 x1 x2 x3a x4 x5)
     then show ?case 
       apply(auto simp: Big_Proof.tick_toList Common_Proof.tick_toList split: current.splits)
-      using empty apply blast
-      apply (metis first_pop rev.simps(2))
-      apply (meson not_empty)
-      apply (metis add.left_neutral empty neq0_conv not_empty rev.simps(1) self_append_conv2)
+      using toList_isEmpty apply blast
+          apply (metis first_pop rev.simps(2))
+      using size_isNotEmpty apply blast
+      apply (metis add.left_neutral toList_isEmpty neq0_conv size_isNotEmpty rev.simps(1) self_append_conv2)
       apply (smt (z3) Stack_Proof.size_pop Suc_pred append_assoc diff_add_inverse first_pop rev.simps(2) rev_append rev_rev_ident rev_singleton_conv)
       by (metis (no_types, hide_lams) add.commute add_diff_cancel_right' append.left_neutral append_Cons append_assoc first_pop length_Cons rev.simps(2) size_listLength)
    next
@@ -120,7 +122,7 @@ next
   proof(induction x big rule: Big.push.induct)
     case (1 x state)
     then show ?case 
-      by(auto simp: Common_Proof.push)
+      by(auto simp: Common_Proof.push_toList)
   next
     case (2 x current big aux count)
     then show ?case 
@@ -149,7 +151,7 @@ next
   proof(induction x small rule: Small.push.induct)
     case (1 x state)
     then show ?case
-      by(auto simp: Common_Proof.push)
+      by(auto simp: Common_Proof.push_toList)
   next
     case (2 x current small auxS)
     then show ?case 
@@ -184,7 +186,7 @@ next
   proof(induction x small rule: Small.push.induct)
     case (1 x state)
     then show ?case 
-      by(auto simp: Common_Proof.push)
+      by(auto simp: Common_Proof.push_toList)
   next
     case (2 x current small auxS)
     then show ?case 
@@ -198,7 +200,7 @@ qed
 
 
 (*
-(* TODO: pop_invariant here? Or prove this on a higher level? *)
+
 lemma pop_big: "\<lbrakk>
   invariant (big, small);
   Big.pop big = (x, poppedBig);
@@ -287,111 +289,366 @@ next
     sorry
 qed*)
 
-lemma invariant_pop_big: "invariant (big, small) \<Longrightarrow> pop_invariant big \<Longrightarrow> \<not>Big.isEmpty big \<Longrightarrow> Big.pop big = (x, big') \<Longrightarrow> invariant (big', small)"
-proof(induction big arbitrary: small x rule: Big.pop.induct)
-  case (1 state)
-  then show ?case
-    apply(auto simp: revN_take split: prod.splits Small.state.splits current.splits)
-    apply (meson Common_Proof.invariant_pop)
-    sorry
-next
-  case (2 current big aux count)
-  then show ?case apply auto
-    sorry
-qed
+lemma invariant_pop_big_1: "\<lbrakk>
+  invariant (big, small);
+  \<not>isEmpty (big, small);
+  Big.pop big = (x, big')\<rbrakk>
+ \<Longrightarrow>  Big.invariant big'  \<and> Small.invariant small"
+  by(auto simp: Big_Proof.invariant_pop)
 
-lemma invariant_pop_small: "invariant (big, small) \<Longrightarrow> \<not>Small.isEmpty small \<Longrightarrow> Small.pop small = (x, small') \<Longrightarrow> invariant (big, small')"
-proof(induction small arbitrary: big x rule: Small.pop.induct)
-  case (1 state)
-  then show ?case 
-    apply auto
-      apply (meson "1.prems"(2) "1.prems"(3) Small.invariant.simps(1) Small_Proof.invariant_pop)
-    sorry
-next
-  case (2 current small auxS)
-  then show ?case sorry
-next
-  case (3 current auxS big newS count)
-  then show ?case sorry
-qed
+lemma helper: "Stack.toList ((Stack.pop ^^ n) stack) = drop n (Stack.toList stack)" 
+  apply(induction n)
+   apply auto
+  by (metis Stack.isEmpty.elims(2) Stack.pop.simps(1) Stack.toList.simps append_Nil drop_Suc first_pop list.sel(2) list.sel(3) tl_drop)
 
-lemma invariant_pop_small_2: "invariant (big, small) \<Longrightarrow> 0 < Small.size small \<Longrightarrow> Small.pop small = (x, small') \<Longrightarrow> invariant (big, small')"
-proof(induction small arbitrary: big x rule: Small.pop.induct)
-  case (1 state)
+lemma helper_2: "Stack.size ((Stack.pop ^^ n) stack) = (Stack.size stack) - n"
+  apply(induction n)
+   apply auto
+  by (metis (no_types, hide_lams) One_nat_def Stack.isEmpty.elims(2) Stack.pop.simps(1) Stack.toList.simps Stack_Proof.size_pop append_Nil diff_Suc_eq_diff_pred diff_commute diff_is_0_eq le_Suc_eq list.size(3) size_listLength)
+
+lemma smart: "toListSmallFirst (big, small) = toCurrentListSmallFirst (big, small) \<longleftrightarrow>
+              toListBigFirst (big, small) = toCurrentListBigFirst (big, small)"
+  apply(auto split: prod.splits)
+  by (metis rev_append rev_rev_ident)+
+
+lemma invariant_pop_big_2_1_1: "\<lbrakk>
+  invariant (big, small);
+  \<not>isEmpty (big, small);
+  Big.pop big = (x, big')\<rbrakk>
+ \<Longrightarrow> tl (toListBigFirst (big, small)) = toListBigFirst (big', small)"
+proof(induction "(big, small)" rule: toList.induct)
+  case (1 currentB big auxB count currentS small auxS)
   then show ?case 
-  proof(induction state rule: Common.pop.induct)
-    case (1 current idle)
-    then show ?case
-    proof(induction idle rule: Idle.pop.induct)
-      case (1 stack stackSize)
-      then show ?case 
-      proof(induction current rule: get.induct)
-        case (1 added old remained)
-        then show ?case
-          apply(auto split: Big.state.splits)
-          apply (metis (no_types, lifting) One_nat_def Stack.isEmpty.elims(2) Stack.pop.elims Stack_Proof.size_pop diff_is_0_eq empty_size list.distinct(1) nat_le_linear not_one_le_zero stack.inject)
-          apply (metis (no_types, lifting) One_nat_def Stack.isEmpty.elims(2) Stack.pop.elims Stack_Proof.size_pop diff_is_0_eq' empty linear list.discI list.size(3) not_one_le_zero size_listLength stack.inject)
-            (* TODO: *)
-          sorry
-      next
-        case (2 x xs added old remained)
-        then show ?case 
-          apply(auto split: Big.state.splits) 
-            apply (metis Stack_Proof.size_pop not_empty zero_less_Suc)
-           apply (metis One_nat_def Stack_Proof.size_pop diff_Suc_1 less_Suc_eq_0_disj not_empty)
-          by (metis Stack_Proof.pop empty_size list.sel(3) nat.discI not_empty_2 tl_append2)
-      qed
-    qed
-  next
-    case (2 current aux new moved)
+  proof(induction currentB rule: get.induct)
+    case (1 added old remained)
     then show ?case 
-    proof(induction current rule: get.induct)
-      case (1 added old remained)
-      then show ?case 
-        apply(auto simp: revN_take split: Big.state.splits) 
-            apply linarith+
-        subgoal sorry (* just times out *)
-        subgoal sorry (* found *)
-        (* found *)
-        sorry
-    next
-      case (2 x xs added old remained)
-      then show ?case by(auto split: Big.state.splits)
-    qed
+      apply(auto simp: reverseN_drop)
+      by (smt (z3) Suc_diff_le add.commute add_diff_cancel_left drop_Suc le_add_diff_inverse2 le_cases3 nat_add_left_cancel_le size_listLength tl_drop)
+  next
+    case (2 x xs added old remained)
+    then show ?case by auto
   qed
 next
-  case (2 current small auxS)
-  then show ?case
-   proof(induction current rule: get.induct)
-     case (1 added old remained)
-     then show ?case
-       apply(auto simp: revN_take split: Big.state.splits current.splits) 
-           apply (metis Stack_Proof.size_pop diff_le_mono not_empty)
-          apply (metis Stack_Proof.size_pop Suc_leD Suc_pred not_empty)
-         apply (meson Small_Proof.invariant_pop_2_helper)
-       subgoal sorry (* TODO *)
-       by (metis Stack_Proof.size_pop Suc_pred not_empty)
-   next
-     case (2 x xs added old remained)
-     then show ?case  by(auto split: Big.state.splits)
-   qed
+  case ("2_1" v)
+  then show ?case 
+    by(auto simp: list_pop split: prod.splits)
 next
-  case (3 current auxS big newS count)
-  then show ?case  
+  case ("2_2" v va vb vc vd)
+  then show ?case 
+    apply(auto simp: pop_2)
+    using helper_3 tl_append2 by blast
+next
+  case ("2_3" v)
+  then show ?case 
+    apply(auto simp: pop_2)
+    using helper_3 tl_append2 by blast
+qed
+
+lemma invariant_pop_big_2_1_2: "\<lbrakk>
+  invariant (big, small);
+  \<not>isEmpty (big, small);
+  Big.pop big = (x, big')\<rbrakk>
+ \<Longrightarrow> tl (toCurrentListBigFirst (big, small)) = toCurrentListBigFirst (big', small)"
+  apply(auto simp: currentList_pop split: prod.splits)
+  using Big_Proof.currentList_empty Big_Proof.currentList_pop by fastforce  
+
+lemma invariant_pop_big_2_1: "\<lbrakk>
+  invariant (big, small);
+  \<not>isEmpty (big, small);
+  Big.pop big = (x, big')\<rbrakk>
+ \<Longrightarrow> toListBigFirst (big', small) = toCurrentListBigFirst (big', small)"
+  by (metis invariant_listBigFirst invariant_pop_big_2_1_1 invariant_pop_big_2_1_2)
+
+lemma invariant_pop_big_2: "\<lbrakk>
+  invariant (big, small);
+  \<not>isEmpty (big, small);
+  Big.pop big = (x, big')\<rbrakk>
+ \<Longrightarrow> toListSmallFirst (big', small) = toCurrentListSmallFirst (big', small)"
+  by (meson invariant_pop_big_2_1 smart)
+
+
+lemma invariant_pop_big_3: "\<lbrakk>
+  invariant (big, small);
+  \<not>isEmpty (big, small);
+  Big.pop big = (x, big')\<rbrakk>
+ \<Longrightarrow> (case (big', small) of 
+        (Reverse _ big _ count, Reverse1 (Current _ _ old remained) small _) \<Rightarrow> 
+          Stack.size big - count = remained - Stack.size old \<and> count \<ge> Stack.size small
+      | (_, Reverse1 _ _ _) \<Rightarrow> False
+      | (Reverse _ _ _ _, _) \<Rightarrow> False
+      | _ \<Rightarrow> True
+      )"
+  apply(auto split: Big.state.splits Small.state.splits)
+   apply (smt (z3) Big.state.distinct(1) case_prod_conv old.prod.exhaust prod.inject)
+  by (metis (no_types, lifting) Big.state.distinct(1) case_prod_conv old.prod.exhaust prod.inject)
+
+
+lemma invariant_pop_big: "\<lbrakk>
+  invariant (big, small);
+  \<not>isEmpty (big, small);
+  Big.pop big = (x, big')\<rbrakk>
+ \<Longrightarrow> invariant (big', small)"
+  using invariant_pop_big_1[of big small x big']  
+        invariant_pop_big_2[of big small x big']
+        invariant_pop_big_3[of big small x big']
+  by auto
+
+lemma invariant_pop_small_1: "\<lbrakk>
+  invariant (big, small);
+  \<not>isEmpty (big, small);
+  Small.pop small = (x, small')\<rbrakk>
+ \<Longrightarrow>  Big.invariant big  \<and> Small.invariant small'"
+  by(auto simp: Small_Proof.invariant_pop)
+
+lemma invariant_pop_small_2_1: "\<lbrakk>
+  invariant (big, small);
+  \<not>isEmpty (big, small);
+  Small.pop small = (x, small')\<rbrakk>
+ \<Longrightarrow> tl (toListSmallFirst (big, small)) = toListSmallFirst (big, small')"
+proof(induction "(big, small)" rule: toList.induct)
+  case (1 currentB big auxB count currentS small auxS)
+  then show ?case 
+  proof(induction currentS rule: get.induct)
+    case (1 added old remained)
+    then show ?case 
+      apply(auto simp: helper helper_2 reverseN_drop rev_drop)
+      by (smt (z3) Small_Proof.invariant_pop_2_helper Stack_Proof.pop_toList Stack_Proof.size_pop Suc_diff_le Suc_pred append_assoc diff_Suc_Suc diff_add_inverse diff_commute diff_diff_cancel diff_is_0_eq' diff_zero drop0 length_rev rev_drop rev_rev_ident rev_take size_isNotEmpty size_listLength tl_append2 toList_isNotEmpty)
+  next
+    case (2 x xs added old remained)
+    then show ?case by auto
+  qed
+next
+  case ("2_1" v)
+  then show ?case 
+    apply(auto simp:  split: prod.splits Small.state.splits)
+    apply (metis (no_types, lifting) "2_1.prems"(1) "2_1.prems"(3) Small.isEmpty.simps(3) States.invariant.elims(2) case_prodD list.distinct(1) list.sel(3) pop_toList_reverse2 tl_append2)
+    by (metis list.distinct(1) list.sel(3) list_pop tl_append2)
+next
+  case ("2_2" current auxS big newS count)
+  then show ?case 
+    apply(simp split: Big.state.splits Small.state.splits)
+    by (metis (no_types, lifting) "2_2"(2) "2_2"(4) Small.isEmpty.simps(3) States.invariant.elims(2) case_prodD list.distinct(1) list.sel(3) pop_toList_reverse2 tl_append2)
+next
+  case ("2_3" v)
+  then show ?case 
+    apply(auto split: prod.splits Big.state.splits)
+    by (metis list.distinct(1) list.sel(3) list_pop tl_append2)
+qed
+
+lemma invariant_pop_small_2_2: "\<lbrakk>
+  invariant (big, small);
+  \<not>isEmpty (big, small);
+  Small.pop small = (x, small')\<rbrakk>
+ \<Longrightarrow> tl (toCurrentListSmallFirst (big, small)) = toCurrentListSmallFirst (big, small')"
+  apply(auto simp: currentList_pop  split: prod.splits)
+  using Small_Proof.currentList_empty tl_append2 by blast
+
+lemma invariant_pop_small_2: "\<lbrakk>
+  invariant (big, small);
+  \<not>isEmpty (big, small);
+  Small.pop small = (x, small')\<rbrakk>
+ \<Longrightarrow> toListSmallFirst (big, small') = toCurrentListSmallFirst (big, small')"
+  using invariant_pop_small_2_1 invariant_pop_small_2_2 by fastforce
+
+lemma invariant_pop_small_3: "\<lbrakk>
+  invariant (big, small);
+  \<not>isEmpty (big, small);
+  Small.pop small = (x, small')\<rbrakk>
+ \<Longrightarrow> (case (big, small') of 
+        (Reverse _ big _ count, Reverse1 (Current _ _ old remained) small _) \<Rightarrow> 
+          Stack.size big - count = remained - Stack.size old \<and> count \<ge> Stack.size small
+      | (_, Reverse1 _ _ _) \<Rightarrow> False
+      | (Reverse _ _ _ _, _) \<Rightarrow> False
+      | _ \<Rightarrow> True
+      )"
+proof(induction small rule: Small.pop.induct)
+  case (1 common)
+  then show ?case
+    by(auto split: Big.state.splits Small.state.splits prod.splits)
+next
+  case (2 current small auxS)
+  then show ?case 
   proof(induction current rule: get.induct)
     case (1 added old remained)
     then show ?case 
-      apply(auto simp: revN_take split: Big.state.splits)
-          apply (simp add: Stack_Proof.size_pop not_empty)
-         apply (simp add: Stack_Proof.size_pop diff_le_mono not_empty)
-        apply (simp add: Stack_Proof.size_pop not_empty)
-      apply (metis One_nat_def Stack_Proof.pop Stack_Proof.size_pop Suc_diff_eq_diff_pred Suc_diff_le drop_Suc not_empty rev_take tl_drop)
-      by (simp add: Stack_Proof.pop Suc_diff_le Suc_pred diff_Suc_Suc drop_Suc not_empty rev_take tl_drop)
+      by(auto simp: Stack_Proof.size_pop size_isNotEmpty split: Big.state.splits)
   next
     case (2 x xs added old remained)
-    then show ?case by(auto split: Big.state.splits)
+    then show ?case 
+      by(auto split: Big.state.splits)
   qed
+next
+  case (3 current auxS big newS count)
+  then show ?case 
+    by(auto split: Big.state.splits)
 qed
+  
+lemma invariant_pop_small: "\<lbrakk>
+  invariant (big, small);
+  \<not>isEmpty (big, small);
+  Small.pop small = (x, small')\<rbrakk>
+   \<Longrightarrow> invariant (big, small')"
+  using invariant_pop_small_1[of big small x small']  
+        invariant_pop_small_2[of big small x small']
+        invariant_pop_small_3[of big small x small']
+  by fastforce  
+
+lemma invariant_pop_small_size_1: "\<lbrakk>
+  invariant (big, small);
+  0 < Small.size small;
+  Small.pop small = (x, small')\<rbrakk>
+ \<Longrightarrow>  Big.invariant big  \<and> Small.invariant small'"
+  by(auto simp: Small_Proof.invariant_pop_2)
+
+lemma invariant_pop_small_size_2_1: "\<lbrakk>
+  invariant (big, small);
+   0 < Small.size small;
+  Small.pop small = (x, small')\<rbrakk>
+ \<Longrightarrow> tl (toListSmallFirst (big, small)) = toListSmallFirst (big, small')"
+proof(induction "(big, small)" rule: toList.induct)
+  case (1 currentB big auxB count currentS small auxS)
+  then show ?case 
+  proof(induction currentS rule: get.induct)
+    case (1 added old remained)
+    then show ?case 
+      apply(auto simp: helper helper_2 reverseN_drop rev_drop)
+      by (smt (z3) Small_Proof.invariant_pop_2_helper Stack_Proof.pop_toList Stack_Proof.size_pop Suc_diff_le Suc_pred append_assoc diff_Suc_Suc diff_add_inverse diff_commute diff_diff_cancel diff_is_0_eq' diff_zero drop0 length_rev rev_drop rev_rev_ident rev_take size_isNotEmpty size_listLength tl_append2 toList_isNotEmpty)
+  next
+    case (2 x xs added old remained)
+    then show ?case by auto
+  qed
+next
+  case ("2_1" v)
+  then show ?case 
+  proof(induction small)
+    case (Reverse1 x1 x2 x3a)
+    then show ?case by auto
+  next
+    case (Reverse2 x1 x2 x3a x4 x5)
+    then show ?case 
+    proof(induction x1 rule: get.induct)
+      case (1 added old remained)
+      then show ?case 
+        apply(auto simp: reverseN_take)
+        by (smt (z3) Suc_diff_le Suc_pred diff_Suc_Suc drop_Suc length_greater_0_conv less_le_trans neq0_conv rev_is_Nil_conv rev_take take_eq_Nil tl_append2 tl_drop)
+    next
+      case (2 x xs added old remained)
+      then show ?case by auto
+    qed
+  next
+    case (Common common)
+    then show ?case
+    proof(induction common rule: Common.pop.induct)
+      case (1 current idle)
+      then show ?case 
+      proof(induction current rule: get.induct)
+        case (1 added old remained)
+       
+  
+        from 1 show ?case 
+         proof(induction idle rule: Idle.pop.induct)
+           case (1 stack stackSize)
+           then show ?case 
+           proof(induction stackSize)
+             case 0
+             have "\<lbrakk>0 < Stack.size old; big = Big.state.Common v; Common.invariant v;
+     small' = Small.state.Common (state.Idle (Current [] 0 (Stack.pop old) 0) (idle.Idle (Stack.pop stack) 0)); Stack.size stack = 0; added = 0;
+     remained = 0; Stack.toList stack @ rev (Common.toList v) = Stack.toList old @ rev (Common.toCurrentList v)\<rbrakk>
+    \<Longrightarrow> tl (Stack.toList old @ rev (Common.toCurrentList v)) = Stack.toList (Stack.pop stack) @ rev (Common.toList v)"
+               sorry
+
+             from 0 show ?case apply auto
+               sorry
+           next
+             case (Suc stackSize)
+             then show ?case 
+               apply auto
+               by (metis Stack_Proof.pop_toList Stack_Proof.size_isEmpty old.nat.distinct(2) tl_append2 toList_isNotEmpty)
+           qed
+         qed
+      next
+        case (2 x xs added old remained)
+        then show ?case apply(auto split: prod.splits)  sorry
+      qed
+    next
+      case (2 current aux new moved)
+      then show ?case apply auto
+        sorry
+    qed
+  qed
+next
+  case ("2_2" current auxS big newS count)
+  then show ?case 
+    apply(simp split: Big.state.splits Small.state.splits)
+    sorry
+next
+  case ("2_3" v)
+  then show ?case 
+    apply(auto split: prod.splits Big.state.splits)
+    sorry
+qed
+
+lemma invariant_pop_small_size_2_2: "\<lbrakk>
+  invariant (big, small);
+  0 < Small.size small;
+  Small.pop small = (x, small')\<rbrakk>
+ \<Longrightarrow> tl (toCurrentListSmallFirst (big, small)) = toCurrentListSmallFirst (big, small')"
+  apply(auto simp: currentList_pop_2  split: prod.splits)
+  using Small_Proof.currentList_empty_2 tl_append2 by blast
+
+lemma invariant_pop_small_size_2: "\<lbrakk>
+  invariant (big, small);
+  0 < Small.size small;
+  Small.pop small = (x, small')\<rbrakk>
+ \<Longrightarrow> toListSmallFirst (big, small') = toCurrentListSmallFirst (big, small')"
+  using invariant_pop_small_size_2_1 invariant_pop_small_size_2_2 by fastforce
+
+lemma invariant_pop_small_size_3: "\<lbrakk>
+  invariant (big, small);
+  0 < Small.size small;
+  Small.pop small = (x, small')\<rbrakk>
+ \<Longrightarrow> (case (big, small') of 
+        (Reverse _ big _ count, Reverse1 (Current _ _ old remained) small _) \<Rightarrow> 
+          Stack.size big - count = remained - Stack.size old \<and> count \<ge> Stack.size small
+      | (_, Reverse1 _ _ _) \<Rightarrow> False
+      | (Reverse _ _ _ _, _) \<Rightarrow> False
+      | _ \<Rightarrow> True
+      )"
+proof(induction small rule: Small.pop.induct)
+  case (1 common)
+  then show ?case
+    by(auto split: Big.state.splits Small.state.splits prod.splits)
+next
+  case (2 current small auxS)
+  then show ?case 
+  proof(induction current rule: get.induct)
+    case (1 added old remained)
+    then show ?case 
+      by(auto simp: Stack_Proof.size_pop size_isNotEmpty split: Big.state.splits)
+  next
+    case (2 x xs added old remained)
+    then show ?case 
+      by(auto split: Big.state.splits)
+  qed
+next
+  case (3 current auxS big newS count)
+  then show ?case 
+    by(auto split: Big.state.splits)
+qed
+  
+  
+lemma invariant_pop_small_size: "\<lbrakk>
+  invariant (big, small);
+   0 < Small.size small;
+  Small.pop small = (x, small')\<rbrakk>
+   \<Longrightarrow> invariant (big, small')"
+  using invariant_pop_small_size_1[of big small x small']  
+        invariant_pop_small_size_2[of big small x small']
+        invariant_pop_small_size_3[of big small x small']
+  by fastforce  
+
+
+
 
 
 lemma invariant_push_big: "invariant (big, small) \<Longrightarrow> invariant (Big.push x big, small)"
@@ -476,7 +733,6 @@ next
   case ("2_1" v va vb vd right)
   then show ?case 
     apply(auto split: current.splits)
-         apply (simp add: Stack_Proof.size_pop not_empty)
     (*apply(auto simp: Stack_Proof.size_pop not_empty split: current.splits prod.splits Small.state.splits)*)
     sorry
     (*apply (smt (verit, best) Zero_not_Suc bot_nat_0.extremum_uniqueI empty first_pop funpow_swap1 list.size(3) revN.elims revN.simps(2) revN.simps(3) size_listLength)
@@ -596,7 +852,7 @@ proof(induction states)
       apply(auto split: prod.splits Big.state.splits Small.state.splits current.splits)
       subgoal apply(auto simp: revN_take)
         sorry
-      subgoal using not_empty_2 sorry 
+      subgoal  sorry 
       using Common_Proof.some_empty sorry
   qed
 qed
