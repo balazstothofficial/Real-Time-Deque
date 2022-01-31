@@ -306,9 +306,10 @@ lemma currentList_empty_2: "\<lbrakk>0 < Common.size x; Common.toCurrentList x =
    apply(auto simp: reverseN_take split: current.splits)
   by (metis get_toList_size list.distinct(1) surj_pair)
 
-lemma tick_size: "invariant common \<Longrightarrow> size common = size (tick common)"
+
+(*lemma tick_size: "invariant common \<Longrightarrow> size common = size (tick common)"
   apply(induction common rule: tick.induct)
-  by(auto split: current.splits)
+  by(auto split: current.splits)*)
 
 lemma tick_not_empty: "invariant common \<Longrightarrow> \<not>isEmpty common \<Longrightarrow> \<not>isEmpty (tick common)"
   apply(induction common rule: tick.induct)
@@ -322,6 +323,20 @@ lemma push_not_empty: "\<lbrakk>\<not> isEmpty state; isEmpty (push x state)\<rb
 
 lemma size_isEmpty: "invariant common \<Longrightarrow> size common = 0 \<Longrightarrow> isEmpty common"
   apply(induction common)
-  by(auto simp: Stack_Proof.size_isEmpty size_isEmpty split: current.splits)
+   apply(auto simp: Stack_Proof.size_isEmpty size_isEmpty min_def split: current.splits if_splits)
+  by (metis Idle.isEmpty.elims(3) Idle.size.simps Stack_Proof.size_isEmpty)
+
+value "tick (Copy (Current [] 0 (Stack [a\<^sub>1] [a\<^sub>1]) 1) [a\<^sub>1] [] 0)"
+
+lemma verzeiflung_2: "invariant x \<Longrightarrow> Common.size2 x = Common.size2 (Common.tick x)"
+proof(induction x rule: Common.tick.induct)
+  case (1 current idle)
+  then show ?case by auto
+next
+  case (2 current aux new moved)
+  then show ?case 
+    by(auto simp: min_def split: current.splits)
+qed
+
 
 end

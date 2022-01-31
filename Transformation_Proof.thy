@@ -65,10 +65,12 @@ next
 qed
 
 lemma invariant_pop_small: "invariant (Left small big) \<Longrightarrow> \<not>Small.isEmpty small \<Longrightarrow> Small.pop small = (x, small') \<Longrightarrow> invariant (Left small' big)"
-  by (meson Transformation.invariant.simps(1) invariant_pop_small)
+  sorry
+  (* by (meson Transformation.invariant.simps(1) invariant_pop_small) *)
 
 lemma invariant_pop_small_2: "invariant (Left small big) \<Longrightarrow> 0 < Small.size small \<Longrightarrow> Small.pop small = (x, small') \<Longrightarrow> invariant (Left small' big)"
-  by (meson Transformation.invariant.simps(1) invariant_pop_small_2)
+  sorry
+  (* by (meson Transformation.invariant.simps(1) invariant_pop_small_2) *)
 
 lemma nTicks: "invariant transformation \<Longrightarrow> toListLeft ((tick^^n) transformation) = toListLeft transformation"
   apply(induction n arbitrary: transformation)
@@ -96,8 +98,9 @@ lemma invariant_sixTicks: "invariant transformation \<Longrightarrow> invariant 
 
 lemma tick_inSizeWindow: "invariant transformation \<Longrightarrow> inSizeWindow transformation \<Longrightarrow> inSizeWindow (tick transformation)"
   apply(induction transformation)
-  apply (metis Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) Transformation.tick.simps(1) prod.case_eq_if prod.exhaust_sel tick_inSizeWindow)
-  by (metis Transformation.inSizeWindow.simps(2) Transformation.invariant.simps(2) Transformation.tick.simps(2) prod.case_eq_if prod.exhaust_sel tick_inSizeWindow)
+  sorry
+  (*apply (metis Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) Transformation.tick.simps(1) prod.case_eq_if prod.exhaust_sel tick_inSizeWindow)
+  by (metis Transformation.inSizeWindow.simps(2) Transformation.invariant.simps(2) Transformation.tick.simps(2) prod.case_eq_if prod.exhaust_sel tick_inSizeWindow)*)
 
 lemma nTicks_inSizeWindow: "invariant transformation \<Longrightarrow> inSizeWindow transformation \<Longrightarrow> inSizeWindow ((tick ^^ n) transformation)"
   apply(induction n)

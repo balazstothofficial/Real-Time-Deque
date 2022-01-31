@@ -289,9 +289,9 @@ lemma currentList_empty_2: "\<lbrakk>0 < size small; toCurrentList small = []; i
    apply (simp add: size_listLength)
   using currentList_empty_2 by blast
 
-lemma tick_size: "invariant small \<Longrightarrow> size small = size (tick small)"
+(*lemma tick_size: "invariant small \<Longrightarrow> size small = size (tick small)"
   apply(induction small rule: tick.induct)
-  by(auto simp: tick_size split: current.splits)
+  by(auto simp: tick_size split: current.splits)*)
 
 lemma tick_not_empty: "invariant small \<Longrightarrow> \<not>isEmpty small \<Longrightarrow> \<not>isEmpty (tick small)"
   apply(induction small rule: tick.induct)

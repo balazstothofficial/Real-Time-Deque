@@ -5,9 +5,27 @@ begin
 lemmas state_splits = idle.splits Common.state.splits Small.state.splits Big.state.splits
 lemmas invariant_ticks = Big_Proof.invariant_tick Common_Proof.invariant_tick Small_Proof.invariant_tick
 
-lemma inSizeWindow'_Suc: "inSizeWindow' states (Suc steps) \<Longrightarrow> inSizeWindow' states steps"
-  apply(induction states steps rule: inSizeWindow'.induct)
-  by auto
+
+lemma tick_inSizeWindow_3: "invariant (big, small)
+  \<Longrightarrow> tick (big, small) = (big', small')  
+  \<Longrightarrow> Small.size small = Small.size small'"
+  nitpick
+proof(induction "(big, small)" rule: tick.induct)
+  case (1 currentB big auxB currentS uu auxS)
+  then show ?case by auto
+next
+  case ("2_1" v va vb vd)
+  then show ?case by(auto split: Small.state.splits current.splits)
+next
+  case ("2_2" v)
+  then show ?case by(auto simp: verzeiflung_2 split: Small.state.splits current.splits)
+next
+  case ("2_3" v va vb vc vd)
+  then show ?case by(auto split: current.splits)
+next
+  case ("2_4" v)
+  then show ?case by(auto simp: verzeiflung_2)
+qed
 
 lemma invariant_listBigFirst: "invariant states \<Longrightarrow> toListBigFirst states = toCurrentListBigFirst states"
   apply(auto split: prod.splits)
@@ -549,43 +567,76 @@ next
          proof(induction idle rule: Idle.pop.induct)
            case (1 stack stackSize)
            then show ?case 
-           proof(induction stackSize)
-             case 0
-             have "\<lbrakk>0 < Stack.size old; big = Big.state.Common v; Common.invariant v;
-     small' = Small.state.Common (state.Idle (Current [] 0 (Stack.pop old) 0) (idle.Idle (Stack.pop stack) 0)); Stack.size stack = 0; added = 0;
-     remained = 0; Stack.toList stack @ rev (Common.toList v) = Stack.toList old @ rev (Common.toCurrentList v)\<rbrakk>
-    \<Longrightarrow> tl (Stack.toList old @ rev (Common.toCurrentList v)) = Stack.toList (Stack.pop stack) @ rev (Common.toList v)"
-               sorry
-
-             from 0 show ?case apply auto
-               sorry
-           next
-             case (Suc stackSize)
-             then show ?case 
-               apply auto
-               by (metis Stack_Proof.pop_toList Stack_Proof.size_isEmpty old.nat.distinct(2) tl_append2 toList_isNotEmpty)
-           qed
+             apply auto
+             by (metis Stack_Proof.pop_toList size_isNotEmpty tl_append2 toList_isNotEmpty)
          qed
       next
         case (2 x xs added old remained)
-        then show ?case apply(auto split: prod.splits)  sorry
+        then show ?case apply(auto split: prod.splits)
+          by (metis (no_types, lifting) Zero_not_Suc length_Cons list.sel(3) list.size(3) pop_toList_2 tl_append2 zero_less_Suc) 
       qed
     next
       case (2 current aux new moved)
-      then show ?case apply auto
-        sorry
+      then show ?case 
+      proof(induction current rule: get.induct)
+        case (1 added old remained)
+        then show ?case 
+          apply(auto simp: reverseN_drop)
+          apply (smt (verit, ccfv_threshold) Suc_diff_Suc append_take_drop_id diff_Suc_1 diff_add_inverse2 diff_commute diff_diff_cancel diff_is_0_eq drop_all_iff length_rev less_le_trans list.sel(3) not_le same_append_eq self_append_conv2 take_all_iff take_hd_drop tl_append2)
+          by (metis (no_types, lifting) Nat.diff_diff_right Suc_diff_le drop_Suc drop_all_iff leD le_add_diff_inverse le_diff_conv length_rev less_add_same_cancel2 less_imp_le_nat tl_append2 tl_drop zero_less_diff)
+      next
+        case (2 x xs added old remained)
+        then show ?case by auto
+      qed
     qed
   qed
 next
   case ("2_2" current auxS big newS count)
   then show ?case 
-    apply(simp split: Big.state.splits Small.state.splits)
-    sorry
+  proof(induction current rule: get.induct)
+    case (1 added old remained)
+    then show ?case 
+      apply(auto simp: reverseN_drop) 
+      by (simp add: Suc_diff_le drop_Suc rev_take tl_drop)
+  next
+    case (2 x xs added old remained)
+    then show ?case by auto
+  qed
 next
-  case ("2_3" v)
+  case ("2_3" common)
   then show ?case 
-    apply(auto split: prod.splits Big.state.splits)
-    sorry
+  proof(induction common rule: Common.pop.induct)
+    case (1 current idle)
+    then show ?case 
+    proof(induction idle rule: Idle.pop.induct)
+      case (1 stack stackSize)
+      then show ?case 
+      proof(induction current rule: get.induct)
+        case (1 added old remained)
+        then show ?case 
+          apply(auto split: Big.state.splits)
+          by (metis Stack_Proof.pop_toList size_isNotEmpty tl_append2 toList_isNotEmpty)
+      next
+        case (2 x xs added old remained)
+        then show ?case 
+          apply(auto split: Big.state.splits)
+          by (metis Stack_Proof.pop_toList list.sel(3) size_isNotEmpty tl_append2 toList_isNotEmpty zero_less_Suc)
+      qed
+    qed
+  next
+    case (2 current aux new moved)
+    then show ?case 
+    proof(induction current rule: get.induct)
+      case (1 added old remained)
+      then show ?case 
+        apply(auto simp: reverseN_take split: Big.state.splits)
+        apply (smt (z3) One_nat_def diff_commute diff_is_0_eq leD le_diff_conv length_0_conv length_rev length_take length_tl min.absorb2 self_append_conv2 tl_append2)
+        by (smt (verit, best) Nat.diff_diff_right Suc_diff_le diff_Suc_Suc diff_add_inverse diff_add_inverse2 diff_diff_left diff_is_0_eq drop_Suc leD length_greater_0_conv less_add_same_cancel2 less_imp_Suc_add less_le_trans less_or_eq_imp_le rev_is_Nil_conv rev_take take_eq_Nil tl_append2 tl_drop)
+    next
+      case (2 x xs added old remained)
+      then show ?case by auto
+    qed
+  qed
 qed
 
 lemma invariant_pop_small_size_2_2: "\<lbrakk>
@@ -636,7 +687,6 @@ next
     by(auto split: Big.state.splits)
 qed
   
-  
 lemma invariant_pop_small_size: "\<lbrakk>
   invariant (big, small);
    0 < Small.size small;
@@ -646,10 +696,6 @@ lemma invariant_pop_small_size: "\<lbrakk>
         invariant_pop_small_size_2[of big small x small']
         invariant_pop_small_size_3[of big small x small']
   by fastforce  
-
-
-
-
 
 lemma invariant_push_big: "invariant (big, small) \<Longrightarrow> invariant (Big.push x big, small)"
 proof(induction x big arbitrary: small rule: Big.push.induct)
@@ -720,101 +766,190 @@ next
   qed
 qed
 
-(* TODO: *)
-lemma invariant_tick: "invariant states \<Longrightarrow> invariant (tick states)"
+lemma invariant_tick_1: "invariant states \<Longrightarrow> tick states = (big, small) \<Longrightarrow> Big.invariant big \<and> Small.invariant small"
 proof(induction states rule: tick.induct)
   case (1 currentB big auxB currentS uu auxS)
-  then show ?case 
-    apply(auto simp: revN_take split: current.splits)
-      apply (metis length_0_conv minus_nat.diff_0 rev_is_Nil_conv self_append_conv size_listLength take_eq_Nil)
-    apply (metis (no_types, hide_lams) length_rev length_take min.absorb2 nat_le_linear size_listLength take_all take_append)
-    by (metis length_0_conv minus_nat.diff_0 rev_is_Nil_conv self_append_conv size_listLength take_eq_Nil)
+  then show ?case apply(auto simp: reverseN_drop split: current.splits if_splits)
+    apply (metis Stack_Proof.size_isEmpty append.right_neutral cancel_comm_monoid_add_class.diff_cancel diff_diff_cancel le_cases list.size(3) rev.simps(1) take_Nil toList_isNotEmpty)
+    apply (smt (z3) Nil_is_rev_conv Stack_Proof.size_isEmpty append_self_conv2 diff_diff_cancel length_drop length_rev length_take rev_append rev_take size_listLength take_all take_append take_eq_Nil take_take toList_isNotEmpty)
+    by (metis Stack_Proof.size_isEmpty append.right_neutral list.size(3) minus_nat.diff_0 rev.simps(1) take_Nil toList_isNotEmpty)
+next
+  case ("2_1" v va vb vd right)
+  then show ?case using Big_Proof.invariant_tick  Small_Proof.invariant_tick
+    by (metis (no_types, lifting) Pair_inject States.invariant.elims(2) States.tick.simps(2) case_prodD)
+next
+  case ("2_2" v right)
+  then show ?case by(auto simp: Common_Proof.invariant_tick Small_Proof.invariant_tick)
+next
+  case ("2_3" left v va vb vc vd)
+  then show ?case using Common_Proof.invariant_tick Big_Proof.invariant_tick  Small_Proof.invariant_tick
+    by (smt (z3) States.invariant.elims(2) States.tick.simps(4) case_prod_conv)
+next
+  case ("2_4" left v)
+  then show ?case by(auto simp: Common_Proof.invariant_tick Big_Proof.invariant_tick)
+qed
+
+lemma invariant_tick_2: "invariant states \<Longrightarrow> toListSmallFirst (tick states) = toCurrentListSmallFirst (tick states)"
+  using States_Proof.tick_toCurrentList States_Proof.tick_toList by fastforce
+
+lemma invariant_tick_3: "invariant states \<Longrightarrow>(case tick states of 
+        (Reverse _ big _ count, Reverse1 (Current _ _ old remained) small _) \<Rightarrow> 
+          Stack.size big - count = remained - Stack.size old \<and> count \<ge> Stack.size small
+      | (_, Reverse1 _ _ _) \<Rightarrow> False
+      | (Reverse _ _ _ _, _) \<Rightarrow> False
+      | _ \<Rightarrow> True
+      )"
+proof(induction states rule: tick.induct)
+  case (1 currentB big auxB currentS uu auxS)
+  then show ?case by auto
 next
   case ("2_1" v va vb vd right)
   then show ?case 
-    apply(auto split: current.splits)
-    (*apply(auto simp: Stack_Proof.size_pop not_empty split: current.splits prod.splits Small.state.splits)*)
-    sorry
-    (*apply (smt (verit, best) Zero_not_Suc bot_nat_0.extremum_uniqueI empty first_pop funpow_swap1 list.size(3) revN.elims revN.simps(2) revN.simps(3) size_listLength)
-     apply (metis le_SucE not_empty zero_less_Suc)
-    by (metis Zero_not_Suc bot_nat_0.extremum_uniqueI empty first_pop funpow_swap1 list.size(3) revN.simps(3) size_listLength)*)
+    apply(auto split: Big.state.splits Small.state.splits current.splits) 
+    apply (metis One_nat_def Stack_Proof.size_pop Suc_le_lessD add_less_same_cancel1 diff_diff_left list.size(3) not_add_less1 plus_1_eq_Suc size_listLength toList_isEmpty)
+    apply (metis Stack_Proof.size_isEmpty gr_implies_not0 not_less)
+    apply (metis One_nat_def Stack_Proof.size_pop diff_Suc_eq_diff_pred less_le_trans size_isNotEmpty)
+    by (metis not_less_eq_eq pop_listLength size_listLength)
 next
   case ("2_2" v right)
-  then show ?case
-    apply(auto simp: Common_Proof.invariant_tick Small_Proof.invariant_tick split:)
-    apply (metis "2_2.prems" Big.tick.simps(1) Big.toList.simps(1) Common_Proof.tick_toCurrentList Pair_inject Small_Proof.tick_toCurrentList States.tick.simps(3) States.toList.simps(2) States_Proof.tick_toList)
-    by(auto simp:  split: Small.state.splits current.splits if_splits)
+  then show ?case by(auto split: Big.state.splits Small.state.splits) 
 next
   case ("2_3" left v va vb vc vd)
-  then show ?case
-    apply(auto simp: Big_Proof.invariant_tick Small_Proof.invariant_tick split: current.split state_splits)
-    apply (simp add: Common_Proof.tick_toCurrentList Common_Proof.tick_toList size_listLength)
-    sorry
-    (*apply (metis Common_Proof.tick_toCurrentList Common_Proof.tick_toList Nat.add_0_right add.commute append.left_neutral empty list.size(3) rev.simps(1) size_listLength)
-    using not_empty apply blast
-    using Common_Proof.some_empty apply blast
-    apply (metis Stack_Proof.size_pop Suc_pred)
-        apply (metis first_pop length_Cons size_listLength)
-    apply (smt (z3) Common_Proof.tick_toCurrentList Common_Proof.tick_toList Stack_Proof.size_pop Suc_pred add_diff_cancel_left' append_assoc first_pop rev.simps(2) rev_append rev_rev_ident rev_singleton_conv)
-    apply (metis Common_Proof.tick_toCurrentList Common_Proof.tick_toList append.left_neutral append_Cons append_assoc diff_add_inverse first_pop length_Cons rev.simps(2) size_listLength)
-    using Common_Proof.some_empty apply blast
-    using Common_Proof.some_empty by blast*)
+  then show ?case by(auto split: Big.state.splits) 
 next
   case ("2_4" left v)
-  then show ?case 
-    apply(auto simp: Big_Proof.invariant_tick Common_Proof.invariant_tick)
-    apply (simp add: Big_Proof.tick_toCurrentList Big_Proof.tick_toList Common_Proof.tick_toCurrentList tick_toList_2)
-    by(simp split: Big.state.splits)
+  then show ?case by(auto split: Big.state.splits) 
 qed
 
-lemma tick_size_big: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small') \<Longrightarrow> Big.size big = Big.size big'"
+(* TODO: *)
+lemma invariant_tick: "invariant states \<Longrightarrow> invariant (tick states)"
+  using invariant_tick_1 invariant_tick_2 invariant_tick_3
+  by (smt (z3) States.invariant.elims(3) case_prodI2)
+
+(*lemma tick_size_big: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small') \<Longrightarrow> Big.size big = Big.size big'"
   apply(induction "(big, small)" rule: tick.induct)
   by(auto simp: Big_Proof.tick_size split: current.splits)
 
 lemma tick_size_small: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small') \<Longrightarrow> Small.size small = Small.size small'"
   apply(induction "(big, small)" rule: tick.induct)
-  by(auto simp: Small_Proof.tick_size split: current.splits)
+  by(auto simp: Small_Proof.tick_size split: current.splits)*)
 
-(* TODO: Clean up! *)
-lemma revN_take: "revN n xs acc = rev (take n xs) @ acc"
-  apply(induction n xs acc rule: revN.induct)
+lemma inSizeWindow'_Suc: "inSizeWindow' states (Suc steps) \<Longrightarrow> inSizeWindow' states steps"
+  apply(induction states steps rule: inSizeWindow'.induct)
   by auto
 
-lemma revN_revN: "(revN n (revN n xs []) []) = take n xs"
-  by(auto simp: revN_take)
+lemma inSizeWindow'_decline: "inSizeWindow' states x \<Longrightarrow> x \<ge> y \<Longrightarrow> inSizeWindow' states y"
+  apply(induction states x rule: inSizeWindow'.induct)
+  by auto
 
-lemma pop_drop: "Stack.toList ((Stack.pop ^^ n) stack) = drop n (Stack.toList stack)"
-proof(induction n arbitrary: stack)
-  case 0
-  then show ?case 
-    by auto
+lemma remainingSteps0_common: "Common.invariant common \<Longrightarrow> Common.remainingSteps common = 0 \<Longrightarrow> Common.remainingSteps (Common.tick common) = 0"
+proof(induction common rule: Common.tick.induct)
+  case (1 current idle)
+  then show ?case by auto
 next
-  case (Suc n)
-  then show ?case 
-  proof(induction stack rule: Stack.pop.induct)
-    case 1
-    then show ?case 
-      by(auto simp: funpow_swap1)
-  next
-    case (2 x left right)
-    then show ?case 
-      by(auto simp: funpow_swap1)
-  next
-    case (3 x right)
-    then show ?case  
-      by(auto simp: funpow_swap1)
-  qed
+  case (2 current aux new moved)
+  then show ?case by(auto split: current.splits)
 qed
 
-lemma test: "rev (drop n xs) @
-             rev (take n xs) = rev xs"
-  by (metis append_take_drop_id rev_append)
+lemma remainingSteps0_big: "Big.invariant big \<Longrightarrow> Big.remainingSteps big = 0 \<Longrightarrow> Big.remainingSteps (Big.tick big) = 0"
+proof(induction big rule: Big.tick.induct)
+  case (1 state)
+  then show ?case by(auto simp: remainingSteps0_common)
+next
+  case (2 current uu aux)
+  then show ?case by(auto split: current.splits)
+next
+  case (3 current big aux v)
+  then show ?case by(auto split: current.splits)
+qed
+
+lemma remainingSteps0: "invariant states \<Longrightarrow> remainingSteps states = 0 \<Longrightarrow> remainingSteps (tick states) = 0"
+proof(induction states rule: tick.induct)
+  case (1 currentB big auxB currentS uu auxS)
+  then show ?case 
+    by(auto simp: remainingSteps0_big remainingSteps0_common split: current.splits Small.state.splits)
+next
+  case ("2_1" v va vb vd right)
+  then show ?case
+    by(auto simp: remainingSteps0_big remainingSteps0_common split: current.splits Small.state.splits)
+next
+  case ("2_2" v right)
+  then show ?case  
+    by(auto simp: remainingSteps0_big remainingSteps0_common split: current.splits Small.state.splits)
+next
+  case ("2_3" left v va vb vc vd)
+  then show ?case 
+    by(auto simp: remainingSteps0_big remainingSteps0_common split: current.splits)
+next
+  case ("2_4" left v)
+  then show ?case by(auto simp: remainingSteps0_big remainingSteps0_common)
+qed
+
+lemma remainingStepsDecline_2_common: "Common.invariant common \<Longrightarrow> Common.remainingSteps common > 0 \<Longrightarrow> Common.remainingSteps common = Suc (Common.remainingSteps (Common.tick common))"
+proof(induction common rule: Common.tick.induct)
+  case (1 current idle)
+  then show ?case by auto
+next
+  case (2 current aux new moved)
+  then show ?case by(auto split: current.splits)
+qed
+
+lemma remainingStepsDecline_2_big: "Big.invariant big \<Longrightarrow> Big.remainingSteps big > 0 \<Longrightarrow> Big.remainingSteps big = Suc (Big.remainingSteps (Big.tick big))"
+proof(induction big rule: Big.tick.induct)
+  case (1 state)
+  then show ?case by(auto simp: remainingStepsDecline_2_common)
+next
+  case (2 current uu aux)
+  then show ?case by(auto split: current.splits)
+next
+  case (3 current big aux v)
+  then show ?case by(auto split: current.splits)
+qed
+
+lemma remainingStepsDecline_2: "invariant states \<Longrightarrow> remainingSteps states > 0 \<Longrightarrow> remainingSteps states = Suc (remainingSteps (tick states))"
+proof(induction states rule: tick.induct)
+case (1 currentB big auxB currentS uu auxS)
+  then show ?case 
+    by(auto simp: max_def split: Big.state.splits Small.state.splits current.splits)
+next
+case ("2_1" v va vb vd right)
+  then show ?case 
+    sorry (* activate late*)
+    (*apply(auto simp: max_def split: Big.state.splits Small.state.splits current.splits)
+    apply (metis add_Suc add_Suc_shift diff_le_self leD le_add_diff_inverse le_diff_conv list.size(3) nat_add_left_cancel_le plus_1_eq_Suc pop_listLength size_listLength toList_isEmpty zero_less_Suc)
+    apply(auto simp: reverseN_take)
+    by (smt (z3) Nat.diff_diff_right One_nat_def Stack_Proof.size_pop Suc_diff_eq_diff_pred Suc_pred add.commute add.left_commute add_le_cancel_left diff_diff_cancel le_add_diff_inverse less_le_trans not_add_less1 not_less_eq plus_1_eq_Suc size_isNotEmpty)
+    *)
+next
+  case ("2_2" v right)
+  then show ?case  
+    apply(auto split: Big.state.splits Small.state.splits current.splits)
+    using remainingSteps0_common remainingStepsDecline_2_common apply fastforce
+    using Stack_Proof.size_isEmpty apply blast
+    using size_isNotEmpty apply blast 
+    using remainingSteps0_common remainingStepsDecline_2_common apply fastforce
+    using Stack_Proof.size_pop remainingSteps0_common remainingStepsDecline_2_common apply fastforce
+    apply (metis (no_types, hide_lams) add.commute add_Suc_right diff_add_inverse2 max_0L max_Suc_Suc neq0_conv pop_listLength remainingSteps0_common remainingStepsDecline_2_common size_listLength)
+    by (metis (no_types, hide_lams) max.commute max_0L max_Suc_Suc neq0_conv remainingSteps0_common remainingStepsDecline_2_common)
+next
+  case ("2_3" left v va vb vc vd)
+  then show ?case 
+    apply(auto split: Big.state.splits Small.state.splits current.splits) 
+    using remainingSteps0_common remainingStepsDecline_2_common apply fastforce
+    using Stack_Proof.size_isEmpty apply blast
+    using size_isNotEmpty apply blast 
+    using remainingSteps0_common remainingStepsDecline_2_common apply fastforce
+    using Stack_Proof.size_pop remainingSteps0_common remainingStepsDecline_2_common by fastforce+
+next
+  case ("2_4" left v)
+  then show ?case 
+    apply(auto simp: max_def remainingStepsDecline_2_big remainingStepsDecline_2_common split: if_splits) 
+    using remainingSteps0_big remainingStepsDecline_2_big apply fastforce
+    by (metis Suc_leI le_imp_less_Suc not_le remainingSteps0_common remainingStepsDecline_2_common zero_less_iff_neq_zero)
+qed
 
 lemma remainingStepsDecline: "invariant states \<Longrightarrow> remainingSteps states \<ge> remainingSteps (tick states)"
-  sorry
-
-lemma remainingStepsDecline_2: "invariant states \<Longrightarrow> remainingSteps states > 0 \<Longrightarrow>  remainingSteps states = Suc (remainingSteps (tick states))"
-  sorry
+  by (metis gr_implies_not_zero le_imp_less_Suc less_not_refl3 linear neqE remainingStepsDecline_2 remainingSteps0)
 
 lemma remainingStepsDecline_3: "invariant states \<Longrightarrow> Suc n < remainingSteps states \<Longrightarrow> n < remainingSteps (tick states)"
   apply(induction n)
@@ -832,13 +967,163 @@ next
     by (smt (verit, ccfv_SIG) Suc_le_mono add_Suc_right funpow_simps_right(2) le_zero_eq neq0_conv o_apply zero_less_Suc)
 qed
 
+lemma verzeiflung: "Common.invariant x \<Longrightarrow> Common.newSize x = Common.newSize (Common.tick x)"
+proof(induction x rule: Common.tick.induct)
+  case (1 current idle)
+  then show ?case by auto
+next
+  case (2 current aux new moved)
+  then show ?case by(auto split: current.splits)
+qed
 
-lemma tick_inSizeWindow: "invariant states \<Longrightarrow> inSizeWindow states \<Longrightarrow> inSizeWindow (tick states)"
-  using hello remainingStepsDecline
-  sorry (* TODO *)
+lemma verzeiflung_2: "Common.invariant x \<Longrightarrow> Common.size x \<ge> Common.size (Common.tick x)"
+proof(induction x rule: Common.tick.induct)
+  case (1 current idle)
+  then show ?case by auto
+next
+  case (2 current aux new moved)
+  then show ?case 
+    by(auto simp: min_def split: current.splits)
+qed
+
+lemma tick_inSizeWindow_1: "invariant (big, small)
+  \<Longrightarrow> tick (big, small) = (big', small')  
+  \<Longrightarrow> Small.newSize small = Small.newSize small'"
+proof(induction "(big, small)" rule: tick.induct)
+  case (1 currentB big auxB currentS uu auxS)
+  then show ?case by auto
+next
+  case ("2_1" v va vb vd)
+  then show ?case by(auto split: Small.state.splits current.splits)
+next
+  case ("2_2" v)
+  then show ?case by(auto simp: verzeiflung split: Small.state.splits current.splits)
+next
+  case ("2_3" v va vb vc vd)
+  then show ?case by(auto split: current.splits)
+next
+  case ("2_4" v)
+  then show ?case by(auto simp: verzeiflung)
+qed
+
+lemma tick_inSizeWindow_2: "invariant (big, small)
+  \<Longrightarrow> tick (big, small) = (big', small')  
+  \<Longrightarrow> Big.newSize big = Big.newSize big'"
+proof(induction "(big, small)" rule: tick.induct)
+  case (1 currentB big auxB currentS uu auxS)
+  then show ?case by(auto split: current.splits)
+next
+  case ("2_1" v va vb vd)
+  then show ?case by(auto split: Small.state.splits current.splits)
+next
+  case ("2_2" v)
+  then show ?case by(auto simp: verzeiflung split: Small.state.splits current.splits)
+next
+  case ("2_3" v va vb vc vd)
+  then show ?case by(auto simp: verzeiflung split: current.splits split: Big.state.splits)
+next
+  case ("2_4" v)
+  then show ?case by(auto simp: verzeiflung split: Big.state.splits)
+qed
+
+lemma tick_inSizeWindow_3: "invariant (big, small)
+  \<Longrightarrow> tick (big, small) = (big', small')  
+  \<Longrightarrow> Small.size small = Small.size small'"
+proof(induction "(big, small)" rule: tick.induct)
+  case (1 currentB big auxB currentS uu auxS)
+  then show ?case by auto
+next
+  case ("2_1" v va vb vd)
+  then show ?case by(auto split: Small.state.splits current.splits)
+next
+  case ("2_2" v)
+  then show ?case by(auto simp: verzeiflung_2 split: Small.state.splits current.splits)
+next
+  case ("2_3" v va vb vc vd)
+  then show ?case by(auto split: current.splits)
+next
+  case ("2_4" v)
+  then show ?case by(auto simp: verzeiflung_2)
+qed
+
+lemma tick_inSizeWindow_4: "invariant (big, small)
+  \<Longrightarrow> tick (big, small) = (big', small')  
+  \<Longrightarrow> Big.size big \<ge> Big.size big'"
+proof(induction "(big, small)" rule: tick.induct)
+  case (1 currentB big auxB currentS uu auxS)
+  then show ?case by(auto split: current.splits)
+next
+  case ("2_1" v va vb vd)
+  then show ?case by(auto split: Small.state.splits current.splits)
+next
+  case ("2_2" v)
+  then show ?case by(auto simp: verzeiflung_2 split: Small.state.splits current.splits)
+next
+  case ("2_3" v va vb vc vd)
+  then show ?case by(auto simp: verzeiflung_2 split: current.splits Big.state.splits)
+next
+  case ("2_4" v)
+  then show ?case by(auto simp: verzeiflung_2 split: Big.state.splits)
+qed
+  
+
+
+lemma tick_inSizeWindow': "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small')
+  \<Longrightarrow> 4 * Big.newSize big + remainingSteps (big, small) \<le> 12 * Small.newSize small
+   \<Longrightarrow> 4 * Big.newSize big' + remainingSteps (big', small') \<le> 12 * Small.newSize small'"
+  using remainingStepsDecline tick_inSizeWindow_1 tick_inSizeWindow_2
+  by fastforce
+
+lemma tick_inSizeWindow'_2: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small')
+  \<Longrightarrow> 4 * Small.newSize small + remainingSteps (big, small) \<le> 12 * Big.newSize big 
+  \<Longrightarrow> 4 * Small.newSize small' + remainingSteps (big', small') \<le> 12 * Big.newSize big'"
+  using remainingStepsDecline tick_inSizeWindow_1 tick_inSizeWindow_2
+  by fastforce
+
+
+lemma tick_inSizeWindow'_3: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small')
+  \<Longrightarrow> remainingSteps (big, small) \<le> 4 * Small.size small
+  \<Longrightarrow> remainingSteps (big', small') \<le> 4 * Small.size small'"
+proof(induction "(big, small)" rule: tick.induct)
+case (1 currentB big auxB currentS uu auxS)
+  then show ?case by(auto split: current.splits)
+next
+  case ("2_1" v va vb vd)
+then show ?case apply(auto split: Small.state.splits) sorry
+next
+  case ("2_2" v)
+  then show ?case apply auto sorry
+next
+  case ("2_3" v va vb vc vd)
+  then show ?case 
+    apply auto
+    sorry
+next
+  case ("2_4" v)
+  then show ?case
+  proof(induction v rule: Common.tick.induct)
+    case (1 current idle)
+    then show ?case sorry
+  next
+    case (2 current aux new moved)
+    then show ?case 
+      apply(auto simp: min_def split: Big.state.splits current.splits)
+          apply (metis nat_le_linear neq0_conv not_less_eq_eq remainingSteps0_common remainingStepsDecline_2_common)
+         apply (metis Suc_leD neq0_conv remainingSteps0_common remainingStepsDecline_2_common)
+      
+        apply (metis Suc_leD neq0_conv remainingSteps0_common remainingStepsDecline_2_common)
+      subgoal for x2 x1a x3a x4a 
+        apply(induction x2)
+         apply(auto simp: reverseN_drop split: current.splits)
+        sorry 
+      by (metis Suc_leD neq0_conv remainingSteps0_common remainingStepsDecline_2_common)
+  qed
+qed
+
 
 lemma tick_not_empty: "invariant states \<Longrightarrow> \<not>isEmpty states \<Longrightarrow> \<not>isEmpty (tick states)"
-proof(induction states) 
+  sorry
+(*proof(induction states) 
   case (Pair big small)
   then show ?case
   proof(induction "Big.isEmpty big")
@@ -855,7 +1140,7 @@ proof(induction states)
       subgoal  sorry 
       using Common_Proof.some_empty sorry
   qed
-qed
+qed*)
 
 (* TODO: check if this is still correct! *)
 lemma same: "invariant (big, small) \<Longrightarrow> remainingSteps (big, small) \<ge> 4 \<Longrightarrow> inSizeWindow (big, small) \<Longrightarrow> inSizeWindow ((tick ^^ 4) (big, Small.push x small))"
@@ -872,6 +1157,9 @@ next
   case (3 x current auxS big newS count)
   then show ?case apply auto sorry
 qed
+
+lemma tick_inSizeWindow "invariant states \<Longrightarrow> inSizeWindow states \<Longrightarrow> inSizeWindow (tick states)"
+  sorry
 
 lemma same_2: "invariant (big, small) \<Longrightarrow> remainingSteps (big, small) \<ge> 4 \<Longrightarrow> inSizeWindow (big, small) \<Longrightarrow> Small.pop small = (x, small') \<Longrightarrow> inSizeWindow ((tick ^^ 4) (big, small'))"
   apply auto

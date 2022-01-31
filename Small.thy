@@ -79,6 +79,11 @@ fun size :: "'a state \<Rightarrow> nat" where
 | "size (Reverse2 current _ _ _ _) = Current.size current"
 | "size (Reverse1 current _ _) = Current.size current"
 
+fun size2 :: "'a state \<Rightarrow> nat" where
+  "size2 (Common state) = Common.size2 state"
+| "size2 (Reverse2 current _ _ _ _) = Current.size current"
+| "size2 (Reverse1 current _ _) = Current.size current"
+
 fun newSize :: "'a state \<Rightarrow> nat" where
   "newSize (Common state) = Common.newSize state"
 | "newSize (Reverse2 current _ _ _ _) = Current.newSize current"
