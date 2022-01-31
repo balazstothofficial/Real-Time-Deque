@@ -25,7 +25,8 @@ proof -
     ultimately have "leftLength \<le> rightLength + 1 \<longrightarrow> rightLength - (rightLength + (rightLength + 1) - List.length (drop (leftLength - (rightLength + 1)) (Stack.toList left))) = 0"
       using diff_zero by fastforce }
   ultimately show ?thesis
-    using a2 sorry (* by (smt (z3) Nat.add_diff_assoc Nat.diff_diff_right Suc_1 Suc_eq_plus1_left add.commute add_Suc_right add_diff_cancel_right' cancel_comm_monoid_add_class.diff_cancel mult_2 nat_le_linear pop_drop size_listLength) *)
+    using a2
+    sorry (* by (smt (z3) Nat.add_diff_assoc Nat.diff_diff_right Suc_1 Suc_eq_plus1_left add.commute add_Suc_right add_diff_cancel_right' cancel_comm_monoid_add_class.diff_cancel mult_2 nat_le_linear pop_drop size_listLength) *)
 qed
 
 
@@ -53,8 +54,8 @@ lemma helper_1_1: "\<lbrakk>\<not> leftLength \<le> 3 * Stack.size right; idle.I
          rev (drop (leftLength - Suc (Stack.size right)) (Stack.toList left)) @
          rev (take (leftLength - Suc (Stack.size right)) (Stack.toList left)) =
          Stack.toList right @ rev (Stack.toList left)"
-  sorry
-  (* by(auto simp: test helper_1_2) *)
+  by (metis append_take_drop_id helper_1_2 rev_append)
+  
 
 lemma helper_1: "\<lbrakk>
   \<not> leftLength \<le> 3 * Stack.size right; 
@@ -131,7 +132,7 @@ lemma list_enqueueLeft: "invariant deque \<Longrightarrow> listLeft (enqueueLeft
           apply(auto simp: reverseN_take helper leftNotEmpty)
               apply (metis Idle.invariant.simps Idle_Proof.invariant_push diff_le_self)
              apply (simp add: size_listLength)+
-          subgoal sorry
+          subgoal  sorry
           (* apply (smt (z3) Idle.invariant.simps Idle.size.simps Idle_Proof.invariant_push Idle_Proof.size_push Nat.add_diff_assoc One_nat_def Suc_eq_plus1_left Suc_leI Suc_n_not_le_n add_Suc_right add_diff_cancel_left' add_diff_cancel_right' append.assoc diff_Suc_eq_diff_pred le_eq_less_or_eq length_drop length_greater_0_conv length_rev mult_2 mult_Suc not_le_imp_less numeral_3_eq_3 pop_drop rev_rev_ident self_append_conv2 size_listLength test)  *)      
           by (metis Idle.invariant.simps Idle_Proof.invariant_push add_Suc_right diff_add_inverse)
        
@@ -222,36 +223,49 @@ lemma maybe2: "\<lbrakk>
 \<rbrakk> \<Longrightarrow> 10 + (9 * r + Suc l) \<le> 12 * (Suc l - Suc r)"
   by auto
 
+lemma fixed: "States.inSizeWindow (big, small) \<Longrightarrow> inSizeWindow (Left small big)"
+  by auto
+
+lemma fixed_2: "States.inSizeWindow (big, small) \<Longrightarrow> inSizeWindow (Right big small)"
+  by auto
+
+lemma fixed_3: "States.inSizeWindow (States.tick (big, small)) \<Longrightarrow> inSizeWindow (tick (Left small big))"
+  by(auto split: prod.splits)
+
+lemma fixed_4: "States.inSizeWindow (States.tick (big, small)) \<Longrightarrow> inSizeWindow (tick (Right big small))"
+  by(auto split: prod.splits)
+
+lemma fixed_5: "States.inSizeWindow ((States.tick ^^ n) (big, small)) \<Longrightarrow> inSizeWindow ((tick ^^ n) (Left small big))"
+proof(induction n arbitrary: big small)
+  case 0
+  then show ?case by auto
+next
+  case (Suc n)
+  then show ?case 
+    by (simp add: case_prod_unfold funpow_swap1)
+qed
+
+lemma fixed_6: "States.inSizeWindow ((States.tick ^^ n) (big, small)) \<Longrightarrow> inSizeWindow ((tick ^^ n) (Right big small))"
+proof(induction n arbitrary: big small)
+  case 0
+  then show ?case by auto
+next
+  case (Suc n)
+  then show ?case 
+    by (simp add: case_prod_unfold funpow_swap1)
+qed
+
 lemma geficke: "States.inSizeWindow ((States.tick) (right, Small.push x left)) \<Longrightarrow>
         Transformation.inSizeWindow (tick (transformation.Left (Small.push x left) right))"
    by (smt (z3) Transformation.inSizeWindow.simps(1) Transformation.tick.simps(1) case_prod_unfold prod.exhaust_sel)
 
 lemma geficke2:  "States.inSizeWindow ((States.tick ^^ n) (right, Small.push x left)) \<Longrightarrow>
      Transformation.inSizeWindow ((tick ^^ n) (transformation.Left (Small.push x left) right))"
-  apply(induction n arbitrary: right x left)
-   using geficke  apply(auto split: prod.splits)
- 
-   sorry
+  by (simp add: fixed_5)
 
 lemma geficke3:  "Small.pop small =(x, small') \<Longrightarrow> States.inSizeWindow ((States.tick ^^ n) (right, small')) \<Longrightarrow>
      Transformation.inSizeWindow ((tick ^^ n) (transformation.Left small' right))"
-  sorry
-
-(*lemma why: "\<lbrakk>
-  \<not> leftLength \<le> 3 * Stack.size right; 
-  idle.Idle left leftLength = Idle.push x left'; 
-  Idle.invariant left'; 
-  rightLength = Stack.size right;
-  \<not> Idle.isEmpty left'; 
-  \<not> Stack.isEmpty right; 
-  Idle.size left' \<le> 3 * Stack.size right;
- Stack.size right \<le> 3 * Idle.size left'
-\<rbrakk> \<Longrightarrow> False"
-proof(induction x left' rule: Idle.push.induct)
-  case (1 x stack stackSize)
-  then show ?case apply auto
-    sorry
-qed*)
+  by (simp add: fixed_5)
 
 interpretation RealTimeDeque: Deque where
   empty        = empty        and
@@ -379,8 +393,8 @@ next
       from Pair have size: "0 < Small.size left"
         by auto
 
-      with Pair invariant_pop_small_2[of left right x left'] have invariant: "Transformation.invariant ?newTransfomation"
-        by auto
+      with Pair invariant_pop_small_left_2 have invariant: "Transformation.invariant ?newTransfomation"
+        by (metis RealTimeDeque.invariant.simps(6))
      
       then have toList: "toListLeft ?newTransfomation = tl (Small.toCurrentList left) @ rev (Big.toCurrentList right)"
         apply(auto)
@@ -467,10 +481,10 @@ next
       apply auto
       using Small_Proof.currentList_empty_2 apply force
       apply(auto simp: max_def split: prod.splits Big.state.splits Small.state.splits if_splits)
-      subgoal apply(auto simp: reverseN_take split: current.splits) 
-        by (metis bot_nat_0.extremum list.size(3) mult_is_0 not_less_eq_eq size_listLength)
-      subgoal apply(auto simp:  split: current.splits)
-        by (simp add: size_listLength) 
+      subgoal sorry
+        (*by (metis bot_nat_0.extremum list.size(3) mult_is_0 not_less_eq_eq size_listLength)*)
+      subgoal sorry (*apply(auto simp:  split: current.splits)
+        by (simp add: size_listLength) *)
       subgoal by(auto split: current.splits)
       subgoal by(auto split: current.splits)
       apply (meson Common_Proof.currentList_empty_2 less_le_trans nat_0_less_mult_iff)
@@ -528,16 +542,8 @@ next
               by auto
           qed
 
-
-          from False have "0 < leftLength"
-            by auto
-
-        (*from False have notEmpty: "\<not>Transformation.isEmpty ?transformation"
-          apply(simp)
-          sorry*)
-          (*sledgehammer
-          using leftNotEmpty apply fastforce
-          by (metis Idle.invariant.simps Idle_Proof.invariant_push diff_is_0_eq funpow_0 helper_1_3 helper_1_4 leftNotEmpty length_greater_0_conv mult_2 size_isNotEmpty not_le size_listLength)*)
+        from False have "0 < leftLength"
+          by auto
 
         from False have test: "leftLength = Stack.size left" 
           apply auto
@@ -551,7 +557,6 @@ next
           apply(auto simp: max_def)
           by (smt (z3) add.commute add_2_eq_Suc' diff_add_inverse2 diff_is_0_eq le_less_Suc_eq length_greater_0_conv local.test mult_Suc size_isNotEmpty not_le not_less_eq numeral_3_eq_3 numeral_Bit0 size_listLength suc)
           
-        
         from False have invariant: "Transformation.invariant ?transformation"
           apply(auto simp: size_listLength helper leftNotEmpty)
              apply (metis Idle.invariant.simps Idle_Proof.invariant_push diff_le_self size_listLength)
@@ -741,7 +746,6 @@ next
 
             then have sizeWindow: "inSizeWindow (sixTicks ?transformation)"
               using sizeWindow_steps invariant remSteps sizeWindow'_sizeWindow unfolding sixTicks_def by blast
-
         
             with True invariant_six sizeWindow show ?case
               by(auto simp: Let_def remStepsEnd split: prod.splits)
@@ -780,7 +784,7 @@ next
     let ?tickedTransformation = "fourTicks ?newTransfomation"
 
     from 5 t have invariant: "Transformation.invariant ?newTransfomation"
-      by (metis RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(1) Transformation.remainingSteps.simps(1) Transformation_Proof.invariant_pop_small_2 sizeWindow_smallSize)
+      by (metis RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(1) Transformation.remainingSteps.simps(1) Transformation_Proof.invariant_pop_small_left_2 sizeWindow_smallSize)
 
     then have invariant_fourTicks: "Transformation.invariant (fourTicks ?newTransfomation)"
       using invariant_fourTicks by blast
@@ -796,7 +800,8 @@ next
         by auto
 
       from True inv steps t window have newWindow: "inSizeWindow (fourTicks ?newTransfomation)" 
-        using same_2[of right left x newLeft] geficke3[of left x newLeft 4 right] unfolding fourTicks_def by auto
+        unfolding fourTicks_def 
+        using same2[of right left] geficke3[of left x newLeft 4 right] unfolding fourTicks_def by auto
 
 
       with invariant_fourTicks show ?case 

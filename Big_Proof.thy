@@ -30,7 +30,8 @@ proof(induction current rule: get.induct)
   case (1 added old remained)
   then show ?case 
     apply(auto simp: reverseN_drop)
-    by (metis Nat.diff_diff_right add.commute first_pop hd_take le_diff_conv length_drop length_rev length_take list.sel(1) min.absorb2 rev_take size_listLength take_append)
+    (* TODO important: times out *)
+    sorry
 next
   case (2 x xs added old remained)
   then show ?case by auto
@@ -48,7 +49,40 @@ proof(induction current rule: get.induct)
 
   with 1  show ?case 
     apply(auto simp: reverseN_drop )
-    by (smt (verit, ccfv_threshold) Suc_diff_le add.commute diff_add_inverse diff_diff_left diff_is_0_eq drop0 drop_Suc drop_all_iff le_Suc_eq le_add_diff_inverse length_rev not_less_eq_eq self_append_conv2 size_listLength tl_append2)
+    (* TODO important: times out *)
+    sorry
+next
+  case (2 x xs added old remained)
+  then show ?case by auto
+qed
+
+lemma helper_size: "0 < Big.size (Reverse current big aux count) \<Longrightarrow> invariant (Reverse current big aux count) \<Longrightarrow> 
+    top current = hd (Big.toList (Reverse current big aux count))"
+proof(induction current rule: get.induct)
+  case (1 added old remained)
+  then show ?case 
+    apply(auto simp: reverseN_drop)
+    (* TODO important: times out *)
+    sorry
+next
+  case (2 x xs added old remained)
+  then show ?case by auto
+qed
+
+lemma helper_2_size: "0 < Big.size (Reverse current big aux count) \<Longrightarrow> invariant (Reverse current big aux count) \<Longrightarrow> 
+    Big.toList (Reverse (bottom current) big aux count) = tl (Big.toList (Reverse current big aux count))"
+proof(induction current rule: get.induct)
+  case (1 added old remained)
+  then have "
+         drop (Suc (length (Stack.toList big) + length aux) - (length (Stack.toList big) - count + remained)) (rev aux) =
+         tl (drop (length (Stack.toList big) + length aux - (length (Stack.toList big) - count + remained)) (rev aux))"
+    apply(auto simp: reverseN_drop)
+    by (smt (verit, del_insts) Nat.add_diff_assoc Nat.diff_diff_right add.commute diff_diff_cancel diff_le_self drop_Suc le_diff_conv plus_1_eq_Suc size_listLength tl_drop)
+
+  with 1  show ?case 
+    apply(auto simp: reverseN_drop )
+    (* TODO important: times out *)
+    sorry
 next
   case (2 x xs added old remained)
   then show ?case by auto
@@ -60,11 +94,23 @@ lemma moveToCommon: "\<lbrakk>\<not> Common.isEmpty x; Common.invariant x; Commo
   using toList_isNotEmpty apply blast
   by (metis Idle.isEmpty.elims(3) Idle.toList.simps toList_isNotEmpty)
 
+lemma moveToCommon_size: "\<lbrakk>0 < Common.size x; Common.invariant x; Common.toList x = []\<rbrakk> \<Longrightarrow> False"
+  apply(induction x)
+   apply(auto simp: take_Cons' size_listLength split: current.splits)
+  by (metis list.distinct(1) pop_toList_2 surj_pair)
+
 lemma helper_3: "\<not>isEmpty big \<Longrightarrow> invariant big \<Longrightarrow> toList big \<noteq> []"
   apply(induction big)
    apply(auto simp: moveToCommon split: current.splits)
-  apply (simp add: reverseN_take)
+   apply (simp add: reverseN_take)
   using moveToCommon by blast
+
+lemma helper_3_size: "0 < Big.size big \<Longrightarrow> invariant big \<Longrightarrow> toList big \<noteq> []"
+  apply(induction big)
+   apply(auto simp: moveToCommon_size split: current.splits)
+   apply (simp add: reverseN_take)
+  apply (metis bot_nat_0.extremum_uniqueI diff_zero leD list.size(3) size_listLength)
+  using moveToCommon_size by blast
 
 (* TODO: *)
 lemma pop: "\<not>isEmpty big \<Longrightarrow> invariant big \<Longrightarrow> pop big = (x, big') \<Longrightarrow> x # toList big' = toList big"
@@ -95,6 +141,36 @@ next
   from 2 show ?case 
     using helper[of current big aux count] helper_2[of current big aux count] helper_3  
     by(auto simp: helper_3 split: current.splits)
+qed 
+
+(* TODO: *)
+lemma pop_size: "0 < size big \<Longrightarrow> invariant big \<Longrightarrow> pop big = (x, big') \<Longrightarrow> x # toList big' = toList big"
+proof(induction x big rule: push.induct)
+  case (1 x state)
+  then show ?case
+    by(auto simp: list_pop_2 split: prod.splits)
+next
+  case (2 x current big aux count)
+  
+  
+  from 2 show ?case 
+    using helper_size[of current big aux count] helper_2_size[of current big aux count] helper_3_size 
+    by(auto simp: helper_3_size split: current.splits)
+qed 
+
+(* TODO: *)
+lemma pop_2_size: "0 < size big \<Longrightarrow> invariant big \<Longrightarrow> pop big = (x, big') \<Longrightarrow> toList big' = tl (toList big)"
+proof(induction x big rule: push.induct)
+  case (1 x state)
+  then show ?case
+    by(auto simp: list_pop_2 split: prod.splits)
+next
+  case (2 x current big aux count)
+  
+  
+  from 2 show ?case 
+    using helper_size[of current big aux count] helper_2_size[of current big aux count] helper_3_size 
+    by(auto simp: helper_3_size split: current.splits)
 qed 
 
 (* TODO: *)
@@ -235,11 +311,11 @@ next
     from 1 show ?case  
       apply auto
          apply linarith+
-      subgoal apply auto sorry
       subgoal 
         by(auto simp: a b reverseN_take)
-      apply(auto simp: reverseN_take)
-      by (smt (verit, ccfv_SIG) Suc_diff_Suc Suc_diff_le Suc_pred a bot_nat_0.not_eq_extremum diff_Suc_Suc diff_is_0_eq drop_Suc le_eq_less_or_eq length_rev length_take list.size(3) min.absorb2 nat_le_linear rev_take size_listLength take_append take_tl tl_append2 tl_drop)
+      apply(auto simp:  reverseN_take)
+      (* TODO important *)
+      sorry
   next
     case (2 x xs added old remained)
     then show ?case
@@ -264,6 +340,27 @@ next
     case (1 added old remained)
     then show ?case
       by(auto simp: Stack_Proof.pop_toList)
+  next
+    case (2 x xs added old remained)
+    then show ?case
+      by auto
+  qed
+qed
+
+lemma currentList_pop_2: "invariant big \<Longrightarrow> 0 < size big \<Longrightarrow> pop big = (x, big') \<Longrightarrow> toCurrentList big' = tl (toCurrentList big)"
+proof(induction big arbitrary: x rule: pop.induct)
+  case (1 state)
+  then show ?case 
+    by(auto simp: currentList_pop_2 split: prod.splits)
+next
+  case (2 current big aux count)
+  
+  then show ?case 
+  proof(induction current rule: get.induct)
+    case (1 added old remained)
+    then show ?case
+      apply auto
+      by (metis Stack_Proof.pop_toList size_isNotEmpty)
   next
     case (2 x xs added old remained)
     then show ?case

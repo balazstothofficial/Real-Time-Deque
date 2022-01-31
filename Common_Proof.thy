@@ -270,6 +270,90 @@ next
   qed
 qed
 
+(* TODO: *)
+lemma list_pop_2: "invariant common \<Longrightarrow> 0 < size common \<Longrightarrow> pop common = (x, common') \<Longrightarrow>
+   toList common = x # toList common'"
+proof(induction common arbitrary: x rule: pop.induct)
+  case (1 current idle)
+  then show ?case
+    by(auto simp: Idle_Proof.pop_toList_2 split: prod.splits)
+next
+  case (2 current aux new moved)
+  then show ?case
+  proof(induction current rule: get.induct)
+    case (1 added old remained)
+    then show ?case
+    proof(induction "remained - Suc 0 \<le> length new")
+      case True
+
+      then have hd: "first old = hd aux"
+        apply(auto simp: reverseN_take)
+        by (smt (z3) Suc_diff_Suc diff_add_inverse diff_commute diff_is_0_eq first_toList hd_append2 hd_conv_nth hd_drop_conv_nth hd_take le_add1 le_add_diff_inverse2 length_greater_0_conv length_rev lessI less_add_same_cancel2 less_le_trans less_or_eq_imp_le toList_isNotEmpty rev_nth rev_take size_listLength take_eq_Nil)
+
+      from True have 1: "remained - length new = Suc 0"
+        by auto
+     
+      with 1 True take_hd show ?case 
+        apply(auto simp: reverseN_take)
+        by (smt (z3) Nat.add_0_right add.commute hd leD list.size(3) take_hd)
+    next
+      case False
+    
+      from False show ?case 
+      proof(induction "length aux = remained - length new")
+        case True
+
+        then have a: "aux \<noteq> []"
+          by auto
+
+        from True have b: "\<not>Stack.isEmpty old"
+          apply auto
+          using size_isNotEmpty by blast
+        
+        from True have "take 1 (Stack.toList old) = take 1 (rev aux)"
+          apply(auto simp: reverseN_take)
+          by (smt (z3) add_gr_0 hd_append2 hd_take le_add_diff_inverse2 length_greater_0_conv length_rev less_imp_le_nat toList_isNotEmpty size_listLength take_eq_Nil take_hd zero_less_diff)
+
+        then have "[last aux] = [first old]"
+          using take_last first_take a b 
+          by fastforce
+
+        then have "last aux = first old"
+          by auto
+
+        with True show ?case 
+          apply(auto simp: reverseN_take min_def split: if_splits)
+          by (metis Suc_eq_plus1 butlast_conv_take diff_diff_left diff_less_mono2 less_nat_zero_code list.size(3) snoc_eq_iff_butlast)+
+      next
+        case False
+
+        then have a: "take (remained - length new) aux \<noteq> []"
+          by auto
+
+        from False have b: "\<not>Stack.isEmpty old"
+          apply auto
+          using size_isNotEmpty by blast
+
+        from False have "take 1 (Stack.toList old) = take 1 (rev (take (remained - length new) aux))"
+          apply(auto simp: reverseN_take)
+          by (smt (verit, ccfv_threshold) Nil_is_append_conv Nil_is_rev_conv bot_nat_0.extremum_uniqueI diff_is_0_eq hd_append2 hd_take length_greater_0_conv less_add_same_cancel2 less_le_trans toList_isNotEmpty not_le size_listLength take_eq_Nil take_hd)
+
+
+        then have c: "[first old] = [last (take (remained - length new) aux)]"
+          using take_last first_take a b
+          by metis
+
+
+        with False show ?case 
+          apply(auto simp: reverseN_take min_def split: if_splits)
+          by (smt (z3) Nil_is_rev_conv Suc_diff_Suc first_toList hd_append2 hd_rev hd_take last_snoc le_Suc_eq length_greater_0_conv less_imp_Suc_add toList_isNotEmpty not_le size_listLength take_eq_Nil take_hd_drop zero_less_Suc)+
+      qed
+    qed
+  next
+    case (2 x xs added old remained)
+    then show ?case by auto
+  qed
+qed
 
 (* TODO: *)
 lemma currentList_pop: "\<not>isEmpty common \<Longrightarrow> pop common = (x, common') \<Longrightarrow> toCurrentList common' = tl (toCurrentList common)"

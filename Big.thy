@@ -44,16 +44,19 @@ fun invariant :: "'a state \<Rightarrow> bool" where
    case current of Current extra added old remained \<Rightarrow>
       Current.invariant current
     \<and> List.length aux \<ge> remained - count
-    \<and> remained \<ge> count
+    
     \<and> count \<le> Stack.size big
     \<and> Stack.toList old = rev (take (Stack.size old) ((rev (Stack.toList big)) @ aux))
     \<and> take remained (Stack.toList old) = rev (take remained (reverseN count (Stack.toList big) aux))
 )"
 
-(* TODO: This should be prevented on a higher level? *) 
+(* \<and> remained \<ge> count *)
+
+(* TODO: Hopefully not need:
 fun pop_invariant :: "'a state \<Rightarrow> bool" where
   "pop_invariant (Common state) = True"
 | "pop_invariant (Reverse (Current _ _ _ remained) _ _ count) \<longleftrightarrow> remained > count"
+ *) 
 
 (* Just for proof *)
 fun remainingSteps :: "'a state \<Rightarrow> nat" where
