@@ -68,13 +68,14 @@ fun remainingSteps :: "'a state \<Rightarrow> nat" where
   "remainingSteps (Idle _ _) = 0"
 | "remainingSteps (Copy (Current _ _ _ remained) aux new moved) = remained - moved"
 
+(*fun size :: "'a state \<Rightarrow> nat" where
+  "size (Idle current idle) = min (Current.size current) (Idle.size idle)"
+| "size (Copy current _ _ _) = Current.size current"*)
+
+(* Use size for emptiness? *)
 fun size :: "'a state \<Rightarrow> nat" where
   "size (Idle current idle) = min (Current.size current) (Idle.size idle)"
-| "size (Copy current _ _ _) = Current.size current"
-
-fun size2 :: "'a state \<Rightarrow> nat" where
-  "size2 (Idle current idle) = min (Current.size current) (Idle.size idle)"
-| "size2 (Copy current _ _ _) = min (Current.size current) (Current.newSize current)"
+| "size (Copy current _ _ _) = min (Current.size current) (Current.newSize current)"
 
 fun newSize :: "'a state \<Rightarrow> nat" where
   "newSize (Idle current _) = Current.newSize current"

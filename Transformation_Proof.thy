@@ -113,7 +113,7 @@ lemma fourTicks_inSizeWindow: "invariant transformation \<Longrightarrow> inSize
 lemma sixTicks_inSizeWindow: "invariant transformation \<Longrightarrow> inSizeWindow transformation \<Longrightarrow> inSizeWindow (sixTicks transformation)"
   by(auto simp: nTicks_inSizeWindow sixTicks_def)
 
-lemma tick_not_empty: "invariant transformation \<Longrightarrow> \<not>isEmpty transformation \<Longrightarrow> \<not>isEmpty (tick transformation)"
+(*lemma tick_not_empty: "invariant transformation \<Longrightarrow> \<not>isEmpty transformation \<Longrightarrow> \<not>isEmpty (tick transformation)"
 proof(induction transformation rule: tick.induct)
   case (1 small big)
   then show ?case apply auto
@@ -131,7 +131,7 @@ lemma sixTicks_not_empty: "invariant transformation \<Longrightarrow> \<not>isEm
   by(auto simp: nTicks_not_empty sixTicks_def)
 
 lemma fourTicks_not_empty: "invariant transformation \<Longrightarrow> \<not>isEmpty transformation \<Longrightarrow> \<not>isEmpty (fourTicks transformation)"
-  by(auto simp: nTicks_not_empty fourTicks_def)
+  by(auto simp: nTicks_not_empty fourTicks_def)*)
 
 lemma remainingStepsDecline_3: "invariant transformation \<Longrightarrow> Suc n < remainingSteps transformation \<Longrightarrow> n < remainingSteps (tick transformation)"
 proof(induction transformation)

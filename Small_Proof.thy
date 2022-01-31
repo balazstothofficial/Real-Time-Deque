@@ -216,8 +216,8 @@ next
     case (1 added old remained)
     then show ?case 
       apply auto 
-      apply (auto simp: Stack_Proof.size_pop size_isNotEmpty Suc_leI)
-      by (metis One_nat_def Suc_diff_eq_diff_pred Suc_diff_le drop_Suc first_pop list.sel(3) rev_take size_isNotEmpty tl_drop)
+                 apply (auto simp: Stack_Proof.size_pop size_isNotEmpty Suc_leI)
+      by (smt (verit, best) Suc_diff_le Suc_pred diff_Suc_Suc drop_Suc first_pop list.sel(3) rev_take size_isNotEmpty tl_drop)+
   next
     case (2 x xs added old remained)
     then show ?case by auto 
@@ -269,13 +269,33 @@ lemma currentList_pop: "\<not> isEmpty small \<Longrightarrow> pop small = (x, s
   by (metis get_toList list.sel(3))
 
 lemma currentList_pop_2: "invariant small \<Longrightarrow> 0 < size small \<Longrightarrow> pop small = (x, small') \<Longrightarrow> toCurrentList small' = tl (toCurrentList small)"
-  apply(induction small arbitrary: x rule: pop.induct)
-  apply(auto simp: Common_Proof.currentList_pop_2 put_toList get_toList_size split: prod.splits current.splits)
-  subgoal
-    by (metis Current.toList.simps Pair_inject get.simps(2) list.exhaust_sel)
-  apply (smt (z3) Current.invariant.simps Current.size.simps Current.toList.simps Suc_diff_Suc Suc_pred \<open>\<And>x4 x3 x2 x1a x1 smalla auxS. \<lbrakk>get (Current x1a (List.length x1a) x3 x4) = (x1, x2); small' = Reverse1 x2 smalla auxS; Stack.size x3 \<le> x4; Stack.size x3 \<le> Stack.size smalla + List.length auxS; Stack.toList x3 = rev (take (Stack.size x3 - List.length (Stack.toList smalla)) auxS) @ rev (take (Stack.size x3) (rev (Stack.toList smalla))); x1a \<noteq> []\<rbrakk> \<Longrightarrow> Current.toList x2 = tl x1a @ rev (take (Stack.size x3 - List.length (Stack.toList smalla)) auxS) @ rev (take (Stack.size x3) (rev (Stack.toList smalla)))\<close> diff_add_inverse get_toList_size less_imp_add_positive list.sel(3) list.size(3) tl_append2)
-  apply (metis Current.toList.simps Pair_inject get.simps(2) list.exhaust_sel)
-  by (metis Current.isEmpty.simps Current.toList.simps add_eq_0_iff_both_eq_0 get_toList list.sel(3) neq0_conv size_isNotEmpty)
+proof(induction small arbitrary: x rule: pop.induct)
+  case (1 state)
+  then show ?case by(auto simp: currentList_pop_2 split: prod.splits)
+next
+  case (2 current small auxS)
+  then show ?case 
+  proof(induction current rule: get.induct)
+    case (1 added old remained)
+    then show ?case 
+      apply auto
+      by (metis Stack_Proof.pop_toList size_isNotEmpty)
+  next
+    case (2 x xs added old remained)
+    then show ?case by auto
+  qed
+next
+  case (3 current auxS big newS count)
+  then show ?case 
+  proof(induction current rule: get.induct)
+    case (1 added old remained)
+    then show ?case 
+      by(auto simp: Stack_Proof.pop_toList size_isNotEmpty)
+  next
+    case (2 x xs added old remained)
+    then show ?case by auto
+  qed
+qed
 
 lemma currentList_empty: "\<lbrakk>\<not> isEmpty small; toCurrentList small = []; invariant small\<rbrakk> \<Longrightarrow> False"
   apply(induction small)
@@ -289,9 +309,9 @@ lemma currentList_empty_2: "\<lbrakk>0 < size small; toCurrentList small = []; i
    apply (simp add: size_listLength)
   using currentList_empty_2 by blast
 
-(*lemma tick_size: "invariant small \<Longrightarrow> size small = size (tick small)"
+lemma tick_size: "invariant small \<Longrightarrow> size small = size (tick small)"
   apply(induction small rule: tick.induct)
-  by(auto simp: tick_size split: current.splits)*)
+  by(auto simp: tick_size split: current.splits)
 
 lemma tick_not_empty: "invariant small \<Longrightarrow> \<not>isEmpty small \<Longrightarrow> \<not>isEmpty (tick small)"
   apply(induction small rule: tick.induct)
@@ -307,6 +327,7 @@ lemma push_not_empty: "\<lbrakk>\<not> isEmpty small; isEmpty (push x small)\<rb
 
 lemma size_isEmpty: "invariant small \<Longrightarrow> size small = 0 \<Longrightarrow> isEmpty small"
   apply(induction small)
-  by(auto simp: size_isEmpty Current_Proof.size_isEmpty toList_isEmpty split: current.splits)
+    apply(auto simp: size_isEmpty Current_Proof.size_isEmpty toList_isEmpty split: current.splits)
+  by (simp_all add: min_def toList_isEmpty)
 
 end

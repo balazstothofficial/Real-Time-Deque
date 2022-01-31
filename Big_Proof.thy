@@ -187,6 +187,66 @@ next
   qed
 qed
 
+lemma invariant_pop_2: "\<lbrakk>
+  0 < size big; 
+  invariant big;
+  pop big = (x, big')
+\<rbrakk> \<Longrightarrow> invariant big'"
+proof(induction big arbitrary: x rule: pop.induct)
+  case (1 state)
+  then show ?case
+    by(auto simp: invariant_pop_2 split: prod.splits)
+next
+  case (2 current big aux count)
+  then show ?case 
+  proof(induction current rule: get.induct)
+    case (1 added old remained)
+    have a: "Stack.toList (Stack.pop old) = tl (Stack.toList old)"
+      apply(induction old rule: Stack.pop.induct)
+      by auto
+
+
+    from 1 have b: "
+     tl (rev (take (Stack.size old - length (Stack.toList big)) aux) @ rev (take (Stack.size old) (rev (Stack.toList big)))) =
+         rev (take (Stack.size (Stack.pop old) - length (Stack.toList big)) aux) @ rev (take (Stack.size (Stack.pop old)) (rev (Stack.toList big)))"
+    proof(induction "Stack.size old < length (Stack.toList big)")
+      case True
+      then show ?case 
+        apply(auto simp: reverseN_take)
+        by (smt (z3) One_nat_def Stack_Proof.size_isEmpty Stack_Proof.size_pop Suc_diff_eq_diff_pred Suc_diff_le bot_nat_0.not_eq_extremum diff_is_0_eq drop_Suc length_rev less_imp_le nat_le_linear not_less_eq_eq rev_is_Nil_conv rev_take self_append_conv2 take_eq_Nil tl_drop)
+    next
+      case False
+     
+        
+
+      from False show ?case
+      proof(induction "Stack.size (Stack.pop old) < length (Stack.toList big)")
+        case True
+        then show ?case
+          apply auto
+          by (smt (verit, best) Cons_nth_drop_Suc One_nat_def Stack_Proof.size_isEmpty Stack_Proof.size_pop Suc_le_eq a add.commute add_leE diff_add_inverse2 first_pop gen_length_def le_add_diff_inverse2 le_eq_less_or_eq length_code length_rev list.inject not_le_imp_less plus_1_eq_Suc rev_is_Nil_conv rev_rev_ident rev_take self_append_conv2 take_all_iff take_eq_Nil)
+      next
+        case False
+        then show ?case apply auto
+          by (smt (z3) Stack_Proof.size_isEmpty Stack_Proof.size_pop Suc_diff_le Suc_le_lessD Suc_pred bot_nat_0.not_eq_extremum diff_Suc_Suc diff_add_inverse2 diff_is_0_eq drop_Suc length_append length_rev list.size(3) nat_le_linear not_le_imp_less rev_take size_listLength take_all_iff tl_append2 tl_drop)
+      qed
+    qed
+             
+    from 1 show ?case  
+      apply auto
+         apply linarith+
+      subgoal apply auto sorry
+      subgoal 
+        by(auto simp: a b reverseN_take)
+      apply(auto simp: reverseN_take)
+      by (smt (verit, ccfv_SIG) Suc_diff_Suc Suc_diff_le Suc_pred a bot_nat_0.not_eq_extremum diff_Suc_Suc diff_is_0_eq drop_Suc le_eq_less_or_eq length_rev length_take list.size(3) min.absorb2 nat_le_linear rev_take size_listLength take_append take_tl tl_append2 tl_drop)
+  next
+    case (2 x xs added old remained)
+    then show ?case
+      by auto
+  qed
+qed
+
 lemma currentList_push: "toCurrentList (push x big) = x # toCurrentList big"
   apply(induction x big rule: push.induct)
   by(auto simp: currentList_push put_toList)
@@ -226,12 +286,11 @@ lemma currentList_empty_2: "\<lbrakk>0 < size big; toCurrentList big = []; invar
   apply(induction big)
     apply(auto  split: current.splits)
     apply (simp add: size_listLength)
-  apply (simp add: size_listLength)
   using currentList_empty_2 by blast
 
-(*lemma tick_size: "invariant big \<Longrightarrow> size big = size (tick big)"
+lemma tick_size: "invariant big \<Longrightarrow> size big = size (tick big)"
   apply(induction big rule: tick.induct)
-  by(auto simp: tick_size split: current.splits)*)
+  by(auto simp: tick_size split: current.splits)
 
 lemma tick_not_empty: "invariant big \<Longrightarrow> \<not>isEmpty big \<Longrightarrow> \<not>isEmpty (tick big)"
   apply(induction big rule: tick.induct)
@@ -241,6 +300,7 @@ lemma tick_not_empty: "invariant big \<Longrightarrow> \<not>isEmpty big \<Longr
 lemma size_isEmpty: "invariant big \<Longrightarrow> size big = 0 \<Longrightarrow> isEmpty big"
   apply(induction big)
    apply(auto simp: size_isEmpty Current_Proof.size_isEmpty split: current.splits)
-  using toList_isEmpty by blast
+   apply (metis Stack_Proof.size_isEmpty add.commute add_diff_cancel_right' bot_nat_0.extremum min_def zero_diff)
+  by (metis add_gr_0 length_greater_0_conv less_numeral_extra(3) min_less_iff_conj)
 
 end

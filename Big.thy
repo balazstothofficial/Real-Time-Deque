@@ -62,7 +62,7 @@ fun remainingSteps :: "'a state \<Rightarrow> nat" where
 
 fun size :: "'a state \<Rightarrow> nat" where
   "size (Common state) = Common.size state"
-| "size (Reverse current _ _ _) = Current.size current"
+| "size (Reverse current _ _ _) = min (Current.size current) (Current.newSize current)"
 
 fun newSize :: "'a state \<Rightarrow> nat" where
   "newSize (Common state) = Common.newSize state"

@@ -76,13 +76,9 @@ fun invariant :: "'a state \<Rightarrow> bool" where
 
 fun size :: "'a state \<Rightarrow> nat" where
   "size (Common state) = Common.size state"
-| "size (Reverse2 current _ _ _ _) = Current.size current"
-| "size (Reverse1 current _ _) = Current.size current"
+| "size (Reverse2 current _ _ _ _) = min (Current.size current) (Current.newSize current)"
+| "size (Reverse1 current _ _) = min (Current.size current) (Current.newSize current)"
 
-fun size2 :: "'a state \<Rightarrow> nat" where
-  "size2 (Common state) = Common.size2 state"
-| "size2 (Reverse2 current _ _ _ _) = Current.size current"
-| "size2 (Reverse1 current _ _) = Current.size current"
 
 fun newSize :: "'a state \<Rightarrow> nat" where
   "newSize (Common state) = Common.newSize state"
