@@ -31,4 +31,8 @@ lemma invariant_pop: "\<lbrakk>\<not> isEmpty idle; invariant idle; pop idle = (
   apply(induction idle arbitrary: x rule: pop.induct)
   by(auto simp: Stack_Proof.size_pop)
 
+lemma isNotEmpty: "\<lbrakk>isEmpty idle; 0 < size idle\<rbrakk> \<Longrightarrow> False" 
+  apply(induction idle)
+  by (simp add: size_isNotEmpty)  
+
 end

@@ -415,5 +415,8 @@ next
     by(auto simp: min_def split: current.splits)
 qed
 
+lemma "idle = Idle current idle' \<Longrightarrow> invariant idle \<Longrightarrow> Idle.size idle' = newSize idle"
+  by auto
+
 
 end

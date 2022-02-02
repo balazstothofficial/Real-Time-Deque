@@ -29,9 +29,8 @@ lemma helper: "\<not>Current.isEmpty current \<Longrightarrow> invariant (Revers
 proof(induction current rule: get.induct)
   case (1 added old remained)
   then show ?case 
-    apply(auto simp: reverseN_drop)
-    (* TODO important: times out *)
-    sorry
+    apply(auto simp: reverseN_take rev_take)
+    by (smt (verit, ccfv_threshold) Nat.diff_diff_right add.commute diff_is_0_eq diff_le_self drop_all_iff first_toList hd_append2 hd_take le_add_diff length_rev minus_nat.diff_0 nat_le_linear self_append_conv2 take_eq_Nil)
 next
   case (2 x xs added old remained)
   then show ?case by auto
@@ -48,9 +47,8 @@ proof(induction current rule: get.induct)
     by (simp add: Suc_diff_le drop_Suc size_listLength tl_drop)
 
   with 1  show ?case 
-    apply(auto simp: reverseN_drop )
-    (* TODO important: times out *)
-    sorry
+    apply(auto simp: reverseN_take rev_take)
+    by (smt (verit, del_insts) Nat.diff_diff_right Suc_diff_le diff_add_inverse diff_is_0_eq' drop_Suc drop_all_iff le_add_diff le_add_diff_inverse2 length_rev nat_le_linear not_less_eq_eq self_append_conv2 size_listLength tl_append2 tl_drop)
 next
   case (2 x xs added old remained)
   then show ?case by auto
@@ -61,9 +59,9 @@ lemma helper_size: "0 < Big.size (Reverse current big aux count) \<Longrightarro
 proof(induction current rule: get.induct)
   case (1 added old remained)
   then show ?case 
-    apply(auto simp: reverseN_drop)
-    (* TODO important: times out *)
-    sorry
+    apply(auto simp: reverseN_take rev_take)
+    by (smt (z3) Nat.diff_diff_right add.commute diff_is_0_eq drop_all_iff first_toList hd_append hd_take le_add_diff length_rev minus_nat.diff_0 nat_le_linear size_isNotEmpty take_eq_Nil)
+   
 next
   case (2 x xs added old remained)
   then show ?case by auto
@@ -80,9 +78,8 @@ proof(induction current rule: get.induct)
     by (smt (verit, del_insts) Nat.add_diff_assoc Nat.diff_diff_right add.commute diff_diff_cancel diff_le_self drop_Suc le_diff_conv plus_1_eq_Suc size_listLength tl_drop)
 
   with 1  show ?case 
-    apply(auto simp: reverseN_drop )
-    (* TODO important: times out *)
-    sorry
+    apply(auto simp: reverseN_take rev_take tl_drop  size_listLength)
+    by (smt (verit, best) Nat.add_diff_assoc One_nat_def add.commute append_self_conv2 diff_add_inverse2 diff_is_0_eq' drop_Suc drop_all le_add2 le_diff_conv length_drop length_rev list.size(3) not_less_eq_eq plus_1_eq_Suc tl_append2 tl_drop)
 next
   case (2 x xs added old remained)
   then show ?case by auto
@@ -313,9 +310,17 @@ next
          apply linarith+
       subgoal 
         by(auto simp: a b reverseN_take)
-      apply(auto simp:  reverseN_take)
-      (* TODO important *)
-      sorry
+      apply(auto simp: a reverseN_take  take_tl)
+      apply(auto simp: rev_take)
+      proof(induction "drop (length aux - (remained - min (length (Stack.toList big)) count)) (rev aux) = []")
+        case True
+        then show ?case apply auto 
+          by (smt (z3) Suc_diff_le diff_diff_cancel diff_diff_left diff_is_0_eq diff_le_self drop_Suc min.commute min_def size_listLength tl_drop)
+      next
+        case False
+        then show ?case apply auto
+          by (metis Suc_diff_le drop_Suc le_diff_conv min.commute min_def size_listLength tl_drop)
+      qed
   next
     case (2 x xs added old remained)
     then show ?case
