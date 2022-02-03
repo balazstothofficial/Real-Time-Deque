@@ -62,6 +62,8 @@ fun inSizeWindow' :: "'a states \<Rightarrow> nat \<Rightarrow> bool" where
     \<and> 4 * Big.newSize big + steps \<le> 12 * Small.newSize small - 3 * steps - 4
     \<and> steps + 1 \<le> 4 * Small.size small
     \<and> steps + 1 \<le> 4 * Big.size big
+    \<and> 1 < Small.newSize small
+    \<and> 1 < Big.newSize big
   "
 
 fun inSizeWindow :: "'a states \<Rightarrow> bool" where

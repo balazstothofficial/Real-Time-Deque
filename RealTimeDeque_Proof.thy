@@ -253,6 +253,39 @@ lemma maybe2: "\<lbrakk>
 \<rbrakk> \<Longrightarrow> 10 + (9 * r + Suc l) \<le> 12 * (Suc l - Suc r)"
   by auto
 
+lemma maybe3: "\<lbrakk>
+          \<not> l \<le> 3 * r; 
+          Suc l' = l;
+          0 < l;
+          0 < l';
+          0 < r;
+          l' \<le> 3 * r;
+          l + l - Suc (Suc (r + r)) \<le> Suc (l + r)
+       \<rbrakk> \<Longrightarrow> Suc (l + r - 4) \<le> 4 * r"
+  by auto
+
+lemma maybe4: "\<lbrakk>
+    \<not> l \<le> 3 * r; 
+    0 < l;
+    0 < l'; 
+    0 < r; 
+    l' \<le> 3 * r;
+    l + l - Suc (Suc (r + r)) \<le> Suc (l + r);
+    Suc l' = l
+\<rbrakk> \<Longrightarrow> 0 < r"
+  by auto
+
+lemma maybe5: " \<lbrakk>
+   \<not> l \<le> 3 * r; 
+   0 < l;
+   0 < l'; 
+   0 < r; 
+   l' \<le> 3 * r;
+   l + l - Suc (Suc (r + r)) \<le> Suc (l + r);
+   Suc l' = l
+\<rbrakk> \<Longrightarrow> Suc 0 < l - Suc r"
+  by auto
+
 lemma fixed: "States.inSizeWindow (big, small) \<Longrightarrow> inSizeWindow (Left small big)"
   by auto
 
@@ -367,6 +400,61 @@ next
   then show ?case 
     by (metis (no_types, lifting) Transformation.tick.simps(2) comp_def funpow_Suc_right prod.case_eq_if) 
 qed
+
+lemma finallly_1: "Stack.toList stack = [] \<Longrightarrow> Suc x \<le> 4 * Stack.size stack \<Longrightarrow> False"
+  apply(induction stack rule: Stack.toList.induct)
+  by auto
+
+lemma finallly_2: "Idle.toList idle = [] \<Longrightarrow> Suc x \<le> 4 * Idle.size idle \<Longrightarrow> False"
+  apply(induction idle arbitrary: x rule: Idle.toList.induct)
+  using finallly_1 by auto
+
+lemma finallly: "Common.invariant common \<Longrightarrow> Suc x \<le> 4 * Common.size common \<Longrightarrow> Common.toList common = [] \<Longrightarrow> False"
+proof(induction common arbitrary: x)
+  case (Copy x1 x2 x3 x4)
+  then show ?case 
+  proof(induction x1)
+    case (Current x1a x2a x3a x4a)
+    then have a: "Stack.toList x3a = []"
+      by auto
+
+    from Current have b: "Suc x \<le> 4 * Stack.size x3a"
+      by auto
+
+    from a b finallly_1 show ?case 
+      by auto
+  qed
+next
+  case (Idle x1 x2)
+  then have a: "0 < Idle.size x2"
+    by auto
+
+  from Idle have  b: "Suc x \<le> 4 * Idle.size x2"
+    by auto
+
+  from Idle have c: "Idle.toList x2 = []"
+    by auto
+
+  from b c show ?case
+    using finallly_2 by auto 
+qed
+
+lemma anja: "0 < Stack.size left \<Longrightarrow> \<not>Stack.isEmpty left"
+  apply(induction left rule: Stack.isEmpty.induct)
+  by auto
+
+lemma anja_2: "0 < Idle.size idle \<Longrightarrow> \<not>Idle.isEmpty idle"
+  apply(induction idle rule: Idle.isEmpty.induct)
+  by(auto simp: anja)
+
+lemma anja_3: "\<not>Stack.isEmpty left \<Longrightarrow> 0 < Stack.size left"
+  apply(induction left rule: Stack.isEmpty.induct)
+  by auto
+
+lemma anja_4: "\<not>Idle.isEmpty idle \<Longrightarrow> 0 < Idle.size idle "
+  apply(induction idle rule: Idle.isEmpty.induct)
+  by(auto simp: anja_3)
+
 
 interpretation RealTimeDeque: Deque where
   empty        = empty        and
@@ -617,8 +705,7 @@ next
       subgoal by(auto split!: current.splits)
       subgoal by(auto split: current.splits)
       subgoal by(auto split: current.splits)
-      apply (metis Common_Proof.currentList_empty_2 Suc_le_lessD less_nat_zero_code mult.commute mult_0 neq0_conv)
-      by (metis Common_Proof.currentList_empty_2 Suc_le_lessD less_nat_zero_code mult.commute mult_0 neq0_conv)
+      using finallly by auto
   qed
 next
   case (10 q)
@@ -713,19 +800,19 @@ next
           by auto
 
         have dummy_2: "\<lbrakk>
-          \<not> Stack.size left \<le> 3 * Stack.size right;
+          \<not> Stack.size left \<le> 3 * Stack.size right; 
           idle.Idle left (Stack.size left) = Idle.push x left';
-          \<not> Stack.isEmpty left;
+          \<not> Stack.isEmpty left; 
           Idle.invariant left';
-          rightLength = Stack.size right;
-          \<not> Idle.isEmpty left';
+          rightLength = Stack.size right; 
+          \<not> Idle.isEmpty left'; 
           \<not> Stack.isEmpty right; 
           Idle.size left' \<le> 3 * Stack.size right;
           Stack.size left + Stack.size left - Suc (Suc (Stack.size right + Stack.size right)) \<le> Suc (Stack.size left + Stack.size right);
           leftLength = Stack.size left; 
           Suc (Idle.size left') = Stack.size left
-        \<rbrakk> \<Longrightarrow> Suc (Stack.size left + Stack.size right - 4) \<le> 4 * Stack.size right"
-          by (smt (verit, best) Suc_diff_le add.commute add_Suc add_Suc_shift diff_is_0_eq le_add2 le_antisym le_diff_conv mult_Suc not_le not_less_eq_eq numeral_2_eq_2 numeral_3_eq_3 numeral_Bit0 plus_1_eq_Suc size_isNotEmpty)
+       \<rbrakk> \<Longrightarrow> Suc (Stack.size left + Stack.size right - 4) \<le> 4 * Stack.size right"
+          using anja_3[of left] anja_3[of right] anja_4[of left'] maybe3 by auto
 
         from False leftNotEmpty have inSizeWindow: "inSizeWindow' ?transformation (remainingSteps ?transformation - 6)"
           apply(auto simp: test max_def suc)
@@ -741,10 +828,13 @@ next
               by auto
           qed
           using local.test suc
-             apply(auto simp: min_def) 
+                apply(auto simp: min_def) 
           subgoal using dummy_2 by auto
-          using \<open>\<lbrakk>\<not> Stack.size left \<le> 3 * Stack.size right; idle.Idle left (Stack.size left) = Idle.push x left'; \<not> Stack.isEmpty left; Idle.invariant left'; rightLength = Stack.size right; \<not> Idle.isEmpty left'; \<not> Stack.isEmpty right; Idle.size left' \<le> 3 * Stack.size right; Stack.size left + Stack.size left - Suc (Suc (Stack.size right + Stack.size right)) \<le> Suc (Stack.size left + Stack.size right); leftLength = Stack.size left; Suc (Idle.size left') = Stack.size left\<rbrakk> \<Longrightarrow> Suc (Stack.size left + Stack.size right - 4) \<le> 4 * Stack.size right\<close> by linarith
-        
+          subgoal using dummy_2 by auto
+          subgoal using maybe4[of "Stack.size left" "Stack.size right" "Idle.size left'"] anja_3[of left] anja_3[of right] anja_4[of left']
+            by auto
+          using maybe5[of "Stack.size left" "Stack.size right" "Idle.size left'"] anja_3[of left] anja_3[of right] anja_4[of left']
+          by auto
 
         then have "inSizeWindow' (sixTicks ?transformation) (remainingSteps (sixTicks ?transformation))"
           using sizeWindow_steps  invariant remSteps unfolding sixTicks_def by blast
@@ -1126,14 +1216,13 @@ next
             from True have invariant: "Transformation.invariant ?transformation"
               apply(auto simp: reverseN_take size_listLength)
                  apply (metis Idle.invariant.simps Idle_Proof.invariant_pop le_SucI le_add2 mult_2 size_listLength)
-              subgoal sorry (* just times out *)
+              subgoal apply(auto simp: States_Proof.helper_2  States_Proof.helper)
+                by (smt (z3) Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff append_take_drop_id le_refl length_rev mult_2 mult_Suc not_less_eq_eq numeral_2_eq_2 numeral_3_eq_3 rev_append rev_rev_ident size_listLength take_all_iff trans_le_add2)
               apply (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_diff_le diff_add_inverse diff_le_self mult_2 size_listLength)
               by (metis Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 size_listLength trans_le_add2)
 
             then have invariant_six: "Transformation.invariant (sixTicks ?transformation)"
               using invariant_sixTicks by blast
-
-          
 
           from True have remSteps: "6 < Transformation.remainingSteps ?transformation"
             by(auto simp: max_def)
@@ -1196,38 +1285,171 @@ next
     let ?newTransfomation = "Left newLeft right"
     let ?tickedTransformation = "fourTicks ?newTransfomation"
 
-    from 5 t have invariant: "Transformation.invariant ?newTransfomation"
-      by (metis RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(1) Transformation.remainingSteps.simps(1) Transformation_Proof.invariant_pop_small_left_2 sizeWindow_smallSize)
+    have start_sizeWindow: "inSizeWindow (Left left right)"
+      using "5.prems" RealTimeDeque.invariant.simps(6) by blast
+
+    from 5 have invariant: "Transformation.invariant ?newTransfomation"
+      by (meson RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(1) invariant_pop_small_left_2 sizeWindow_smallSize t)
 
     then have invariant_fourTicks: "Transformation.invariant (fourTicks ?newTransfomation)"
       using invariant_fourTicks by blast
 
-    from 5 show ?case
+    with 5 show ?case
     proof(induction "remainingSteps (Left left right) > 4")
       case True
-      then have inv: "States.invariant (right, left)"
-        by auto
-      from True have steps: "4 \<le> States.remainingSteps (right, left)" 
-        by auto
-       from True have window: "States.inSizeWindow (right, left)" 
-        by auto
+      then have states_inv: "States.invariant (right, left)" by auto
+      from True have states_rem: "4 \<le> States.remainingSteps (right, left)" by auto
+      from True have states_window: "States.inSizeWindow (right, left)" by auto
+      from True have "0 < Small.size left" by auto
 
-      from True inv steps t window have newWindow: "inSizeWindow (fourTicks ?newTransfomation)" 
-        unfolding fourTicks_def 
-        using same2[of right left] geficke3[of left x newLeft 4 right] unfolding fourTicks_def by auto
+      show ?case 
+      proof(induction "remainingSteps ?newTransfomation > 4")
+        case True
+        with True have "remainingSteps ?newTransfomation > 4" 
+          by auto
 
+      then have remSteps: "remainingSteps ?tickedTransformation > 0"
+        by (metis One_nat_def add_Suc_shift fourTicks_def funpow_0 invariant numeral_2_eq_2 numeral_Bit0 plus_1_eq_Suc remainingStepsDecline_4)
 
-      with invariant_fourTicks show ?case 
-        apply(auto simp: Let_def split: prod.splits transformation.splits)
-        subgoal sorry
-                  apply (simp add: t)
-        using t apply auto
-        sorry
+      from True have sizeWindow: "inSizeWindow ?tickedTransformation"
+        using same3[of right left x] states_inv states_rem states_window geficke2 unfolding fourTicks_def
+        by (metis Transformation.remainingSteps.simps(1) \<open>0 < Small.size left\<close> fixed_5 less_imp_le_nat t)
+
+      have "case ?tickedTransformation of
+        Left (Small.state.Common (state.Idle _ _)) (Big.state.Common (state.Idle _ _)) \<Rightarrow> False
+      | _ \<Rightarrow> True"
+        using tick_same_left[of newLeft right] remSteps_idle_5[of ?tickedTransformation]
+        apply(auto split: prod.splits transformation.splits Small.state.splits Big.state.splits Common.state.splits)
+        using remSteps by auto
+
+      then have "(case ?tickedTransformation of 
+        Left 
+          (Small.Common (Common.Idle _ left)) 
+          (Big.Common (Common.Idle _ right)) \<Rightarrow> Idle left right
+     | _ \<Rightarrow> Transforming ?tickedTransformation) = Transforming ?tickedTransformation"
+        by(auto split: transformation.splits Small.state.splits Common.state.splits Big.state.splits)
+
+      with True  have "invariant (case ?tickedTransformation of 
+        Left 
+          (Small.Common (Common.Idle _ left)) 
+          (Big.Common (Common.Idle _ right)) \<Rightarrow> Idle left right
+     | _ \<Rightarrow> Transforming ?tickedTransformation)"
+        by (smt (z3) RealTimeDeque.invariant.simps(6) local.invariant_fourTicks remSteps sizeWindow)
+
+      then have "RealTimeDeque.invariant
+          (case 
+                  (case fourTicks (transformation.Left newLeft right) of
+                        Left (Small.state.Common (state.Idle _ left')) (Big.state.Common (state.Idle _ right)) \<Rightarrow> (x, Idle left' right)
+                      | _ \<Rightarrow> (x, Transforming ?tickedTransformation)) of
+           (x, deque) \<Rightarrow> deque)"
+        by(auto split: prod.splits transformation.splits Small.state.splits Big.state.splits Common.state.splits)
+
+      with True show ?case
+        apply(auto simp: Let_def split: prod.splits)
+        using t by fastforce
+      next
+        case False
+        then show ?case sorry
+      qed
+      
     next
       case False
-      then show ?case 
+      then have "remainingSteps ?newTransfomation \<le> 4"
+        by (metis (no_types, lifting) RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) Transformation.remainingSteps.simps(1) dual_order.trans not_le_imp_less same_dp sizeWindow_smallSize t)
+
+      with False have remSteps: "remainingSteps ?tickedTransformation = 0"
+        unfolding fourTicks_def using invariant remainingStepsDecline_5[of ?newTransfomation 4]
+        by auto
+
+      obtain tickedLeft tickedRight where ticked: "?tickedTransformation = Left tickedLeft tickedRight"
+        unfolding fourTicks_def using tick_same_left_n[of 4 newLeft right]
+        by (simp add: case_prod_unfold numeral_Bit0)
+
+      with remSteps have "case Left tickedLeft tickedRight of
+        Left (Small.state.Common (state.Idle _ _)) (Big.state.Common (state.Idle _ _)) \<Rightarrow> True
+      | _ \<Rightarrow> False" using remSteps_idle_6[of ] tick_same_left
+        using local.invariant_fourTicks by auto
+
+      then obtain l idleLeft r idleRight where idle: "Left tickedLeft tickedRight = 
+        Left (Small.state.Common (state.Idle l idleLeft)) (Big.state.Common (state.Idle r idleRight))"
+        by(auto split: Small.state.splits Common.state.splits Big.state.splits)
+
+      then have transformation_invariant: "Transformation.invariant (Left tickedLeft tickedRight)"
+        using False
+        using \<open>fourTicks (transformation.Left newLeft right) = transformation.Left tickedLeft tickedRight\<close>
+        by auto
+
+      with ticked invariant_fourTicks have "Big.newSize right = Big.newSize tickedRight"
+        unfolding fourTicks_def 
+        using invariant size_tick_n_6 by blast
+
+      have leftSizes1: "Suc (Small.newSize newLeft) = Small.newSize left"
+        by (metis (no_types, lifting) False(2) RealTimeDeque.invariant.simps(6) States.invariant.elims(2) Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) case_prodD pop_newSize_small sizeWindow_smallNewSize t)
+
+      with ticked invariant_fourTicks have leftSizes: "Small.newSize newLeft = Small.newSize tickedLeft"
+        unfolding fourTicks_def 
+        using invariant size_tick_n_2 by blast
+
+      then have "1 < Small.newSize left"
+        using "5.prems" RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) sizeWindow_smallNewSize by blast
+
+      then have "0 < Small.newSize newLeft" using leftSizes1
+        by linarith
+
+      then have "0 < Small.newSize tickedLeft" using leftSizes by auto
+
+      then have "0 < Big.newSize right"
+        using "5.prems" RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) sizeWindow_bigNewSize by blast
+
+      then have rightNotEmpty: "0 < Big.newSize tickedRight"
+        by (simp add: \<open>Big.newSize right = Big.newSize tickedRight\<close>)
+
+      have leftSize: "Idle.size idleLeft = Small.newSize tickedLeft"
+        using idle transformation_invariant by auto
+
+      have rightSize: "Idle.size idleRight = Big.newSize tickedRight"
+        using idle transformation_invariant by auto
+
+
+      have "Small.newSize left \<le> 3 * Big.newSize right" 
+        using start_sizeWindow by auto
+      
+
+      with leftSizes1 have "Small.newSize newLeft \<le> 3 * Big.newSize right" 
+        by auto
+
+      then have T: "Small.newSize tickedLeft \<le> 3 * Big.newSize tickedRight"  
+        using \<open>Big.newSize right = Big.newSize tickedRight\<close> leftSizes by presburger
+
+      have "Big.newSize right \<le> 3 * Small.newSize left - 3"
+        using start_sizeWindow leftSizes1
         sorry
-    qed
+
+      then have "Big.newSize right \<le> 3 * Small.newSize newLeft"
+        using leftSizes1
+        sorry
+
+      then have "Big.newSize right \<le> 3 * Small.newSize tickedLeft"
+        by (simp add: leftSizes)
+
+      then have "Big.newSize tickedRight \<le> 3 * Small.newSize tickedLeft"
+        by (simp add: \<open>Big.newSize right = Big.newSize tickedRight\<close>)
+      
+      with idle transformation_invariant T have "invariant (Idle idleLeft idleRight)"
+        apply auto
+        apply (metis Common.newSize.simps(1) Idle.isEmpty.elims(2) Idle.size.simps Small.newSize.simps(1) \<open>0 < Small.newSize (Small.push x left)\<close> \<open>Small.newSize (Small.push x left) = Small.newSize tickedLeft\<close> list.size(3) size_listLength toList_isNotEmpty verit_comp_simplify1(1))
+        using rightNotEmpty Idle_Proof.isNotEmpty by auto
+       
+       with False  have "invariant (case Left tickedLeft tickedRight of 
+        Left 
+          (Small.Common (Common.Idle _ left)) 
+          (Big.Common (Common.Idle _ right)) \<Rightarrow> Idle left right
+     | _ \<Rightarrow> Transforming (Left tickedLeft tickedRight))"
+         using Big.state.simps(6) Common.state.simps(6) Small.state.simps(12) idle transformation.inject(1) transformation.simps(5) by auto
+
+       with False show ?case
+         by (metis \<open>fourTicks (transformation.Left (Small.push x left) right) = transformation.Left tickedLeft tickedRight\<close> enqueueLeft.simps(6))
+     qed
   next
     case (6 left right)
     then show ?case sorry

@@ -199,23 +199,10 @@ value "runningFold
   enqueueLeft 1, 
   enqueueLeft 2,
   enqueueLeft 3,
-  dequeueRight,
-  enqueueLeft 4,
+  enqueueLeft 4,   
   enqueueLeft 5,
-  enqueueRight 0,
-  enqueueRight (-1),
-  enqueueRight (-2),
-  enqueueRight (-3),
-  enqueueRight (-4),
-  enqueueRight (-5),
-   enqueueRight (-6),
-   enqueueRight (-7),
-   enqueueRight (-8),
- enqueueRight (-9),
- enqueueRight (-10),
- enqueueRight (-11),
-  dequeueLeft,
-  dequeueLeft
+  dequeueRight,
+  dequeueRight
   ] 
   Empty"
 
