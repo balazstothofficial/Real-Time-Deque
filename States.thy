@@ -58,10 +58,10 @@ fun invariant :: "'a states \<Rightarrow> bool" where
 
 fun inSizeWindow' :: "'a states \<Rightarrow> nat \<Rightarrow> bool" where
   "inSizeWindow' (big, small) steps \<longleftrightarrow> 
-      4 * Small.newSize small + steps \<le> 12 * Big.newSize big - 3 * steps
-    \<and> 4 * Big.newSize big + steps \<le> 12 * Small.newSize small - 3 * steps
-    \<and> steps \<le> 4 * Small.size small
-    \<and> steps \<le> 4 * Big.size big
+      4 * Small.newSize small + steps \<le> 12 * Big.newSize big - 3 * steps - 4
+    \<and> 4 * Big.newSize big + steps \<le> 12 * Small.newSize small - 3 * steps - 4
+    \<and> steps + 1 \<le> 4 * Small.size small
+    \<and> steps + 1 \<le> 4 * Big.size big
   "
 
 fun inSizeWindow :: "'a states \<Rightarrow> bool" where
