@@ -268,7 +268,7 @@ lemma currentList_pop: "\<not> isEmpty small \<Longrightarrow> pop small = (x, s
    apply (metis get_toList list.sel(3))
   by (metis get_toList list.sel(3))
 
-lemma currentList_pop_2: "invariant small \<Longrightarrow> 0 < size small \<Longrightarrow> pop small = (x, small') \<Longrightarrow> toCurrentList small' = tl (toCurrentList small)"
+lemma currentList_pop_2: "invariant small \<Longrightarrow> 0 < size small \<Longrightarrow> pop small = (x, small') \<Longrightarrow> x # toCurrentList small' = toCurrentList small"
 proof(induction small arbitrary: x rule: pop.induct)
   case (1 state)
   then show ?case by(auto simp: currentList_pop_2 split: prod.splits)
@@ -279,7 +279,7 @@ next
     case (1 added old remained)
     then show ?case 
       apply auto
-      by (metis Stack_Proof.pop_toList size_isNotEmpty)
+      by (simp add: first_pop size_isNotEmpty)
   next
     case (2 x xs added old remained)
     then show ?case by auto
@@ -290,7 +290,7 @@ next
   proof(induction current rule: get.induct)
     case (1 added old remained)
     then show ?case 
-      by(auto simp: Stack_Proof.pop_toList size_isNotEmpty)
+      by(auto simp: first_pop size_isNotEmpty)
   next
     case (2 x xs added old remained)
     then show ?case by auto

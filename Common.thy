@@ -54,7 +54,9 @@ fun invariant :: "'a state \<Rightarrow> bool" where
   "invariant (Idle current idle) \<longleftrightarrow>
       Idle.invariant idle 
     \<and> Current.invariant current 
-    \<and> Current.newSize current = Idle.size idle"
+    \<and> Current.newSize current = Idle.size idle
+    \<and> take (Idle.size idle) (Current.toList current) = 
+      take (Current.size current) (Idle.toList idle)"
 | "invariant (Copy current aux new moved) \<longleftrightarrow> (
     case current of Current _ _ old remained \<Rightarrow>
       moved < remained

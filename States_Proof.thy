@@ -359,7 +359,7 @@ lemma invariant_pop_big_size_2_1_2: "\<lbrakk>
  \<Longrightarrow> tl (toCurrentListBigFirst (big, small)) = toCurrentListBigFirst (big', small)"
   apply(auto simp: currentList_pop_2 split: prod.splits)
   using Big_Proof.currentList_empty_2 Big_Proof.currentList_pop_2
-  by (metis tl_append2)
+  by (metis list.sel(3) tl_append2)
 
 lemma invariant_pop_big_size_2_1: "\<lbrakk>
   invariant (big, small);
@@ -636,7 +636,8 @@ lemma invariant_pop_small_size_2_2: "\<lbrakk>
   Small.pop small = (x, small')\<rbrakk>
  \<Longrightarrow> tl (toCurrentListSmallFirst (big, small)) = toCurrentListSmallFirst (big, small')"
   apply(auto simp: currentList_pop_2  split: prod.splits)
-  using Small_Proof.currentList_empty_2 tl_append2 by blast
+  using Small_Proof.currentList_empty_2 tl_append2
+  by (metis (no_types, lifting) Small_Proof.currentList_pop_2 list.sel(3))
 
 lemma invariant_pop_small_size_2: "\<lbrakk>
   invariant (big, small);

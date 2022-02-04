@@ -60,14 +60,33 @@ next
       case (Cons a as)
       then show ?case
         apply(auto)
+        apply (metis Suc_diff_Suc Suc_leI diff_is_0_eq' reverseN.simps(1) reverseN.simps(3) verit_la_disequality)
         by (metis Suc_diff_Suc le_SucI not_le reverseN.simps(3))
      qed
   qed
 qed
 
 lemma invariant_push: "invariant common \<Longrightarrow> invariant (push x common)"
-  apply(induction x common rule: push.induct)
-  by(auto simp: invariant_put Stack_Proof.size_push put_size split: stack.splits current.splits)
+proof(induction x common rule: push.induct)
+  case (1 x current stack stackSize)
+  then show ?case
+  proof(induction x current rule: put.induct)
+    case (1 element extra added old remained)
+    then show ?case
+    proof(induction element stack rule: Stack.push.induct)
+      case (1 element left right)
+      then show ?case by auto
+    qed
+  qed
+next
+  case (2 x current aux new moved)
+  then show ?case
+  proof(induction x current rule: put.induct)
+    case (1 element extra added old remained)
+    then show ?case by auto
+  qed
+qed
+
 
 (* TODO: *)
 lemma invariant_pop: "\<lbrakk>
@@ -78,10 +97,57 @@ lemma invariant_pop: "\<lbrakk>
 proof(induction common arbitrary: x rule: pop.induct)
   case (1 current idle)
   then show ?case 
-    apply(induction idle arbitrary: x rule: Idle.pop.induct)
-    apply(induction current rule: get.induct)
-    by (auto simp: Stack_Proof.size_pop)
-   
+  proof(induction idle arbitrary: x rule: Idle.pop.induct)
+    case (1 stack stackSize)
+    then show ?case 
+    proof(induction current rule: get.induct)
+      case (1 added old remained)
+      then show ?case
+      proof(induction stack rule: Stack.pop.induct)
+        case 1
+        then show ?case by auto
+      next
+        case (2 x left right)
+        then show ?case 
+        proof(induction old rule: Stack.pop.induct)
+          case 1
+          then show ?case by auto
+        next
+          case (2 x left right)
+          then show ?case by auto
+        next
+          case (3 x right)
+          then show ?case by auto
+        qed
+      next
+        case (3 x right)
+        then show ?case
+        proof(induction old rule: Stack.pop.induct)
+          case 1
+          then show ?case by auto
+        next
+          case (2 x left right)
+          then show ?case by auto
+        next
+          case (3 x right)
+          then show ?case by auto
+        qed
+      qed
+    next
+      case (2 x xs added old remained)
+      then show ?case 
+      proof(induction stack rule: Stack.pop.induct)
+        case 1
+        then show ?case by auto
+      next
+        case (2 x left right)
+        then show ?case by auto
+      next
+        case (3 x right)
+        then show ?case by auto
+      qed
+    qed
+  qed
 next
   case (2 current aux new moved)
   then show ?case 
@@ -111,7 +177,9 @@ next
 
     from 1 show ?case 
       apply auto
-        apply linarith+
+         apply linarith+
+      apply (metis (no_types, lifting) One_nat_def Suc_diff_Suc Suc_eq_plus1 add.commute c diff_diff_add diff_is_0_eq' first_pop le_add_diff_inverse less_imp_le list.sel(3) reverseN.simps(1) take_tl)
+      apply linarith
       by (metis One_nat_def c first_pop list.sel(3) tl_take)
   next
     case (2 x xs added old remained)
@@ -151,8 +219,20 @@ proof(induction common arbitrary: x rule: pop.induct)
   proof(induction idle rule: Idle.pop.induct)
     case (1 stack stackSize)
     then show ?case 
-      apply(auto simp: invariant_pop_2_helper invariant_get_size split: prod.splits)
-      by (metis One_nat_def Stack.isEmpty.simps(1) Stack.pop.simps(1) Stack_Proof.size_isEmpty Stack_Proof.size_pop invariant_pop_2_helper length_tl list.sel(2) list.size(3))
+    proof(induction current rule: get.induct)
+      case (1 added old remained)
+      then show ?case apply auto
+        using Stack_Proof.size_pop size_isNotEmpty apply blast
+         apply (simp add: Stack_Proof.size_pop size_isNotEmpty)
+        by (simp add: Stack_Proof.pop_toList Stack_Proof.size_pop size_isNotEmpty take_tl)
+    next
+      case (2 x xs added old remained)
+      then show ?case 
+        apply auto
+          apply (metis Stack_Proof.size_isEmpty Stack_Proof.size_pop old.nat.distinct(2))
+         apply (metis One_nat_def Stack_Proof.size_isEmpty Stack_Proof.size_pop diff_Suc_1 old.nat.distinct(1))
+        by (metis first_pop less_Suc_eq_0_disj list.sel(3) pop_listLength size_isNotEmpty size_listLength take_Suc_Cons take_append)
+    qed
   qed
 next
   case (2 current aux new moved)
@@ -175,7 +255,9 @@ next
 
     from 1 show ?case 
       apply(auto simp: reverseN_take)
-      apply linarith+
+         apply linarith+
+      apply (smt (z3) One_nat_def Stack_Proof.size_pop Suc_diff_Suc Suc_eq_plus1 a append_Cons append_self_conv2 diff_is_0_eq' first_pop le_add_diff_inverse le_diff_conv less_imp_le list.sel(3) min.absorb2 rev_is_Nil_conv size_isNotEmpty take_eq_Nil take_tl)
+      apply (meson less_Suc_eq_le less_imp_diff_less)
       by (smt (verit, del_insts) One_nat_def Stack_Proof.size_pop Suc_diff_Suc append_Cons b diff_Suc_eq_diff_pred diff_le_self dual_order.trans first_take_pop le_diff_conv length_greater_0_conv less_le_trans less_or_eq_imp_le list.inject list.size(3) min.absorb2 size_isNotEmpty)
   next
     case (2 x xs added old remained)
@@ -363,15 +445,36 @@ lemma currentList_pop: "\<not>isEmpty common \<Longrightarrow> pop common = (x, 
   by (metis Current.toList.simps get_toList list.sel(3))+ 
 
 (* TODO: *)
-lemma currentList_pop_2: "invariant common \<Longrightarrow> 0 < size common \<Longrightarrow> pop common = (x, common') \<Longrightarrow> toCurrentList common' = tl (toCurrentList common)"
-  apply(induction common arbitrary: x rule: pop.induct)
-  apply(auto simp: get_toList_size split: prod.splits current.splits if_splits)
-  apply (metis get_toList_size list.sel(3))
-  apply (smt (z3) Current.isEmpty.simps Current.toList.simps append_Cons get_toList less_nat_zero_code list.exhaust_sel list.inject)
-  apply (metis Current.isEmpty.simps Current.toList.simps get_toList less_nat_zero_code list.sel(3) size_isNotEmpty)
-  apply (metis Current.isEmpty.simps Current.toList.simps get_toList length_0_conv less_irrefl_nat less_or_eq_imp_le list.sel(3) reverseN.simps(1) reverseN_reverseN take_all tl_append2)
-  by (metis Current.isEmpty.simps Current.toList.simps Suc_diff_Suc get_toList list.sel(3) size_isNotEmpty not_gr_zero zero_diff zero_less_Suc)
-
+lemma currentList_pop_2: "invariant common \<Longrightarrow> 0 < size common \<Longrightarrow> pop common = (x, common') \<Longrightarrow> x # toCurrentList common' = toCurrentList common"
+proof(induction common arbitrary: x rule: pop.induct)
+  case (1 current idle)
+  then show ?case 
+  proof(induction idle rule: Idle.pop.induct)
+    case (1 stack stackSize)
+    then show ?case
+    proof(induction current rule: get.induct)
+      case (1 added old remained)
+      then show ?case apply auto
+        by (metis first_pop hd_take list.sel(1) size_isNotEmpty)
+    next
+      case (2 x' xs added old remained)
+      then show ?case apply auto
+        by (metis Stack_Proof.size_isEmpty first_pop hd_take list.sel(1) old.nat.distinct(2) zero_less_Suc)
+    qed
+  qed
+next
+  case (2 current aux new moved)
+  then show ?case
+  proof(induction current rule: get.induct)
+    case (1 added old remained)
+    then show ?case apply(auto split: if_splits)
+      using first_pop size_isNotEmpty by blast+
+  next
+    case (2 x xs added old remained)
+    then show ?case by auto
+  qed
+qed
+  
 lemma some_empty: "\<lbrakk>isEmpty (tick common); \<not> isEmpty common; invariant common\<rbrakk> \<Longrightarrow> False"
   apply(induction common rule: tick.induct)
   by(auto split: current.splits if_splits)

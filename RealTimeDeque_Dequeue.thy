@@ -7,9 +7,9 @@ lemma maybe: "\<lbrakk>Idle.pop left = (x, idle.Idle left' leftLength'); Idle.in
   apply auto
   by (metis Stack.isEmpty.elims(2) Stack.pop.simps(1) Stack_Proof.pop_toList toList_isEmpty list.sel(2))
 
-lemma list_dequeueLeft:
-    "\<lbrakk>invariant deque; listLeft deque \<noteq> []\<rbrakk> \<Longrightarrow> listLeft (dequeueLeft deque) = tl (listLeft deque)"
-  proof(induction deque rule: dequeueLeft'.induct)
+lemma list_dequeueLeft':
+    "\<lbrakk>invariant deque; listLeft deque \<noteq> []; dequeueLeft' deque = (x', deque')\<rbrakk> \<Longrightarrow> x' # listLeft deque' = listLeft deque"
+  proof(induction deque arbitrary: x' rule: dequeueLeft'.induct)
     case (1 x)
     then show ?case by auto
   next
@@ -41,7 +41,7 @@ lemma list_dequeueLeft:
               (Reverse (Current [] 0 right (Stack.size right - Suc leftLength')) right [] (Stack.size right - Suc leftLength'))"
 
         from True have invariant: "Transformation.invariant ?transformation"
-          apply(auto simp: size_listLength)
+          apply(auto simp: Let_def size_listLength)
           apply (metis reverseN_reverseN reverseN_take append_Nil2)
                   apply (metis Idle.invariant.simps Idle_Proof.invariant_pop eq_imp_le le_SucI mult_2 size_listLength trans_le_add2)
                  apply(auto simp: reverseN_take)
@@ -50,7 +50,7 @@ lemma list_dequeueLeft:
           apply (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_diff_le diff_add_inverse le_add1 mult_2 size_listLength)
           apply (metis Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 size_listLength trans_le_add2)
              apply (metis Idle.invariant.simps Idle_Proof.invariant_pop le_SucI le_add1 mult_2 size_listLength)
-          apply (metis Idle_Proof.pop_toList \<open>\<lbrakk>Suc 0 \<le> leftLength'; \<not> List.length (Stack.toList right) \<le> 3 * leftLength'; Idle.pop left = (x, idle.Idle left' leftLength'); Idle.invariant left; rightLength = List.length (Stack.toList right); \<not> Idle.isEmpty left; \<not> Stack.isEmpty right; Idle.size left \<le> 3 * List.length (Stack.toList right); List.length (Stack.toList right) \<le> 3 * Idle.size left; Idle.toList left \<noteq> []\<rbrakk> \<Longrightarrow> rev (take (Suc (2 * leftLength') - List.length (Stack.toList ((Stack.pop ^^ (List.length (Stack.toList right) - Suc leftLength')) right))) (rev (take (List.length (Stack.toList right) - Suc leftLength') (Stack.toList left')))) @ rev (Stack.toList ((Stack.pop ^^ (List.length (Stack.toList right) - Suc leftLength')) right)) @ rev (take (List.length (Stack.toList right) - Suc leftLength') (Stack.toList right)) = Stack.toList left' @ rev (Stack.toList right)\<close> list.distinct(1))
+          apply (metis Idle.isEmpty.elims(3) Idle.toList.simps \<open>\<lbrakk>Suc 0 \<le> leftLength'; \<not> List.length (Stack.toList right) \<le> 3 * leftLength'; Idle.pop left = (x', idle.Idle left' leftLength'); Idle.invariant left; x = x'; deque' = Transforming (sixTicks (transformation.Left (Reverse1 (Current [] 0 left' (Suc (2 * leftLength'))) left' []) (Reverse (Current [] 0 right (List.length (Stack.toList right) - Suc leftLength')) right [] (List.length (Stack.toList right) - Suc leftLength')))); rightLength = List.length (Stack.toList right); \<not> Idle.isEmpty left; \<not> Stack.isEmpty right; Idle.size left \<le> 3 * List.length (Stack.toList right); List.length (Stack.toList right) \<le> 3 * Idle.size left; Idle.toList left \<noteq> []\<rbrakk> \<Longrightarrow> rev (take (Suc (2 * leftLength') - List.length (Stack.toList ((Stack.pop ^^ (List.length (Stack.toList right) - Suc leftLength')) right))) (rev (take (List.length (Stack.toList right) - Suc leftLength') (Stack.toList left')))) @ rev (Stack.toList ((Stack.pop ^^ (List.length (Stack.toList right) - Suc leftLength')) right)) @ rev (take (List.length (Stack.toList right) - Suc leftLength') (Stack.toList right)) = Stack.toList left' @ rev (Stack.toList right)\<close> toList_isNotEmpty)
           apply (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_diff_le add_diff_cancel_right' le_add2 mult_2 size_listLength)
           by (metis Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 size_listLength trans_le_add2)
 
@@ -61,7 +61,8 @@ lemma list_dequeueLeft:
           by (auto simp: sixTicks)
 
         with True show ?case apply(auto simp: Let_def invariant_sixTicks tick_toList split: prod.splits)
-          by (metis Idle_Proof.pop_toList list.discI tl_append2)
+           apply (metis Idle.toList.simps Idle_Proof.pop_toList maybe)
+          by (metis Idle.toList.simps Idle_Proof.pop_toList maybe)
 
       next
         case False
@@ -86,78 +87,118 @@ lemma list_dequeueLeft:
       
   next
     case (5 left right)
-    then show ?case 
-    proof(induction "Small.pop left")
-      case (Pair x left')
-      let ?newTransfomation = "Left left' right"
-      let ?tickedTransformation = "fourTicks ?newTransfomation"
 
-      from Pair have size: "0 < Small.size left"
-        by auto
+    then have start_invariant: "Transformation.invariant (Left left right)"
+      by auto
 
-      with Pair invariant_pop_small_left_2 have invariant: "Transformation.invariant ?newTransfomation"
-        by (metis RealTimeDeque.invariant.simps(6))
-     
-      then have toList: "toListLeft ?newTransfomation = tl (Small.toCurrentList left) @ rev (Big.toCurrentList right)"
-        apply(auto)
-        using size Small_Proof.currentList_pop_2[of left x left']
-        using Pair.hyps Pair.prems(1) by auto
+    from 5 have left_invariant: "Small.invariant left"
+      by auto
+  
+    from 5 have leftSize: "0 < Small.size left"
+      by auto
 
-      from invariant have fourTicks: "Transformation.invariant ?tickedTransformation"
-        using invariant_fourTicks by blast
+    with 5(3) obtain left' where pop: "Small.pop left = (x', left')"
+      by(auto simp: Let_def split: prod.splits transformation.splits Small.state.splits Common.state.splits Big.state.splits)
 
-      then have 1: "toListLeft ?tickedTransformation = tl (Small.toCurrentList left) @ rev (Big.toCurrentList right)"
-        using Transformation_Proof.fourTicks invariant toList by fastforce
+    let ?newTransfomation = "Left left' right"
+    let ?tickedTransformation = "fourTicks ?newTransfomation"
 
-      then have 2: "listLeft (dequeueLeft (Transforming (Left left right))) = toListLeft ?tickedTransformation"
-        apply(auto simp: Let_def split: prod.splits transformation.splits Small.state.splits)
-        using Pair.hyps apply fastforce+
-         apply(auto split: Common.state.splits Big.state.splits)
-        using Pair.hyps by fastforce+
-                             
-      with Pair show ?case 
-        apply(auto simp: 1 Let_def split: prod.split transformation.split Small.state.split Common.state.split Big.state.split)
-        by (metis Small_Proof.currentList_empty_2 size tl_append2)
-    qed
+    have invariant: "Transformation.invariant ?newTransfomation"
+      using pop  start_invariant leftSize invariant_pop_small_left_2[of left right x' left']
+      by auto
+
+    have "x' # Small.toCurrentList left' = Small.toCurrentList left"
+      using left_invariant leftSize pop Small_Proof.currentList_pop_2[of left x' left'] by auto
+      
+    then have toList: "x' # toListLeft ?newTransfomation = Small.toCurrentList left @ rev (Big.toCurrentList right)"
+      using invariant leftSize Small_Proof.currentList_pop_2[of left x' left'] 5(1)
+      by auto      
+
+    from invariant have fourTicks: "Transformation.invariant ?tickedTransformation"
+      using invariant_fourTicks by blast
+
+    then have 1: "x' # toListLeft ?tickedTransformation = Small.toCurrentList left @ rev (Big.toCurrentList right)"
+      using Transformation_Proof.fourTicks invariant toList by fastforce
+
+    then have 2: "listLeft (dequeueLeft (Transforming (Left left right))) = toListLeft ?tickedTransformation"
+      apply(auto simp: Let_def split: prod.splits transformation.splits Small.state.splits)
+         apply (simp add: local.pop)+
+       apply(auto split: Common.state.splits Big.state.splits)
+      by (simp add: local.pop)
+
+    with 1 have 3: "x' # listLeft (dequeueLeft (Transforming (Left left right))) = Small.toCurrentList left @ rev (Big.toCurrentList right)"
+      by auto
+
+    with 5(1) have 4: "listLeft (Transforming (Left left right)) = Small.toCurrentList left @ rev (Big.toCurrentList right)"
+      by auto
+
+    from 3 4 have "x' # listLeft (dequeueLeft (Transforming (Left left right))) = listLeft (Transforming (Left left right))"
+      by auto
+
+    with 5 show ?case by auto
   next
     case (6 left right)
-    then show ?case 
-     proof(induction "Big.pop left")
-       case (Pair x left')
-       let ?newTransfomation = "Right left' right"
-       let ?tickedTransformation = "fourTicks ?newTransfomation"
+    then have start_invariant: "Transformation.invariant (Right left right)"
+      by auto
 
-       from Pair have size: "0 < Big.size left"
-          by auto
+    from 6 have left_invariant: "Big.invariant left"
+      by auto
+  
+    from 6 have leftSize: "0 < Big.size left"
+      by auto
 
-        with Pair invariant_pop_big_right_2 have invariant: "Transformation.invariant ?newTransfomation"
-          by (metis RealTimeDeque.invariant.simps(6))
+    with 6(3) obtain left' where pop: "Big.pop left = (x', left')"
+      by(auto simp: Let_def split: prod.splits transformation.splits Small.state.splits Common.state.splits Big.state.splits)
 
-        then have toList: "toListLeft ?newTransfomation = tl (Big.toCurrentList left) @ rev (Small.toCurrentList right)"
-          apply(auto)
-          using size Big_Proof.currentList_pop_2[of left x left']
-          by (smt (z3) Pair.hyps Pair.prems(1) RealTimeDeque.invariant.simps(6) States.invariant.elims(2) States.toCurrentList.simps Transformation.invariant.simps(2) invariant_pop_big_size_2_1 old.prod.case toCurrentListBigFirst.simps toListBigFirst.simps)
+    let ?newTransfomation = "Right left' right"
+    let ?tickedTransformation = "fourTicks ?newTransfomation"
 
-      from invariant have fourTicks: "Transformation.invariant ?tickedTransformation"
-        using invariant_fourTicks by blast
+    have invariant: "Transformation.invariant ?newTransfomation"
+      using pop start_invariant leftSize invariant_pop_big_right_2[of left right x' left']
+      by auto
 
-      then have 1: "toListLeft ?tickedTransformation = tl (Big.toCurrentList left) @ rev (Small.toCurrentList right)"
-        using Transformation_Proof.fourTicks invariant toList by fastforce
+    have "x' # Big.toCurrentList left' = Big.toCurrentList left"
+      using left_invariant leftSize pop Big_Proof.currentList_pop_2[of left x' left'] by auto
+      
+    then have toList: "x' # toListLeft ?newTransfomation = Big.toCurrentList left @ rev (Small.toCurrentList right)"
+      using left_invariant invariant leftSize Big_Proof.currentList_pop_2[of left x' left'] 6(1)
+      by (metis States.toCurrentList.simps Transformation.invariant.simps(2) append_Cons invariant_listBigFirst old.prod.case toCurrentListBigFirst.simps toListLeft.simps(2))
 
-       then have 2: "listLeft (dequeueLeft (Transforming (Right left right))) = toListLeft ?tickedTransformation"
-        apply(auto simp: Let_def split: prod.splits transformation.splits Small.state.splits)
-        using Pair.hyps apply fastforce+
-        apply(auto split: Common.state.splits  Small.state.splits Big.state.splits prod.splits)
-        using Pair.hyps by auto
-                             
-      with Pair show ?case 
-        apply(auto simp: 1 Let_def split: prod.split transformation.split Small.state.split Common.state.split Big.state.split)
-        by (metis Big_Proof.currentList_empty_2 rev_append rev_rev_ident size tl_append2)+
-     qed
+    from invariant have fourTicks: "Transformation.invariant ?tickedTransformation"
+      using invariant_fourTicks by blast
+
+    then have 1: "x' # toListLeft ?tickedTransformation = Big.toCurrentList left @ rev (Small.toCurrentList right)"
+      using Transformation_Proof.fourTicks invariant toList by fastforce
+
+    then have 2: "listLeft (dequeueLeft (Transforming (Right left right))) = toListLeft ?tickedTransformation"
+      apply(auto simp: Let_def split: prod.splits transformation.splits Small.state.splits)
+         apply (simp add: local.pop)+
+      by(auto split: Common.state.splits Big.state.splits Small.state.splits)
+
+    with 1 have 3: "x' # listLeft (dequeueLeft (Transforming (Right left right))) = Big.toCurrentList left @ rev (Small.toCurrentList right)"
+      by auto
+
+    with 6(1) have 4: "listLeft (Transforming (Right left right)) = Big.toCurrentList left @ rev (Small.toCurrentList right)"
+      using invariant_listBigFirst by fastforce
+
+    from 3 4 have "x' # listLeft (dequeueLeft (Transforming (Right left right))) = listLeft (Transforming (Right left right))"
+      by auto
+
+    with 6 show ?case by auto
   next
     case 7
     then show ?case by auto
   qed
+
+lemma list_dequeueLeft:
+    "\<lbrakk>invariant deque; listLeft deque \<noteq> []\<rbrakk> \<Longrightarrow> listLeft (dequeueLeft deque) = tl (listLeft deque)"
+  using list_dequeueLeft' apply(auto split: prod.splits)
+  by (smt (z3) list.sel(3) list_dequeueLeft')
+
+lemma list_firstLeft:
+    "\<lbrakk>invariant deque; listLeft deque \<noteq> []\<rbrakk> \<Longrightarrow> firstLeft deque = hd (listLeft deque)"
+  using list_dequeueLeft' apply(auto split: prod.splits)
+  by (smt (z3) list.sel(1) list_dequeueLeft')
 
 lemma maybe2: "\<lbrakk>
   \<not> Suc l \<le> 3 * r; 

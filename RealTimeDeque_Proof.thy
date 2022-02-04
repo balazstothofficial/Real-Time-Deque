@@ -291,29 +291,27 @@ next
 next
   case (7 q)
   then show ?case
-  proof(induction q)
-    case Empty
-    then show ?case by auto
-  next
-    case (One x)
-    then show ?case by auto
-  next
-    case (Two x1 x2a)
-    then show ?case by auto
-  next
-    case (Three x1 x2a x3)
-    then show ?case by auto
-  next
-    case (Idle x1 x2a)
-    then show ?case sorry
-  next
-    case (Transforming x)
-    then show ?case sorry
-  qed
+    using list_firstLeft by simp
 next
   case (8 q)
-  then show ?case
-    sorry
+
+  then have swap_invariant: "invariant (swap q)"
+    by (simp add: swap_1)
+
+  from 8 have "listRight q = listLeft (swap q)"
+    by (simp add: swap')
+
+  from 8 have "firstRight q = firstLeft (swap q)"
+    by(auto split: prod.splits)
+
+  from 8 have "listLeft (swap q) \<noteq> []"
+    using \<open>listRight q = listLeft (swap q)\<close> by auto
+
+  then have "firstLeft (swap q) = hd (listLeft (swap q))"
+    using swap_invariant list_firstLeft by auto
+  
+  then show ?case 
+    using \<open>firstRight q = firstLeft (swap q)\<close> \<open>listRight q = listLeft (swap q)\<close> by presburger
 next
   case (9 q)
   then show ?case using isEmpty_listLeft by auto

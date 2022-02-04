@@ -89,7 +89,7 @@ lemma moveToCommon: "\<lbrakk>\<not> Common.isEmpty x; Common.invariant x; Commo
   apply(induction x)
    apply(auto simp: take_Cons' split: current.splits)
   using toList_isNotEmpty apply blast
-  by (metis Idle.isEmpty.elims(3) Idle.toList.simps toList_isNotEmpty)
+  by (metis Idle.isEmpty.elims(3) Idle.toList.simps toList_isNotEmpty)+
 
 lemma moveToCommon_size: "\<lbrakk>0 < Common.size x; Common.invariant x; Common.toList x = []\<rbrakk> \<Longrightarrow> False"
   apply(induction x)
@@ -352,7 +352,7 @@ next
   qed
 qed
 
-lemma currentList_pop_2: "invariant big \<Longrightarrow> 0 < size big \<Longrightarrow> pop big = (x, big') \<Longrightarrow> toCurrentList big' = tl (toCurrentList big)"
+lemma currentList_pop_2: "invariant big \<Longrightarrow> 0 < size big \<Longrightarrow> pop big = (x, big') \<Longrightarrow> x # toCurrentList big' = toCurrentList big"
 proof(induction big arbitrary: x rule: pop.induct)
   case (1 state)
   then show ?case 
@@ -365,7 +365,7 @@ next
     case (1 added old remained)
     then show ?case
       apply auto
-      by (metis Stack_Proof.pop_toList size_isNotEmpty)
+      by (metis first_pop size_isNotEmpty)
   next
     case (2 x xs added old remained)
     then show ?case
