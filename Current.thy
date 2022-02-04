@@ -20,4 +20,16 @@ fun bottom :: "'a current \<Rightarrow> 'a current" where
 fun toList :: "'a current \<Rightarrow> 'a list" where
   "toList (Current extra _ old _) = extra @ (Stack.toList old)"
 
+fun isEmpty :: "'a current \<Rightarrow> bool" where
+  "isEmpty (Current extra _ old remained) \<longleftrightarrow> (Stack.isEmpty old \<and> extra = []) \<or> remained = 0"
+
+fun invariant :: "'a current \<Rightarrow> bool" where
+  "invariant (Current extra added old remained) \<longleftrightarrow> length extra = added"
+
+fun size :: "'a current \<Rightarrow> nat" where
+  "size (Current _ added old _) = added + Stack.size old"
+
+fun newSize :: "'a current \<Rightarrow> nat" where
+  "newSize (Current _ added _ remained) = added + remained"
+
 end

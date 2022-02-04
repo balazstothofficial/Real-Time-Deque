@@ -15,7 +15,8 @@ fun push :: "'a \<Rightarrow> 'a stack \<Rightarrow> 'a stack" where
   "push element (Stack left right) = Stack (element#left) right"
 
 fun pop :: "'a stack \<Rightarrow> 'a stack" where
-  "pop (Stack (x#left) right)     = Stack left right"
+  "pop (Stack [] [])              = Stack [] []"
+| "pop (Stack (x#left) right)     = Stack left right"
 | "pop (Stack []       (x#right)) = Stack []   right"
 
 fun first :: "'a stack \<Rightarrow> 'a" where
@@ -27,12 +28,5 @@ fun size :: "'a stack \<Rightarrow> nat" where
 
 fun toList :: "'a stack \<Rightarrow> 'a list" where
   "toList (Stack left right) = left @ right"
-
-fun invariant :: "'a stack \<Rightarrow> bool" where
-  "invariant (Stack [] []) = True"
-| "invariant (Stack [] _) = False"
-| "invariant _ = True"
-
-
 
 end
