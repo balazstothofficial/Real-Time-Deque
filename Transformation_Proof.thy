@@ -184,23 +184,57 @@ next
     by(auto simp: tooEasy_2 split: prod.splits)
 qed
 
-lemma sizeWindow_steps: "invariant transformation \<Longrightarrow> n < remainingSteps transformation \<Longrightarrow> inSizeWindow' transformation (remainingSteps transformation - n) \<Longrightarrow> inSizeWindow' ((tick ^^ n) transformation) (remainingSteps ((tick ^^ n) transformation))"
+
+lemma bi': "States.invariant states \<Longrightarrow>  n < States.remainingSteps states \<Longrightarrow>  States.remainingSteps states - n = States.remainingSteps ((States.tick ^^ n) states)"
+  by (metis diff_add_inverse2 less_or_eq_imp_le tick_remainingSteps)
+
+lemma bi: "invariant transformation \<Longrightarrow>  n < remainingSteps transformation \<Longrightarrow>  remainingSteps transformation - n = remainingSteps ((tick ^^ n) transformation)"
+proof(induction transformation)
+  case (Left small big)
+  then show ?case 
+    using bi'[of "(big, small)" n]
+    by (metis Transformation.invariant.simps(1) Transformation.remainingSteps.simps(1) tooEasy)
+next
+  case (Right big small)
+  then show ?case
+    by (metis Transformation.invariant.simps(2) bi' funpow_0 tooEasy_2)
+qed
+
+lemma stick: "States.invariant states \<Longrightarrow>
+    States.inSizeWindow' states x \<Longrightarrow> 
+    States.inSizeWindow' (States.tick states) x"
+  by (smt (verit, ccfv_SIG) States.inSizeWindow'.elims(2) States.inSizeWindow'.elims(3) same_b_1_1 same_b_2_1 tick_inSizeWindow_1 tick_inSizeWindow_3)
+
+lemma sticks: "invariant transformation \<Longrightarrow>
+    inSizeWindow' transformation x \<Longrightarrow> 
+    inSizeWindow' (tick transformation) x"
+proof(induction transformation)
+  case (Left x1 x2)
+  then show ?case
+    by (smt (verit, best) States.inSizeWindow'.elims(2) States.inSizeWindow'.elims(3) Transformation.inSizeWindow'.simps(1) Transformation.invariant.simps(1) Transformation.tick.simps(1) Transformation_Proof.invariant_tick case_prodE2 case_prod_conv same_b_1_1 same_b_2 tick_inSizeWindow_2 tick_inSizeWindow_3)
+next
+  case (Right x1 x2)
+  then show ?case 
+    by (smt (verit, ccfv_threshold) Transformation.inSizeWindow'.simps(2) Transformation.invariant.simps(2) Transformation.tick.simps(2) Transformation_Proof.invariant_tick case_prodE2 case_prod_unfold fst_conv snd_conv stick)
+qed
+
+lemma sticksn: "invariant transformation \<Longrightarrow>
+    inSizeWindow' transformation x \<Longrightarrow> 
+    inSizeWindow' ((tick ^^ n) transformation) x"
 proof(induction n arbitrary: transformation)
   case 0
   then show ?case by auto
 next
   case (Suc n)
-  then show ?case 
-  proof(induction transformation)
-    case (Left x1 x2)
-    then show ?case
-      sorry
-  next
-    case (Right x1 x2)
-    then show ?case 
-      sorry
-  qed
+  then show ?case using sticks 
+    by (metis Transformation_Proof.invariant_tick comp_eq_dest_lhs funpow_Suc_right) 
 qed
+
+lemma sizeWindow_steps: "invariant transformation \<Longrightarrow>
+     n < remainingSteps transformation \<Longrightarrow> 
+    inSizeWindow' transformation (remainingSteps transformation - n) \<Longrightarrow> 
+    inSizeWindow' ((tick ^^ n) transformation) (remainingSteps ((tick ^^ n) transformation))"
+  by (simp add: bi sticksn)
 
 lemma sizeWindow'_sizeWindow: "inSizeWindow' transformation (remainingSteps transformation) = inSizeWindow transformation"
   apply(induction transformation rule: inSizeWindow.induct)

@@ -401,10 +401,7 @@ next
               apply(auto simp: min_def) 
         subgoal using dummy_2 by auto
         subgoal using dummy_2 by auto
-        subgoal using maybe4[of "Stack.size left" "Stack.size right" "Idle.size left'"] anja_3[of left] anja_3[of right] anja_4[of left']
-          by auto
-        using maybe5[of "Stack.size left" "Stack.size right" "Idle.size left'"] anja_3[of left] anja_3[of right] anja_4[of left']
-        by auto
+        done
 
       then have "inSizeWindow' (sixTicks ?transformation) (remainingSteps (sixTicks ?transformation))"
         using sizeWindow_steps  invariant remSteps unfolding sixTicks_def by blast

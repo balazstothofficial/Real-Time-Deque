@@ -447,8 +447,14 @@ lemma invariant_dequeueLeft:
         unfolding fourTicks_def 
         using invariant size_tick_n_2 by blast
 
-      then have "1 < Small.newSize left"
-        using "5.prems" RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) sizeWindow_smallNewSize_1 by blast
+      have a: "0 < Big.newSize right"
+        using sizeWindow_bigNewSize states_window by blast
+
+      have b: "0 < remainingSteps (Left left right)"
+        using states_rem by fastforce
+
+      from start_sizeWindow a b have "1 < Small.newSize left"
+        by auto
 
       then have "0 < Small.newSize newLeft" using leftSizes1
         by linarith
@@ -578,8 +584,14 @@ lemma invariant_dequeueLeft:
         unfolding fourTicks_def 
         using invariant size_tick_n_2 by blast
 
-      then have "1 < Small.newSize left"
-        using "5.prems" RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) sizeWindow_smallNewSize_1 by blast
+      have a: "0 < Big.newSize right"
+        using Transformation.inSizeWindow.simps(1) sizeWindow_bigNewSize start_sizeWindow by blast
+
+      have b: "0 < remainingSteps (Left left right)"
+        using False.prems(1) RealTimeDeque.invariant.simps(6) by blast
+
+      from start_sizeWindow a b have "1 < Small.newSize left"
+        by auto
 
       then have "0 < Small.newSize newLeft" using leftSizes1
         by linarith
@@ -778,9 +790,14 @@ lemma invariant_dequeueLeft:
         unfolding fourTicks_def 
         using invariant size_tick_n_8 by blast
 
-      then have "1 < Big.newSize left"
-        using "6.prems" RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) sizeWindow_bigNewSize_1 
-        using states_window by blast
+      have a: "0 < Small.newSize right"
+        using sizeWindow_smallNewSize states_window by blast
+
+      have b: "0 < remainingSteps (Right left right)"
+        using states_rem by force
+
+      from start_sizeWindow a b have "1 < Big.newSize left"
+        by auto
 
       then have "0 < Big.newSize newLeft" using leftSizes1
         by linarith
@@ -911,8 +928,14 @@ lemma invariant_dequeueLeft:
         unfolding fourTicks_def 
         using invariant size_tick_n_8 by blast
 
-      then have "1 < Big.newSize left"
-        using "6.prems" RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps Transformation.invariant.simps sizeWindow_bigNewSize_1 by blast
+      have a: "0 < Small.newSize right"
+        using Transformation.inSizeWindow.simps(2) sizeWindow_smallNewSize start_sizeWindow by blast
+
+      have b: "0 < remainingSteps (Right left right)"
+        using False.prems(1) RealTimeDeque.invariant.simps(6) by blast
+
+      from start_sizeWindow a b have "1 < Big.newSize left"
+        by auto
 
       then have "0 < Big.newSize newLeft" using leftSizes1
         by linarith
@@ -931,10 +954,8 @@ lemma invariant_dequeueLeft:
       have rightSize: "Idle.size idleRight = Small.newSize tickedRight"
         using idle transformation_invariant by auto
 
-
       have "Big.newSize left \<le> 3 * Small.newSize right" 
         using start_sizeWindow by auto
-      
 
       with leftSizes1 have "Big.newSize newLeft \<le> 3 * Small.newSize right" 
         by auto
