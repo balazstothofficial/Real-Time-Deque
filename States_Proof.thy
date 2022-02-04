@@ -1094,14 +1094,14 @@ qed
 
 
 lemma tick_inSizeWindow': "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small')
-  \<Longrightarrow> 4 * Big.newSize big + remainingSteps (big, small) \<le> 12 * Small.newSize small - 3 * remainingSteps (big, small) - 4
-   \<Longrightarrow> 4 * Big.newSize big' + remainingSteps (big', small') \<le> 12 * Small.newSize small' - 3 * remainingSteps (big', small') - 4"
+  \<Longrightarrow> 4 * Big.newSize big + remainingSteps (big, small) \<le> 12 * Small.newSize small - 3 * remainingSteps (big, small) - 8
+   \<Longrightarrow> 4 * Big.newSize big' + remainingSteps (big', small') \<le> 12 * Small.newSize small' - 3 * remainingSteps (big', small') - 8"
   using remainingStepsDecline tick_inSizeWindow_1 tick_inSizeWindow_2
   by fastforce
 
 lemma tick_inSizeWindow'_2: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small')
-  \<Longrightarrow> 4 * Small.newSize small + remainingSteps (big, small) \<le> 12 * Big.newSize big - 3 * remainingSteps (big, small) - 4
-  \<Longrightarrow> 4 * Small.newSize small' + remainingSteps (big', small') \<le> 12 * Big.newSize big' - 3 * remainingSteps (big', small') - 4"
+  \<Longrightarrow> 4 * Small.newSize small + remainingSteps (big, small) \<le> 12 * Big.newSize big - 3 * remainingSteps (big, small) - 8
+  \<Longrightarrow> 4 * Small.newSize small' + remainingSteps (big', small') \<le> 12 * Big.newSize big' - 3 * remainingSteps (big', small') - 8"
   using remainingStepsDecline tick_inSizeWindow_1 tick_inSizeWindow_2
   by fastforce
 
@@ -1939,11 +1939,11 @@ lemma same_f5p: "invariant (big, small)
        \<Longrightarrow> Small.pop small = (x, smallP)
        \<Longrightarrow> remainingSteps (big, smallP) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (big, smallP)) = (big', small')
-       \<Longrightarrow>  4 * Small.newSize small + remainingSteps (big, small) \<le> 12 * Big.newSize big - 3 * remainingSteps (big, small) - 4
-       \<Longrightarrow>  4 * Small.newSize small' + remainingSteps (big', small') \<le> 12 * Big.newSize big' - 3 * remainingSteps (big', small') - 4"
+       \<Longrightarrow>  4 * Small.newSize small + remainingSteps (big, small) \<le> 12 * Big.newSize big - 3 * remainingSteps (big, small) - 8
+       \<Longrightarrow>  4 * Small.newSize small' + remainingSteps (big', small') \<le> 12 * Big.newSize big' - 3 * remainingSteps (big', small') - 8"
   using invariant_pop_small_size same_bb1 same_c_2p same_ep remSteps_4 same_dp
 proof -
-assume a1: "4 * Small.newSize small + States.remainingSteps (big, small) \<le> 12 * Big.newSize big - 3 * States.remainingSteps (big, small) - 4"
+assume a1: "4 * Small.newSize small + States.remainingSteps (big, small) \<le> 12 * Big.newSize big - 3 * States.remainingSteps (big, small) - 8"
   assume a2: "(States.tick ^^ 4) (big, smallP) = (big', small')"
   assume a3: "4 \<le> States.remainingSteps (big, smallP)"
   assume a4: "Small.pop small = (x, smallP)"
@@ -1964,8 +1964,8 @@ qed
 lemma same_f6p': "
             0 < Big.size big 
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
-       \<Longrightarrow>  4 * Small.newSize small + remainingSteps (big, small) \<le> 12 * Big.newSize big - 3 * remainingSteps (big, small) - 4
-       \<Longrightarrow>  4 * Small.newSize small + (remainingSteps (big, small) - 4) \<le> 12 * (Big.newSize big - 1) - 3 * (remainingSteps (big, small) - 4) - 4"
+       \<Longrightarrow>  4 * Small.newSize small + remainingSteps (big, small) \<le> 12 * Big.newSize big - 3 * remainingSteps (big, small) - 8
+       \<Longrightarrow>  4 * Small.newSize small + (remainingSteps (big, small) - 4) \<le> 12 * (Big.newSize big - 1) - 3 * (remainingSteps (big, small) - 4) - 8"
   using invariant_pop_big_size same_bb1 same_bb same_c_22p same_e2p remSteps_4 same_d2p
   by linarith
 
@@ -1976,14 +1976,14 @@ lemma same_f6p:
       "Big.pop big = (x, bigP) "
       "remainingSteps (bigP, small) \<ge> 4"
       "((tick ^^ 4) (bigP, small)) = (big', small')"
-      "4 * Small.newSize small + remainingSteps (big, small) \<le> 12 * Big.newSize big - 3 * remainingSteps (big, small) - 4"
+      "4 * Small.newSize small + remainingSteps (big, small) \<le> 12 * Big.newSize big - 3 * remainingSteps (big, small) - 8"
     shows
-      "4 * Small.newSize small' + remainingSteps (big', small') \<le> 12 * Big.newSize big' - 3 * remainingSteps (big', small') - 4"
+      "4 * Small.newSize small' + remainingSteps (big', small') \<le> 12 * Big.newSize big' - 3 * remainingSteps (big', small') - 8"
 proof-
-  from assms have "4 * Small.newSize small + (remainingSteps (big, small) - 4) \<le> 12 * (Big.newSize big - 1) - 3 * (remainingSteps (big, small) - 4) - 4"
+  from assms have "4 * Small.newSize small + (remainingSteps (big, small) - 4) \<le> 12 * (Big.newSize big - 1) - 3 * (remainingSteps (big, small) - 4) - 8"
     by (meson dual_order.trans same_d2p same_f6p')
 
-  then have  "4 * Small.newSize small + remainingSteps (big', small') \<le> 12 * (Big.newSize big - 1) - 3 * remainingSteps (big', small') - 4"
+  then have  "4 * Small.newSize small + remainingSteps (big', small') \<le> 12 * (Big.newSize big - 1) - 3 * remainingSteps (big', small') - 8"
     by (smt (verit, ccfv_SIG) add_le_mono assms(1) assms(2) assms(3) assms(4) assms(5) diff_le_mono diff_le_mono2 dual_order.eq_iff mult_le_mono2 order_trans same_e2p)
 
   with assms show ?thesis 
@@ -1993,8 +1993,8 @@ qed
 lemma same_f7p': "
             0 < Small.size small 
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
-       \<Longrightarrow> 4 * Big.newSize big + remainingSteps (big, small) \<le> 12 * Small.newSize small - 3 * remainingSteps (big, small) - 4
-       \<Longrightarrow> 4 * Big.newSize big + (remainingSteps (big, small) - 4) \<le> 12 * (Small.newSize small - 1) - 3 * (remainingSteps (big, small) - 4) - 4"
+       \<Longrightarrow> 4 * Big.newSize big + remainingSteps (big, small) \<le> 12 * Small.newSize small - 3 * remainingSteps (big, small) - 8
+       \<Longrightarrow> 4 * Big.newSize big + (remainingSteps (big, small) - 4) \<le> 12 * (Small.newSize small - 1) - 3 * (remainingSteps (big, small) - 4) - 8"
   by linarith
 
 lemma same_f7p:
@@ -2004,14 +2004,14 @@ lemma same_f7p:
       "Small.pop small = (x, smallP)"
       "remainingSteps (big, smallP) \<ge> 4"
       "((tick ^^ 4) (big, smallP)) = (big', small')"
-      "4 * Big.newSize big + remainingSteps (big, small) \<le> 12 * Small.newSize small - 3 * remainingSteps (big, small) - 4"
+      "4 * Big.newSize big + remainingSteps (big, small) \<le> 12 * Small.newSize small - 3 * remainingSteps (big, small) - 8"
     shows
-       "4 * Big.newSize big' + remainingSteps (big', small') \<le> 12 * Small.newSize small' - 3 * remainingSteps (big', small') - 4"
+       "4 * Big.newSize big' + remainingSteps (big', small') \<le> 12 * Small.newSize small' - 3 * remainingSteps (big', small') - 8"
 proof-
-  from assms same_f7p' have  "4 * Big.newSize big + (remainingSteps (big, small) - 4) \<le> 12 * (Small.newSize small - 1) - 3 * (remainingSteps (big, small) - 4) - 4"
+  from assms same_f7p' have  "4 * Big.newSize big + (remainingSteps (big, small) - 4) \<le> 12 * (Small.newSize small - 1) - 3 * (remainingSteps (big, small) - 4) - 8"
     by (smt (verit, best) add_leE le_add_diff_inverse same_dp)
 
-  with assms have "4 * Big.newSize big + remainingSteps (big', small') \<le> 12 * (Small.newSize small - 1) - 3 * remainingSteps (big', small') - 4"
+  with assms have "4 * Big.newSize big + remainingSteps (big', small') \<le> 12 * (Small.newSize small - 1) - 3 * remainingSteps (big', small') - 8"
     by (smt (verit, ccfv_SIG) diff_le_mono diff_le_mono2 mult_le_mono2 nat_add_left_cancel_le order_trans same_ep)
 
   with assms show ?thesis 
@@ -2021,8 +2021,8 @@ qed
 lemma same_f8p': "
            0 < Big.size big 
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
-       \<Longrightarrow>  4 * Big.newSize big + remainingSteps (big, small) \<le> 12 * Small.newSize small - 3 * remainingSteps (big, small) - 4
-       \<Longrightarrow>  4 * (Big.newSize big - 1) + (remainingSteps (big, small) - 4) \<le> 12 * Small.newSize small - 3 * (remainingSteps (big, small) - 4) - 4"
+       \<Longrightarrow>  4 * Big.newSize big + remainingSteps (big, small) \<le> 12 * Small.newSize small - 3 * remainingSteps (big, small) - 8
+       \<Longrightarrow>  4 * (Big.newSize big - 1) + (remainingSteps (big, small) - 4) \<le> 12 * Small.newSize small - 3 * (remainingSteps (big, small) - 4) - 8"
   by linarith
 
 lemma same_f8p: 
@@ -2032,15 +2032,15 @@ lemma same_f8p:
     "Big.pop big = (x, bigP)"
     "remainingSteps (bigP, small) \<ge> 4"
     "((tick ^^ 4) (bigP, small)) = (big', small')"
-    "4 * Big.newSize big + remainingSteps (big, small) \<le> 12 * Small.newSize small - 3 * remainingSteps (big, small) - 4"
+    "4 * Big.newSize big + remainingSteps (big, small) \<le> 12 * Small.newSize small - 3 * remainingSteps (big, small) - 8"
   shows
-    "4 * Big.newSize big' + remainingSteps (big', small') \<le> 12 * Small.newSize small' - 3 * remainingSteps (big', small') - 4"
+    "4 * Big.newSize big' + remainingSteps (big', small') \<le> 12 * Small.newSize small' - 3 * remainingSteps (big', small') - 8"
 proof -
   from assms same_f8p' 
-  have "4 * (Big.newSize big - 1) + (remainingSteps (big, small) - 4) \<le> 12 * Small.newSize small - 3 * (remainingSteps (big, small) - 4) - 4"
+  have "4 * (Big.newSize big - 1) + (remainingSteps (big, small) - 4) \<le> 12 * Small.newSize small - 3 * (remainingSteps (big, small) - 4) - 8"
     by linarith
 
-  with assms have  "4 * (Big.newSize big - 1) + remainingSteps (big', small') \<le> 12 * Small.newSize small - 3 * remainingSteps (big', small') - 4"
+  with assms have  "4 * (Big.newSize big - 1) + remainingSteps (big', small') \<le> 12 * Small.newSize small - 3 * remainingSteps (big', small') - 8"
     by (smt (verit, ccfv_SIG) diff_le_mono diff_le_mono2 mult_le_mono2 nat_add_left_cancel_le order_trans same_e2p)
 
   with assms show ?thesis 
@@ -2113,55 +2113,55 @@ lemma same_f4: "invariant (big, small)
 
 lemma same_f5': "
             remainingSteps (big, small) \<ge> 4
-       \<Longrightarrow> 4 * Small.newSize small + remainingSteps (big, small) \<le> 12 * Big.newSize big - 3 * remainingSteps (big, small) - 4
-       \<Longrightarrow> 4 * (Suc (Small.newSize small)) + (remainingSteps (big, small) - 4) \<le> 12 * Big.newSize big - 3 * (remainingSteps (big, small) - 4) - 4"
+       \<Longrightarrow> 4 * Small.newSize small + remainingSteps (big, small) \<le> 12 * Big.newSize big - 3 * remainingSteps (big, small) - 8
+       \<Longrightarrow> 4 * (Suc (Small.newSize small)) + (remainingSteps (big, small) - 4) \<le> 12 * Big.newSize big - 3 * (remainingSteps (big, small) - 4) - 8"
   using distrib_left dual_order.trans le_add_diff_inverse2 by force
 
 lemma same_f5: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (big, Small.push x small)) = (big', small')
-       \<Longrightarrow>  4 * Small.newSize small + remainingSteps (big, small) \<le> 12 * Big.newSize big - 3 * remainingSteps (big, small) - 4
-       \<Longrightarrow>  4 * Small.newSize small' + remainingSteps (big', small') \<le> 12 * Big.newSize big' - 3 * remainingSteps (big', small') - 4"
+       \<Longrightarrow>  4 * Small.newSize small + remainingSteps (big, small) \<le> 12 * Big.newSize big - 3 * remainingSteps (big, small) - 8
+       \<Longrightarrow>  4 * Small.newSize small' + remainingSteps (big', small') \<le> 12 * Big.newSize big' - 3 * remainingSteps (big', small') - 8"
   using same_bb1 same_c_2 same_e
   by (metis invariant_push_small same_f5')
 
 lemma same_f6': "
             remainingSteps (big, small) \<ge> 4
-       \<Longrightarrow> 4 * Small.newSize small + remainingSteps (big, small) \<le> 12 * Big.newSize big - 3 * remainingSteps (big, small) - 4
-       \<Longrightarrow> 4 * Small.newSize small + (remainingSteps (big, small) - 4) \<le> 12 * (Suc (Big.newSize big)) - 3 * (remainingSteps (big, small) - 4) - 4"
+       \<Longrightarrow> 4 * Small.newSize small + remainingSteps (big, small) \<le> 12 * Big.newSize big - 3 * remainingSteps (big, small) - 8
+       \<Longrightarrow> 4 * Small.newSize small + (remainingSteps (big, small) - 4) \<le> 12 * (Suc (Big.newSize big)) - 3 * (remainingSteps (big, small) - 4) - 8"
   using distrib_left dual_order.trans le_add_diff_inverse2 by force
 
 lemma same_f6: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (Big.push x big, small)) = (big', small')
-       \<Longrightarrow>  4 * Small.newSize small + remainingSteps (big, small) \<le> 12 * Big.newSize big - 3 * remainingSteps (big, small) - 4
-       \<Longrightarrow>  4 * Small.newSize small' + remainingSteps (big', small') \<le> 12 * Big.newSize big' - 3 * remainingSteps (big', small') - 4"
+       \<Longrightarrow>  4 * Small.newSize small + remainingSteps (big, small) \<le> 12 * Big.newSize big - 3 * remainingSteps (big, small) - 8
+       \<Longrightarrow>  4 * Small.newSize small' + remainingSteps (big', small') \<le> 12 * Big.newSize big' - 3 * remainingSteps (big', small') - 8"
   by (metis invariant_push_big same_bb same_c_22 same_e2 same_f6')
 
 lemma same_f7': "
             remainingSteps (big, small) \<ge> 4
-       \<Longrightarrow> 4 * Big.newSize big + remainingSteps (big, small) \<le> 12 * Small.newSize small - 3 * remainingSteps (big, small) - 4
-       \<Longrightarrow> 4 * Big.newSize big + (remainingSteps (big, small) - 4) \<le> 12 * (Suc (Small.newSize small)) - 3 * (remainingSteps (big, small) - 4) - 4"
+       \<Longrightarrow> 4 * Big.newSize big + remainingSteps (big, small) \<le> 12 * Small.newSize small - 3 * remainingSteps (big, small) - 8
+       \<Longrightarrow> 4 * Big.newSize big + (remainingSteps (big, small) - 4) \<le> 12 * (Suc (Small.newSize small)) - 3 * (remainingSteps (big, small) - 4) - 8"
   using distrib_left dual_order.trans le_add_diff_inverse2 by force
 
 lemma same_f7: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (big, Small.push x small)) = (big', small')
-       \<Longrightarrow>  4 * Big.newSize big + remainingSteps (big, small) \<le> 12 * Small.newSize small - 3 * remainingSteps (big, small) - 4
-       \<Longrightarrow>  4 * Big.newSize big' + remainingSteps (big', small') \<le> 12 * Small.newSize small' - 3 * remainingSteps (big', small') - 4"
+       \<Longrightarrow>  4 * Big.newSize big + remainingSteps (big, small) \<le> 12 * Small.newSize small - 3 * remainingSteps (big, small) - 8
+       \<Longrightarrow>  4 * Big.newSize big' + remainingSteps (big', small') \<le> 12 * Small.newSize small' - 3 * remainingSteps (big', small') - 8"
   by (metis invariant_push_small same_bb1 same_c_2 same_e same_f7')
 
 lemma same_f8': "
             remainingSteps (big, small) \<ge> 4
-       \<Longrightarrow> 4 * Big.newSize big + remainingSteps (big, small) \<le> 12 * Small.newSize small - 3 * remainingSteps (big, small) - 4
-       \<Longrightarrow> 4 * (Suc (Big.newSize big)) + (remainingSteps (big, small) - 4) \<le> 12 * Small.newSize small - 3 * (remainingSteps (big, small) - 4) - 4"
+       \<Longrightarrow> 4 * Big.newSize big + remainingSteps (big, small) \<le> 12 * Small.newSize small - 3 * remainingSteps (big, small) - 8
+       \<Longrightarrow> 4 * (Suc (Big.newSize big)) + (remainingSteps (big, small) - 4) \<le> 12 * Small.newSize small - 3 * (remainingSteps (big, small) - 4) - 8"
   using distrib_left dual_order.trans le_add_diff_inverse2 by force
 
 lemma same_f8: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (Big.push x big, small)) = (big', small')
-       \<Longrightarrow>  4 * Big.newSize big + remainingSteps (big, small) \<le> 12 * Small.newSize small - 3 * remainingSteps (big, small) - 4
-       \<Longrightarrow>  4 * Big.newSize big' + remainingSteps (big', small') \<le> 12 * Small.newSize small' - 3 * remainingSteps (big', small') - 4"
+       \<Longrightarrow>  4 * Big.newSize big + remainingSteps (big, small) \<le> 12 * Small.newSize small - 3 * remainingSteps (big, small) - 8
+       \<Longrightarrow>  4 * Big.newSize big' + remainingSteps (big', small') \<le> 12 * Small.newSize small' - 3 * remainingSteps (big', small') - 8"
   by (metis invariant_push_big same_bb same_c_22 same_e2 same_f8')
 
 lemma same_f9: "invariant (big, small)
@@ -2169,7 +2169,7 @@ lemma same_f9: "invariant (big, small)
        \<Longrightarrow> ((tick ^^ 4) (big, Small.push x small)) = (big', small')
        \<Longrightarrow> 1 < Big.newSize big
        \<Longrightarrow> 1 < Big.newSize big'"
-  by (metis invariant_pop_small_size same_bb1)
+  by (metis invariant_push_small same_bb1)
 
 lemma same_f10: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4

@@ -1396,7 +1396,7 @@ next
       then have "0 < Small.newSize newLeft" using leftSizes1
         by linarith
 
-      then have "0 < Small.newSize tickedLeft" using leftSizes by auto
+      then have leftNotEmpty: "0 < Small.newSize tickedLeft" using leftSizes by auto
 
       then have "0 < Big.newSize right"
         using "5.prems" RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) sizeWindow_bigNewSize by blast
@@ -1421,13 +1421,26 @@ next
       then have T: "Small.newSize tickedLeft \<le> 3 * Big.newSize tickedRight"  
         using \<open>Big.newSize right = Big.newSize tickedRight\<close> leftSizes by presburger
 
-      have "Big.newSize right \<le> 3 * Small.newSize left - 3"
-        using start_sizeWindow leftSizes1
-        sorry
+      have idleLeftNotEmpty: "0 < Idle.size idleLeft"
+        using leftSize leftNotEmpty by auto
 
+      have minSteps: "0 < States.remainingSteps (right, left)"
+        using False by auto 
+
+      have "4 * Big.newSize right + (States.remainingSteps (right, left)) \<le> 12 * Small.newSize left - (3 * States.remainingSteps (right, left)) - 8"
+        using start_sizeWindow by auto 
+
+      then have "4 * Big.newSize right + 1 \<le> 12 * Small.newSize left - 3 - 8"
+        using minSteps by auto
+
+      then have "4 * Big.newSize right \<le> 12 * Small.newSize left - 12"
+        by auto
+
+      then have "Big.newSize right \<le> 3 * Small.newSize left - 3"
+        by auto
+      
       then have "Big.newSize right \<le> 3 * Small.newSize newLeft"
-        using leftSizes1
-        sorry
+        using leftSizes1 by auto
 
       then have "Big.newSize right \<le> 3 * Small.newSize tickedLeft"
         by (simp add: leftSizes)
@@ -1437,8 +1450,8 @@ next
       
       with idle transformation_invariant T have "invariant (Idle idleLeft idleRight)"
         apply auto
-        apply (metis Common.newSize.simps(1) Idle.isEmpty.elims(2) Idle.size.simps Small.newSize.simps(1) \<open>0 < Small.newSize (Small.push x left)\<close> \<open>Small.newSize (Small.push x left) = Small.newSize tickedLeft\<close> list.size(3) size_listLength toList_isNotEmpty verit_comp_simplify1(1))
-        using rightNotEmpty Idle_Proof.isNotEmpty by auto
+        using rightNotEmpty Idle_Proof.isNotEmpty apply auto
+        using idleLeftNotEmpty by auto
        
        with False  have "invariant (case Left tickedLeft tickedRight of 
         Left 
@@ -1448,7 +1461,9 @@ next
          using Big.state.simps(6) Common.state.simps(6) Small.state.simps(12) idle transformation.inject(1) transformation.simps(5) by auto
 
        with False show ?case
-         by (metis \<open>fourTicks (transformation.Left (Small.push x left) right) = transformation.Left tickedLeft tickedRight\<close> enqueueLeft.simps(6))
+         using ticked 
+         sorry
+         (*by (metis \<open>fourTicks (transformation.Left newLeft right) = transformation.Left tickedLeft tickedRight\<close> enqueueLeft.simps(6))*)
      qed
   next
     case (6 left right)
