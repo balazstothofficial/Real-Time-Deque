@@ -1905,7 +1905,7 @@ lemma same_fp: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) + 1 \<le> 4 * Small.size small
        \<Longrightarrow> remainingSteps (big', small') + 1 \<le> 4 * Small.size small'"
   using same_fp' remSteps_4 same_cp same_dp
-  sorry
+  by (smt (verit, ccfv_SIG) Suc_diff_1 Suc_inject add_le_cancel_right order_trans same_ep)
 
 lemma same_f2p: "invariant (big, small)
        \<Longrightarrow> 0 < Big.size big 
@@ -1923,16 +1923,33 @@ lemma same_f3p: "invariant (big, small)
        \<Longrightarrow> ((tick ^^ 4) (big, smallP)) = (big', small')
        \<Longrightarrow> remainingSteps (big, small) + 1 \<le> 4 * Big.size big
        \<Longrightarrow> remainingSteps (big', small') + 1 \<le> 4 * Big.size big'"
-  sorry
+  by (smt (z3) add.commute add_leE invariant_pop_small_size le_add_diff_inverse2 nat_add_left_cancel_le remSteps_4 same_b1 same_dp)
 
-lemma same_f4p: "invariant (big, small)
-       \<Longrightarrow> 0 < Big.size big 
-       \<Longrightarrow> Big.pop big = (x, bigP) 
-       \<Longrightarrow> remainingSteps (bigP, small) \<ge> 4
-       \<Longrightarrow> ((tick ^^ 4) (bigP, small)) = (big', small')
+
+lemma same_f4p': "
+           0 < Big.size big 
+       \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> remainingSteps (big, small) + 1 \<le> 4 * Big.size big
-       \<Longrightarrow> remainingSteps (big', small') + 1 \<le> 4 * Big.size big'"
-  sorry
+       \<Longrightarrow> (remainingSteps (big, small) -  4) + 1 \<le> 4 * (Big.size big - 1)"
+  by linarith
+
+lemma same_f4p: 
+  assumes
+    "invariant (big, small)"
+    "0 < Big.size big"
+    "Big.pop big = (x, bigP)"
+    "remainingSteps (bigP, small) \<ge> 4"
+    "((tick ^^ 4) (bigP, small)) = (big', small')"
+    "remainingSteps (big, small) + 1 \<le> 4 * Big.size big"
+  shows
+    "remainingSteps (big', small') + 1 \<le> 4 * Big.size big'"
+proof -
+  from assms have "remainingSteps (bigP, small) + 1 \<le> 4 * Big.size big"
+    by (meson add_le_cancel_right order.trans same_d2p)
+
+  with assms show ?thesis
+    by (smt (z3) Suc_diff_le Suc_eq_plus1 add_mult_distrib2 diff_diff_add diff_is_0_eq invariant_pop_big_size mult_numeral_1_right numerals(1) plus_1_eq_Suc remSteps_4 same_c1p)
+qed
 
 lemma same_f5p: "invariant (big, small)
        \<Longrightarrow> 0 < Small.size small 
@@ -2056,14 +2073,23 @@ lemma same_f9p: "invariant (big, small)
        \<Longrightarrow> 1 < Big.newSize big'"
   by (metis invariant_pop_small_size same_bb1)
 
-lemma same_f10p: "invariant (big, small)
-       \<Longrightarrow> 0 < Big.size big 
-       \<Longrightarrow> Big.pop big = (x, bigP) 
-       \<Longrightarrow> remainingSteps (bigP, small) \<ge> 4
-       \<Longrightarrow> ((tick ^^ 4) (bigP, small)) = (big', small')
-       \<Longrightarrow> 1 < Big.newSize big
-       \<Longrightarrow> 1 < Big.newSize big'"
-  sorry
+(*lemma same_f10p: 
+  assumes
+    "invariant (big, small)"
+    "0 < Big.size big"
+    "Big.pop big = (x, bigP)"
+    "remainingSteps (bigP, small) \<ge> 4"
+    "((tick ^^ 4) (bigP, small)) = (big', small')"
+    "1 < Big.newSize big"
+  shows
+    "1 < Big.newSize big'"
+proof -
+  from assms have "2 < Big.newSize big"
+    sorry
+
+  show ?thesis
+    sorry
+qed
 
 lemma same_f11p: "invariant (big, small)
        \<Longrightarrow> 0 < Small.size small 
@@ -2081,7 +2107,7 @@ lemma same_f12p: "invariant (big, small)
        \<Longrightarrow> ((tick ^^ 4) (bigP, small)) = (big', small')
        \<Longrightarrow> 1 < Small.newSize small
        \<Longrightarrow> 1 < Small.newSize small'"
-  sorry
+  sorry *)
 
 lemma same_f: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
@@ -2176,21 +2202,21 @@ lemma same_f10: "invariant (big, small)
        \<Longrightarrow> ((tick ^^ 4) (Big.push x big, small)) = (big', small')
        \<Longrightarrow> 1 < Big.newSize big
        \<Longrightarrow> 1 < Big.newSize big'"
-  sorry
+  by (simp add: same_c_22)
 
 lemma same_f11: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (big, Small.push x small)) = (big', small')
        \<Longrightarrow> 1 < Small.newSize small
        \<Longrightarrow> 1 < Small.newSize small'"
-  sorry
+  by (simp add: same_c_2)
 
 lemma same_f12: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (Big.push x big, small)) = (big', small')
        \<Longrightarrow> 1 < Small.newSize small
        \<Longrightarrow> 1 < Small.newSize small'"
-  sorry
+  by (metis invariant_push_big same_bb)
 
 lemma same: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
@@ -2203,7 +2229,7 @@ lemma same2: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> inSizeWindow (big, small)
        \<Longrightarrow> inSizeWindow ((tick ^^ 4) (Big.push x big, small))"
-  using same_f2 same_f4 same_f6 same_f8 same_f10 same_f12
+  using same_f2 same_f4 same_f6 same_f8  same_f10 same_f12
   by (smt (verit) inSizeWindow'.elims(3) inSizeWindow'.simps inSizeWindow.elims(2) inSizeWindow.elims(3))
 
 lemma same3: "invariant (big, small)
@@ -2212,7 +2238,8 @@ lemma same3: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, smallP) \<ge> 4
        \<Longrightarrow> inSizeWindow (big, small)
        \<Longrightarrow> inSizeWindow ((tick ^^ 4) (big, smallP))"
-  using same_fp same_f3p same_f5p same_f7p same_f9p same_f11p
+  using same_fp same_f3p same_f5p same_f7p same_f9p 
+  sledgehammer
   by (smt (verit) inSizeWindow'.elims(3) inSizeWindow'.simps inSizeWindow.elims(2) inSizeWindow.elims(3))
 
 lemma same4: "invariant (big, small)
