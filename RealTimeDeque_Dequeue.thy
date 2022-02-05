@@ -41,18 +41,18 @@ lemma list_dequeueLeft':
               (Reverse (Current [] 0 right (Stack.size right - Suc leftLength')) right [] (Stack.size right - Suc leftLength'))"
 
         from True have invariant: "Transformation.invariant ?transformation"
-          apply(auto simp: Let_def size_listLength)
+          apply(auto simp: Let_def Stack_Proof.size_listLength)
           apply (metis reverseN_reverseN reverseN_take append_Nil2)
-                  apply (metis Idle.invariant.simps Idle_Proof.invariant_pop eq_imp_le le_SucI mult_2 size_listLength trans_le_add2)
+                  apply (metis Idle.invariant.simps Idle_Proof.invariant_pop eq_imp_le le_SucI mult_2 Stack_Proof.size_listLength trans_le_add2)
                  apply(auto simp: reverseN_take)
           subgoal apply(auto simp: States_Proof.helper States_Proof.helper_2)
-            by (smt (z3) Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff append_take_drop_id le_refl length_rev mult_2 mult_Suc not_less_eq_eq numeral_2_eq_2 numeral_3_eq_3 rev_append rev_rev_ident size_listLength take_all_iff trans_le_add2)
-          apply (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_diff_le diff_add_inverse le_add1 mult_2 size_listLength)
-          apply (metis Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 size_listLength trans_le_add2)
-             apply (metis Idle.invariant.simps Idle_Proof.invariant_pop le_SucI le_add1 mult_2 size_listLength)
-          apply (metis Idle.isEmpty.elims(3) Idle.toList.simps \<open>\<lbrakk>Suc 0 \<le> leftLength'; \<not> List.length (Stack.toList right) \<le> 3 * leftLength'; Idle.pop left = (x', idle.Idle left' leftLength'); Idle.invariant left; x = x'; deque' = Transforming (sixTicks (transformation.Left (Reverse1 (Current [] 0 left' (Suc (2 * leftLength'))) left' []) (Reverse (Current [] 0 right (List.length (Stack.toList right) - Suc leftLength')) right [] (List.length (Stack.toList right) - Suc leftLength')))); rightLength = List.length (Stack.toList right); \<not> Idle.isEmpty left; \<not> Stack.isEmpty right; Idle.size left \<le> 3 * List.length (Stack.toList right); List.length (Stack.toList right) \<le> 3 * Idle.size left; Idle.toList left \<noteq> []\<rbrakk> \<Longrightarrow> rev (take (Suc (2 * leftLength') - List.length (Stack.toList ((Stack.pop ^^ (List.length (Stack.toList right) - Suc leftLength')) right))) (rev (take (List.length (Stack.toList right) - Suc leftLength') (Stack.toList left')))) @ rev (Stack.toList ((Stack.pop ^^ (List.length (Stack.toList right) - Suc leftLength')) right)) @ rev (take (List.length (Stack.toList right) - Suc leftLength') (Stack.toList right)) = Stack.toList left' @ rev (Stack.toList right)\<close> toList_isNotEmpty)
-          apply (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_diff_le add_diff_cancel_right' le_add2 mult_2 size_listLength)
-          by (metis Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 size_listLength trans_le_add2)
+            by (smt (z3) Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff append_take_drop_id le_refl length_rev mult_2 mult_Suc not_less_eq_eq numeral_2_eq_2 numeral_3_eq_3 rev_append rev_rev_ident Stack_Proof.size_listLength take_all_iff trans_le_add2)
+          apply (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_diff_le diff_add_inverse le_add1 mult_2 Stack_Proof.size_listLength)
+          apply (metis Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 Stack_Proof.size_listLength trans_le_add2)
+             apply (metis Idle.invariant.simps Idle_Proof.invariant_pop le_SucI le_add1 mult_2 Stack_Proof.size_listLength)
+          apply (metis Idle.isEmpty.elims(3) Idle.toList.simps \<open>\<lbrakk>Suc 0 \<le> leftLength'; \<not> List.length (Stack.toList right) \<le> 3 * leftLength'; Idle.pop left = (x', idle.Idle left' leftLength'); Idle.invariant left; x = x'; deque' = Transforming (sixTicks (transformation.Left (Reverse1 (Current [] 0 left' (Suc (2 * leftLength'))) left' []) (Reverse (Current [] 0 right (List.length (Stack.toList right) - Suc leftLength')) right [] (List.length (Stack.toList right) - Suc leftLength')))); rightLength = List.length (Stack.toList right); \<not> Idle.isEmpty left; \<not> Stack.isEmpty right; Idle.size left \<le> 3 * List.length (Stack.toList right); List.length (Stack.toList right) \<le> 3 * Idle.size left; Idle.toList left \<noteq> []\<rbrakk> \<Longrightarrow> rev (take (Suc (2 * leftLength') - List.length (Stack.toList ((Stack.pop ^^ (List.length (Stack.toList right) - Suc leftLength')) right))) (rev (take (List.length (Stack.toList right) - Suc leftLength') (Stack.toList left')))) @ rev (Stack.toList ((Stack.pop ^^ (List.length (Stack.toList right) - Suc leftLength')) right)) @ rev (take (List.length (Stack.toList right) - Suc leftLength') (Stack.toList right)) = Stack.toList left' @ rev (Stack.toList right)\<close> Stack_Proof.toList_isNotEmpty)
+          apply (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_diff_le add_diff_cancel_right' le_add2 mult_2 Stack_Proof.size_listLength)
+          by (metis Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 Stack_Proof.size_listLength trans_le_add2)
 
         with True have "toListLeft ?transformation = tl (Idle.toList left) @ rev (Stack.toList right)"
           by(auto simp: maybe)
@@ -72,15 +72,15 @@ lemma list_dequeueLeft':
         with False show ?case 
           apply(induction right1 right2 rule: toSmallDeque.induct)
           apply auto
-          apply (metis (mono_tags, lifting) Cons_eq_append_conv Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList le_zero_eq length_0_conv list.sel(3) not_less_eq_eq size_listLength)
-          apply (metis (mono_tags, lifting) Cons_eq_append_conv Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList le_zero_eq length_0_conv list.sel(3) not_less_eq_eq size_listLength)
-          apply (metis (mono_tags, lifting) False.hyps Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList One_nat_def append_Nil2 append_eq_append_conv2 le_zero_eq length_0_conv list.distinct(1) list.sel(3) not_less_eq_eq same_append_eq size_listLength tl_append2)
-          apply (metis (mono_tags, lifting) False.hyps Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList One_nat_def append_Nil2 append_eq_append_conv2 le_zero_eq length_0_conv list.distinct(1) list.sel(3) not_less_eq_eq same_append_eq size_listLength tl_append2)
-          apply (metis (mono_tags, lifting) False.hyps Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList One_nat_def append_Nil2 append_eq_append_conv2 le_zero_eq length_0_conv list.distinct(1) list.sel(3) not_less_eq_eq same_append_eq size_listLength tl_append2)
-          apply (metis (mono_tags, lifting) False.hyps Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList One_nat_def append_Nil2 append_eq_append_conv2 le_zero_eq length_0_conv list.distinct(1) list.sel(3) not_less_eq_eq same_append_eq size_listLength tl_append2)
-          apply (metis (mono_tags, lifting) False.hyps Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList One_nat_def append_Nil2 append_eq_append_conv2 le_zero_eq length_0_conv list.distinct(1) list.sel(3) not_less_eq_eq same_append_eq size_listLength tl_append2)
-          apply (metis (mono_tags, lifting) False.hyps Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList One_nat_def append_Nil2 append_eq_append_conv2 le_zero_eq length_0_conv list.distinct(1) list.sel(3) not_less_eq_eq same_append_eq size_listLength tl_append2)
-          apply (metis (mono_tags, lifting) False.hyps Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList One_nat_def append_Nil2 append_eq_append_conv2 le_zero_eq length_0_conv list.distinct(1) list.sel(3) not_less_eq_eq same_append_eq size_listLength tl_append2)
+          apply (metis (mono_tags, lifting) Cons_eq_append_conv Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList le_zero_eq length_0_conv list.sel(3) not_less_eq_eq Stack_Proof.size_listLength)
+          apply (metis (mono_tags, lifting) Cons_eq_append_conv Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList le_zero_eq length_0_conv list.sel(3) not_less_eq_eq Stack_Proof.size_listLength)
+          apply (metis (mono_tags, lifting) False.hyps Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList One_nat_def append_Nil2 append_eq_append_conv2 le_zero_eq length_0_conv list.distinct(1) list.sel(3) not_less_eq_eq same_append_eq Stack_Proof.size_listLength tl_append2)
+          apply (metis (mono_tags, lifting) False.hyps Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList One_nat_def append_Nil2 append_eq_append_conv2 le_zero_eq length_0_conv list.distinct(1) list.sel(3) not_less_eq_eq same_append_eq Stack_Proof.size_listLength tl_append2)
+          apply (metis (mono_tags, lifting) False.hyps Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList One_nat_def append_Nil2 append_eq_append_conv2 le_zero_eq length_0_conv list.distinct(1) list.sel(3) not_less_eq_eq same_append_eq Stack_Proof.size_listLength tl_append2)
+          apply (metis (mono_tags, lifting) False.hyps Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList One_nat_def append_Nil2 append_eq_append_conv2 le_zero_eq length_0_conv list.distinct(1) list.sel(3) not_less_eq_eq same_append_eq Stack_Proof.size_listLength tl_append2)
+          apply (metis (mono_tags, lifting) False.hyps Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList One_nat_def append_Nil2 append_eq_append_conv2 le_zero_eq length_0_conv list.distinct(1) list.sel(3) not_less_eq_eq same_append_eq Stack_Proof.size_listLength tl_append2)
+          apply (metis (mono_tags, lifting) False.hyps Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList One_nat_def append_Nil2 append_eq_append_conv2 le_zero_eq length_0_conv list.distinct(1) list.sel(3) not_less_eq_eq same_append_eq Stack_Proof.size_listLength tl_append2)
+          apply (metis (mono_tags, lifting) False.hyps Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList One_nat_def append_Nil2 append_eq_append_conv2 le_zero_eq length_0_conv list.distinct(1) list.sel(3) not_less_eq_eq same_append_eq Stack_Proof.size_listLength tl_append2)
           using Idle_Proof.invariant_pop Idle_Proof.size_pop by fastforce+
       qed
     qed    
@@ -108,10 +108,10 @@ lemma list_dequeueLeft':
       by auto
 
     have "x' # Small.toCurrentList left' = Small.toCurrentList left"
-      using left_invariant leftSize pop Small_Proof.currentList_pop_2[of left x' left'] by auto
+      using left_invariant leftSize pop Small_Proof.pop_toCurrentList[of left x' left'] by auto
       
     then have toList: "x' # toListLeft ?newTransfomation = Small.toCurrentList left @ rev (Big.toCurrentList right)"
-      using invariant leftSize Small_Proof.currentList_pop_2[of left x' left'] 5(1)
+      using invariant leftSize Small_Proof.pop_toCurrentList[of left x' left'] 5(1)
       by auto      
 
     from invariant have fourTicks: "Transformation.invariant ?tickedTransformation"
@@ -158,10 +158,10 @@ lemma list_dequeueLeft':
       by auto
 
     have "x' # Big.toCurrentList left' = Big.toCurrentList left"
-      using left_invariant leftSize pop Big_Proof.currentList_pop_2[of left x' left'] by auto
+      using left_invariant leftSize pop Big_Proof.pop_toCurrentList[of left x' left'] by auto
       
     then have toList: "x' # toListLeft ?newTransfomation = Big.toCurrentList left @ rev (Small.toCurrentList right)"
-      using left_invariant invariant leftSize Big_Proof.currentList_pop_2[of left x' left'] 6(1)
+      using left_invariant invariant leftSize Big_Proof.pop_toCurrentList[of left x' left'] 6(1)
       by (metis States.toCurrentList.simps Transformation.invariant.simps(2) append_Cons invariant_listBigFirst old.prod.case toCurrentListBigFirst.simps toListLeft.simps(2))
 
     from invariant have fourTicks: "Transformation.invariant ?tickedTransformation"
@@ -305,7 +305,7 @@ lemma invariant_dequeueLeft:
           then show ?case 
             apply(auto split: prod.splits)
                apply (meson Idle.invariant.simps Idle_Proof.invariant_pop)
-            apply (metis Idle.invariant.simps Idle_Proof.invariant_pop bot_nat_0.extremum bot_nat_0.not_eq_extremum length_0_conv mult_zero_right toList_isNotEmpty size_isNotEmpty size_listLength verit_la_disequality)
+            apply (metis Idle.invariant.simps Idle_Proof.invariant_pop bot_nat_0.extremum bot_nat_0.not_eq_extremum length_0_conv mult_zero_right Stack_Proof.toList_isNotEmpty size_isNotEmpty Stack_Proof.size_listLength verit_la_disequality)
              apply (metis Idle.size.simps Idle_Proof.size_pop Suc_leD)
             using Idle_Proof.invariant_pop by fastforce
         next
@@ -317,12 +317,12 @@ lemma invariant_dequeueLeft:
               (Reverse (Current [] 0 right (Stack.size right - Suc iLeftLength)) right [] (Stack.size right - Suc iLeftLength))"
 
             from True have invariant: "Transformation.invariant ?transformation"
-              apply(auto simp: reverseN_take size_listLength)
-                 apply (metis Idle.invariant.simps Idle_Proof.invariant_pop le_SucI le_add2 mult_2 size_listLength)
+              apply(auto simp: reverseN_take Stack_Proof.size_listLength)
+                 apply (metis Idle.invariant.simps Idle_Proof.invariant_pop le_SucI le_add2 mult_2 Stack_Proof.size_listLength)
               subgoal apply(auto simp: States_Proof.helper_2  States_Proof.helper)
-                by (smt (z3) Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff append_take_drop_id le_refl length_rev mult_2 mult_Suc not_less_eq_eq numeral_2_eq_2 numeral_3_eq_3 rev_append rev_rev_ident size_listLength take_all_iff trans_le_add2)
-              apply (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_diff_le diff_add_inverse diff_le_self mult_2 size_listLength)
-              by (metis Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 size_listLength trans_le_add2)
+                by (smt (z3) Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff append_take_drop_id le_refl length_rev mult_2 mult_Suc not_less_eq_eq numeral_2_eq_2 numeral_3_eq_3 rev_append rev_rev_ident Stack_Proof.size_listLength take_all_iff trans_le_add2)
+              apply (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_diff_le diff_add_inverse diff_le_self mult_2 Stack_Proof.size_listLength)
+              by (metis Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 Stack_Proof.size_listLength trans_le_add2)
 
             then have invariant_six: "Transformation.invariant (sixTicks ?transformation)"
               using invariant_sixTicks by blast

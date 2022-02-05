@@ -16,11 +16,11 @@ lemma pop_toList_2: "\<lbrakk>0 < size idle; pop idle = (x, idle')\<rbrakk> \<Lo
 
 lemma size_push: "size (push x idle) = Suc (size idle)"
   apply(induction idle arbitrary: x)
-  by(auto simp: Stack_Proof.size_push)
+  by(auto simp: size_push)
 
 lemma size_pop: "\<lbrakk>\<not> isEmpty idle; pop idle = (x, idle')\<rbrakk> \<Longrightarrow> Suc (size idle')  = size idle"
   apply(induction idle arbitrary: x)
-  by(auto simp: size_listLength pop_listLength)
+  by(auto simp: Stack_Proof.size_listLength pop_listLength)
 
 lemma invariant_push: "invariant idle \<Longrightarrow> invariant (push x idle)"
   apply(induction x idle rule: push.induct)
@@ -33,6 +33,14 @@ lemma invariant_pop: "\<lbrakk>\<not> isEmpty idle; invariant idle; pop idle = (
 
 lemma isNotEmpty: "\<lbrakk>isEmpty idle; 0 < size idle\<rbrakk> \<Longrightarrow> False" 
   apply(induction idle)
-  by (simp add: size_isNotEmpty)  
+  by (simp add: size_isNotEmpty) 
+
+lemma size_isEmpty: "isEmpty idle \<longleftrightarrow> size idle = 0"
+  apply(induction idle)
+  by(auto simp: size_isEmpty)
+
+lemma size_isNotEmpty: "\<not>isEmpty idle \<longleftrightarrow> 0 < size idle"
+  apply(induction idle)
+  by(auto simp: size_isNotEmpty)
 
 end

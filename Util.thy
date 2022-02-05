@@ -14,4 +14,7 @@ lemma take_hd: "xs \<noteq> [] \<Longrightarrow> take (Suc 0) xs = [hd xs]"
   apply(induction xs)
   by auto
 
+lemma cons_tl: "x # xs = ys \<Longrightarrow> xs = tl ys"
+  by auto
+
 end
