@@ -60,7 +60,10 @@ lemma toList_size: "\<lbrakk>invariant current; toList current = []; 0 < size cu
   apply(induction current)
   by(auto simp: Stack_Proof.size_listLength)
 
-lemma size_put: "invariant current \<Longrightarrow> newSize (put x current) = Suc (newSize current)"
+lemma newSize_put: "invariant current \<Longrightarrow> newSize (put x current) = Suc (newSize current)"
+  by(induction x current rule: put.induct) auto
+
+lemma size_put: "invariant current \<Longrightarrow> size (put x current) = Suc (size current)"
   by(induction x current rule: put.induct) auto
 
 lemma newSize_get: "\<lbrakk>0 < newSize current; invariant current \<rbrakk>

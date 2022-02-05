@@ -45,7 +45,7 @@ lemma list_dequeueLeft':
           apply (metis reverseN_reverseN reverseN_take append_Nil2)
                   apply (metis Idle.invariant.simps Idle_Proof.invariant_pop eq_imp_le le_SucI mult_2 Stack_Proof.size_listLength trans_le_add2)
                  apply(auto simp: reverseN_take)
-          subgoal apply(auto simp: States_Proof.helper States_Proof.helper_2)
+          subgoal apply(auto simp: popN_drop popN_size)
             by (smt (z3) Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff append_take_drop_id le_refl length_rev mult_2 mult_Suc not_less_eq_eq numeral_2_eq_2 numeral_3_eq_3 rev_append rev_rev_ident Stack_Proof.size_listLength take_all_iff trans_le_add2)
           apply (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_diff_le diff_add_inverse le_add1 mult_2 Stack_Proof.size_listLength)
           apply (metis Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 Stack_Proof.size_listLength trans_le_add2)
@@ -104,7 +104,7 @@ lemma list_dequeueLeft':
     let ?tickedTransformation = "fourTicks ?newTransfomation"
 
     have invariant: "Transformation.invariant ?newTransfomation"
-      using pop  start_invariant leftSize invariant_pop_small_left_2[of left right x' left']
+      using pop  start_invariant leftSize invariant_pop_small_left[of left right x' left']
       by auto
 
     have "x' # Small.toCurrentList left' = Small.toCurrentList left"
@@ -154,7 +154,7 @@ lemma list_dequeueLeft':
     let ?tickedTransformation = "fourTicks ?newTransfomation"
 
     have invariant: "Transformation.invariant ?newTransfomation"
-      using pop start_invariant leftSize invariant_pop_big_right_2[of left right x' left']
+      using pop start_invariant leftSize invariant_pop_big_right[of left right x' left']
       by auto
 
     have "x' # Big.toCurrentList left' = Big.toCurrentList left"
@@ -319,7 +319,7 @@ lemma invariant_dequeueLeft:
             from True have invariant: "Transformation.invariant ?transformation"
               apply(auto simp: reverseN_take Stack_Proof.size_listLength)
                  apply (metis Idle.invariant.simps Idle_Proof.invariant_pop le_SucI le_add2 mult_2 Stack_Proof.size_listLength)
-              subgoal apply(auto simp: States_Proof.helper_2  States_Proof.helper)
+              subgoal apply(auto simp: popN_size popN_drop)
                 by (smt (z3) Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff append_take_drop_id le_refl length_rev mult_2 mult_Suc not_less_eq_eq numeral_2_eq_2 numeral_3_eq_3 rev_append rev_rev_ident Stack_Proof.size_listLength take_all_iff trans_le_add2)
               apply (metis Idle.invariant.simps Idle_Proof.invariant_pop Suc_diff_le diff_add_inverse diff_le_self mult_2 Stack_Proof.size_listLength)
               by (metis Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 Stack_Proof.size_listLength trans_le_add2)
@@ -338,7 +338,7 @@ lemma invariant_dequeueLeft:
           by (smt (z3) add.commute add_Suc_right funpow_0 numeral_2_eq_2 numeral_3_eq_3 numeral_Bit0 remSteps remainingStepsDecline_4)
 
         with remSteps have remStepsEnd: "0 < Transformation.remainingSteps (sixTicks ?transformation)"
-          unfolding sixTicks_def using remainingStepsDecline_4[of ?transformation 5 5] 
+          using remainingStepsDecline_4[of ?transformation 5 5] 
           by (smt (z3) One_nat_def Suc_eq_plus1 add_Suc_right invariant numeral_2_eq_2 numeral_3_eq_3 numeral_Bit0 remainingStepsDecline_4)
             from True have test: "Stack.size iLeft = iLeftLength"
               apply auto
@@ -350,7 +350,7 @@ lemma invariant_dequeueLeft:
               by (smt (z3) Idle.size.simps Idle_Proof.size_pop add_2_eq_Suc diff_Suc_diff_eq1 diff_add_inverse diff_commute diff_diff_left diff_is_0_eq le_add1 local.test mult_2 mult_Suc mult_Suc_right numeral_2_eq_2 numeral_3_eq_3)
 
             then have sizeWindow: "inSizeWindow (sixTicks ?transformation)"
-              using sizeWindow_steps invariant remSteps sizeWindow'_sizeWindow unfolding sixTicks_def by blast
+              using sizeWindow_steps invariant remSteps sizeWindow'_sizeWindow by blast
         
             with True invariant_six sizeWindow show ?case
               by(auto simp: Let_def remStepsEnd split: prod.splits)
@@ -392,7 +392,7 @@ lemma invariant_dequeueLeft:
       using "5.prems" RealTimeDeque.invariant.simps(6) by blast
 
     from 5 have invariant: "Transformation.invariant ?newTransfomation"
-      by (meson RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(1) invariant_pop_small_left_2 sizeWindow_smallSize t)
+      by (meson RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(1) invariant_pop_small_left sizeWindow_smallSize t)
 
     then have invariant_fourTicks: "Transformation.invariant (fourTicks ?newTransfomation)"
       using invariant_fourTicks by blast
@@ -412,10 +412,10 @@ lemma invariant_dequeueLeft:
           by auto
 
       then have remSteps: "remainingSteps ?tickedTransformation > 0"
-        by (metis One_nat_def add_Suc_shift fourTicks_def funpow_0 invariant numeral_2_eq_2 numeral_Bit0 plus_1_eq_Suc remainingStepsDecline_4)
+        by (metis One_nat_def add_Suc_shift funpow_0 invariant numeral_2_eq_2 numeral_Bit0 plus_1_eq_Suc remainingStepsDecline_4)
 
       from True have sizeWindow: "inSizeWindow ?tickedTransformation"
-        using same3[of right left x] states_inv states_rem states_window geficke2 unfolding fourTicks_def
+        using tick4_popSmall_sizeWindow[of right left x] states_inv states_rem states_window geficke2
         by (metis Transformation.remainingSteps.simps(1) \<open>0 < Small.size left\<close> fixed_5 less_imp_le_nat t)
 
       have "case ?tickedTransformation of
@@ -453,14 +453,14 @@ lemma invariant_dequeueLeft:
       next
         case False
         then have "remainingSteps ?newTransfomation \<le> 4"
-        by (metis (no_types, lifting) RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) Transformation.remainingSteps.simps(1) dual_order.trans not_le_imp_less same_dp sizeWindow_smallSize t)
+        by (metis (no_types, lifting) RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) Transformation.remainingSteps.simps(1) dual_order.trans not_le_imp_less remainingSteps_popSmall sizeWindow_smallSize t)
 
       with False have remSteps: "remainingSteps ?tickedTransformation = 0"
-        unfolding fourTicks_def using invariant remainingStepsDecline_5[of ?newTransfomation 4]
+        using invariant remainingStepsDecline_5[of ?newTransfomation 4]
         by auto
 
       obtain tickedLeft tickedRight where ticked: "?tickedTransformation = Left tickedLeft tickedRight"
-        unfolding fourTicks_def using tick_same_left_n[of 4 newLeft right]
+        using tick_same_left_n[of 4 newLeft right]
         by (simp add: case_prod_unfold numeral_Bit0)
 
       with remSteps have "case Left tickedLeft tickedRight of
@@ -478,15 +478,13 @@ lemma invariant_dequeueLeft:
         by (metis local.invariant_fourTicks)
 
       with ticked invariant_fourTicks have "Big.newSize right = Big.newSize tickedRight"
-        unfolding fourTicks_def 
-        using invariant size_tick_n_6 by blast
+        using invariant tickN_left_newSizeBig by blast
 
       have leftSizes1: "Suc (Small.newSize newLeft) = Small.newSize left"
-        by (metis \<open>0 < Small.size left\<close> funpow_0 same_c_2p states_inv t)
+        by (metis \<open>0 < Small.size left\<close> funpow_0 tickN_popSmall_newSizeSmall states_inv t)
 
       with ticked invariant_fourTicks have leftSizes: "Small.newSize newLeft = Small.newSize tickedLeft"
-        unfolding fourTicks_def 
-        using invariant size_tick_n_2 by blast
+        using invariant tickN_left_newSizeSmall by blast
 
       have a: "0 < Big.newSize right"
         using sizeWindow_bigNewSize states_window by blast
@@ -590,14 +588,14 @@ lemma invariant_dequeueLeft:
     next
       case False
       then have "remainingSteps ?newTransfomation \<le> 4"
-        by (metis (no_types, lifting) RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) Transformation.remainingSteps.simps(1) dual_order.trans not_le_imp_less same_dp sizeWindow_smallSize t)
+        by (metis (no_types, lifting) RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) Transformation.remainingSteps.simps(1) dual_order.trans not_le_imp_less remainingSteps_popSmall sizeWindow_smallSize t)
 
       with False have remSteps: "remainingSteps ?tickedTransformation = 0"
-        unfolding fourTicks_def using invariant remainingStepsDecline_5[of ?newTransfomation 4]
+        using invariant remainingStepsDecline_5[of ?newTransfomation 4]
         by auto
 
       obtain tickedLeft tickedRight where ticked: "?tickedTransformation = Left tickedLeft tickedRight"
-        unfolding fourTicks_def using tick_same_left_n[of 4 newLeft right]
+        using tick_same_left_n[of 4 newLeft right]
         by (simp add: case_prod_unfold numeral_Bit0)
 
       with remSteps have "case Left tickedLeft tickedRight of
@@ -615,15 +613,13 @@ lemma invariant_dequeueLeft:
         by auto
 
       with ticked invariant_fourTicks have "Big.newSize right = Big.newSize tickedRight"
-        unfolding fourTicks_def 
-        using invariant size_tick_n_6 by blast
+        using invariant tickN_left_newSizeBig by blast
 
       have leftSizes1: "Suc (Small.newSize newLeft) = Small.newSize left"
-        by (metis (no_types, lifting) False(2) RealTimeDeque.invariant.simps(6) States.invariant.elims(2) Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) case_prodD pop_newSize_small sizeWindow_smallNewSize t)
+        by (metis (no_types, lifting) False(2) RealTimeDeque.invariant.simps(6) States.invariant.elims(2) Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) case_prodD Small_Proof.newSize_pop sizeWindow_smallNewSize t)
 
       with ticked invariant_fourTicks have leftSizes: "Small.newSize newLeft = Small.newSize tickedLeft"
-        unfolding fourTicks_def 
-        using invariant size_tick_n_2 by blast
+        using invariant tickN_left_newSizeSmall by blast
 
       have a: "0 < Big.newSize right"
         using Transformation.inSizeWindow.simps(1) sizeWindow_bigNewSize start_sizeWindow by blast
@@ -735,7 +731,7 @@ lemma invariant_dequeueLeft:
       using "6.prems" RealTimeDeque.invariant.simps(6) by blast
 
     from 6 have invariant: "Transformation.invariant ?newTransfomation"
-      by (meson RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(2) invariant_pop_big_right_2 sizeWindow_bigSize t)
+      by (meson RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(2) invariant_pop_big_right sizeWindow_bigSize t)
 
     then have invariant_fourTicks: "Transformation.invariant (fourTicks ?newTransfomation)"
       using invariant_fourTicks by blast
@@ -755,10 +751,10 @@ lemma invariant_dequeueLeft:
           by auto
 
       then have remSteps: "remainingSteps ?tickedTransformation > 0"
-        by (metis One_nat_def add_Suc_shift fourTicks_def funpow_0 invariant numeral_2_eq_2 numeral_Bit0 plus_1_eq_Suc remainingStepsDecline_4)
+        by (metis One_nat_def add_Suc_shift funpow_0 invariant numeral_2_eq_2 numeral_Bit0 plus_1_eq_Suc remainingStepsDecline_4)
 
       from True have sizeWindow: "inSizeWindow ?tickedTransformation"
-        using same4[of left right x] states_inv states_rem states_window geficke2 unfolding fourTicks_def
+        using tick4_popBig_sizeWindow[of left right x] states_inv states_rem states_window geficke2
         by (metis Transformation.remainingSteps.simps(2) \<open>0 < Big.size left\<close> fixed_6 less_imp_le t)
 
       have "case ?tickedTransformation of
@@ -796,14 +792,14 @@ lemma invariant_dequeueLeft:
       next
         case False
         then have "remainingSteps ?newTransfomation \<le> 4"
-        by (metis (no_types, lifting) RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) Transformation.remainingSteps.simps(1) dual_order.trans not_le_imp_less same_dp sizeWindow_smallSize t)
+        by (metis (no_types, lifting) RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps(1) Transformation.invariant.simps(1) Transformation.remainingSteps.simps(1) dual_order.trans not_le_imp_less remainingSteps_popSmall sizeWindow_smallSize t)
 
       with False have remSteps: "remainingSteps ?tickedTransformation = 0"
-        unfolding fourTicks_def using invariant remainingStepsDecline_5[of ?newTransfomation 4]
+        using invariant remainingStepsDecline_5[of ?newTransfomation 4]
         by auto
 
       obtain tickedLeft tickedRight where ticked: "?tickedTransformation = Right tickedLeft tickedRight"
-        unfolding fourTicks_def using tick_same_right_n[of 4 newLeft right]
+        using tick_same_right_n[of 4 newLeft right]
         by (simp add: case_prod_unfold numeral_Bit0)
 
       with remSteps have "case Right tickedLeft tickedRight of
@@ -821,15 +817,13 @@ lemma invariant_dequeueLeft:
         by (metis local.invariant_fourTicks)
 
       with ticked invariant_fourTicks have "Small.newSize right = Small.newSize tickedRight"
-        unfolding fourTicks_def 
-        using invariant size_tick_n_4 by blast
+        using invariant tickN_right_newSizeSmall by blast
 
       have leftSizes1: "Suc (Big.newSize newLeft) = Big.newSize left"
-        by (metis \<open>0 < Big.size left\<close> funpow_0 same_c_22p states_inv t)
+        by (metis \<open>0 < Big.size left\<close> funpow_0 tickN_popBig_newSizeBig states_inv t)
 
       with ticked invariant_fourTicks have leftSizes: "Big.newSize newLeft = Big.newSize tickedLeft"
-        unfolding fourTicks_def 
-        using invariant size_tick_n_8 by blast
+        using invariant tickN_right_newSizeBig by blast
 
       have a: "0 < Small.newSize right"
         using sizeWindow_smallNewSize states_window by blast
@@ -934,14 +928,14 @@ lemma invariant_dequeueLeft:
     next
       case False
       then have "remainingSteps ?newTransfomation \<le> 4"
-        by (metis (no_types, lifting) RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps Transformation.invariant.simps Transformation.remainingSteps.simps dual_order.trans not_le_imp_less same_d2p sizeWindow_bigSize t)
+        by (metis (no_types, lifting) RealTimeDeque.invariant.simps(6) Transformation.inSizeWindow.simps Transformation.invariant.simps Transformation.remainingSteps.simps dual_order.trans not_le_imp_less remainingSteps_popBig sizeWindow_bigSize t)
 
       with False have remSteps: "remainingSteps ?tickedTransformation = 0"
-        unfolding fourTicks_def using invariant remainingStepsDecline_5[of ?newTransfomation 4]
+        using invariant remainingStepsDecline_5[of ?newTransfomation 4]
         by auto
 
       obtain tickedLeft tickedRight where ticked: "?tickedTransformation = Right tickedLeft tickedRight"
-        unfolding fourTicks_def using tick_same_right_n[of 4 newLeft right]
+        using tick_same_right_n[of 4 newLeft right]
         by (simp add: case_prod_unfold numeral_Bit0)
 
       with remSteps have "case Right tickedLeft tickedRight of
@@ -958,16 +952,14 @@ lemma invariant_dequeueLeft:
         using \<open>fourTicks (transformation.Right newLeft right) = transformation.Right tickedLeft tickedRight\<close>
         by auto
 
-      with ticked invariant_fourTicks have "Small.newSize right = Small.newSize tickedRight"
-        unfolding fourTicks_def 
-        using invariant size_tick_n_4 by blast
+      with ticked invariant_fourTicks have "Small.newSize right = Small.newSize tickedRight" 
+        using invariant tickN_right_newSizeSmall by blast
 
       have leftSizes1: "Suc (Big.newSize newLeft) = Big.newSize left"
-        by (metis (no_types, lifting) False(2) RealTimeDeque.invariant.simps(6) States.invariant.elims(2) Transformation.inSizeWindow.simps Transformation.invariant.simps case_prodD pop_newSize_big sizeWindow_bigNewSize t)
+        by (metis (no_types, lifting) False(2) RealTimeDeque.invariant.simps(6) States.invariant.elims(2) Transformation.inSizeWindow.simps Transformation.invariant.simps case_prodD Big_Proof.newSize_pop sizeWindow_bigNewSize t)
 
       with ticked invariant_fourTicks have leftSizes: "Big.newSize newLeft = Big.newSize tickedLeft"
-        unfolding fourTicks_def 
-        using invariant size_tick_n_8 by blast
+        using invariant tickN_right_newSizeBig by blast
 
       have a: "0 < Small.newSize right"
         using Transformation.inSizeWindow.simps(2) sizeWindow_smallNewSize start_sizeWindow by blast

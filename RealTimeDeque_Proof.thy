@@ -11,7 +11,7 @@ lemma helper_1_1: "\<lbrakk>\<not> leftLength \<le> 3 * Stack.size right; idle.I
          Stack.toList right @ rev (Stack.toList left)"
   by (metis append_take_drop_id helper_1_2 rev_append)
   
-lemma helper: "\<lbrakk>
+lemma popN_drop: "\<lbrakk>
   \<not> leftLength \<le> 3 * Stack.size right; 
   idle.Idle left leftLength = Idle.push x left'; 
   Idle.invariant left'; 

@@ -18,10 +18,10 @@ fun tick :: "'a transformation \<Rightarrow> 'a transformation" where
   "tick (Left small big) = (case States.tick (big, small) of (big, small) \<Rightarrow> Left small big)"
 | "tick (Right big small) = (case States.tick (big, small) of (big, small) \<Rightarrow> Right big small)"  
 
-definition fourTicks where
+abbreviation fourTicks where
   "fourTicks \<equiv> tick^^4"
 
-definition sixTicks where
+abbreviation sixTicks where
   "sixTicks \<equiv> tick^^6"
 
 fun invariant :: "'a transformation \<Rightarrow> bool" where

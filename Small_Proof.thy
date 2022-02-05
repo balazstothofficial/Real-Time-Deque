@@ -237,4 +237,71 @@ lemma size_isEmpty: "invariant small \<Longrightarrow> size small = 0 \<Longrigh
     apply(auto simp: size_isEmpty Current_Proof.size_isEmpty toList_isEmpty split: current.splits)
   by (simp_all add: min_def toList_isEmpty)
 
+lemma size_push: "invariant small \<Longrightarrow> Suc (size small) = size (push x small)"
+proof(induction x small rule: Small.push.induct)
+  case (1 x state)
+  then show ?case 
+    by(auto simp: size_push)
+next
+  case (2 x current small auxS)
+  then show ?case 
+    by(auto simp: size_put split: current.splits)
+next
+  case (3 x current auxS big newS count)
+  then show ?case 
+    by(auto simp: size_put split: current.splits)
+qed
+
+lemma newSize_push: "invariant small \<Longrightarrow> Suc (newSize small) = newSize (push x small)"
+proof(induction x small rule: Small.push.induct)
+  case (1 x state)
+  then show ?case 
+    by(auto simp: newSize_push)
+next
+  case (2 x current small auxS)
+  then show ?case 
+    by(auto simp: size_put split: current.splits)
+next
+  case (3 x current auxS big newS count)
+  then show ?case 
+    by(auto simp: size_put split: current.splits)
+qed
+
+lemma size_pop: "\<lbrakk>invariant small; 0 < size small; pop small = (x, small')\<rbrakk>
+   \<Longrightarrow> Suc (size small') = size small"
+proof(induction small rule: Small.pop.induct)
+  case (1 state)
+  then show ?case
+    by(auto simp: size_pop split: prod.splits)
+next
+  case (2 current small auxS)
+  then show ?case
+    using size_get[of current] apply(induction current rule: get.induct)
+    by auto
+next
+  case (3 current auxS big newS count)
+  then show ?case 
+    using size_get[of current] apply(induction current rule: get.induct)
+    by auto
+qed
+
+lemma newSize_pop: "\<lbrakk>invariant small; 0 < newSize small; pop small = (x, small')\<rbrakk>
+   \<Longrightarrow> Suc (newSize small') = newSize small"
+proof(induction small rule: Small.pop.induct)
+  case (1 state)
+  then show ?case 
+    by(auto simp: newSize_pop split: prod.splits)
+next
+  case (2 current small auxS)
+  then show ?case 
+  by(induction current rule: get.induct) auto
+next
+  case (3 current auxS big newS count)
+  then show ?case 
+    by(induction current rule: get.induct) auto
+qed
+
+lemma size_newSize: "\<lbrakk>invariant small; 0 < size small\<rbrakk> \<Longrightarrow> 0 < newSize small"
+  by(induction small)(auto simp: size_newSize)
+
 end

@@ -186,6 +186,7 @@ fun invariant :: "'a deque \<Rightarrow> bool" where
    0 < remainingSteps transformation
   "
 
+(* For Test: *)
 fun runningFold :: "('a deque \<Rightarrow> 'a deque) list \<Rightarrow> 'a deque \<Rightarrow> 'a deque list" where
   "runningFold [] _ = []"
 | "runningFold (x#xs) deque = (
@@ -206,17 +207,5 @@ value "runningFold
   ] 
   Empty"
 
-value "runningFold 
-  [
-  enqueueLeft (0::int), 
-  enqueueLeft 1, 
-  enqueueLeft 2,
-  enqueueLeft 3,
-  dequeueRight,
-  enqueueLeft 4,
-  enqueueLeft 5,
-  dequeueRight
-  ] 
-  Empty"
 
 end

@@ -365,4 +365,101 @@ lemma remainingSteps_tick_0: "\<lbrakk>invariant common; remainingSteps common =
   apply(induction common)
   by(auto split: current.splits)
 
+lemma remainingSteps_push: "invariant common \<Longrightarrow> 
+  remainingSteps common = remainingSteps (push x common)"
+proof(induction x common rule: Common.push.induct)
+  case (1 x current stack stackSize)
+  then show ?case by auto
+next
+  case (2 x current aux new moved)
+  then show ?case by(auto split: current.splits)
+qed
+
+lemma remainingSteps_pop: "\<lbrakk>invariant common; 0 < size common; Common.pop common = (x, common')\<rbrakk> 
+  \<Longrightarrow> Common.remainingSteps common' \<le> Common.remainingSteps common"
+proof(induction common rule: Common.pop.induct)
+  case (1 current idle)
+  then show ?case 
+  proof(induction idle rule: Idle.pop.induct)
+    case (1 stack stackSize)
+    then show ?case  
+    proof(induction current rule: get.induct)
+      case (1 added old remained)
+      then show ?case by auto
+    next
+      case (2 x xs added old remained)
+      then show ?case by auto
+    qed
+  qed
+next
+  case (2 current aux new moved)
+  then show ?case 
+  proof(induction current rule: get.induct)
+    case (1 added old remained)
+    then show ?case 
+      by auto
+  next
+    case (2 x xs added old remained)
+    then show ?case by auto
+  qed
+qed
+
+lemma size_push: "invariant common \<Longrightarrow> Suc (size common) = size (push x common)"
+proof(induction x common rule: Common.push.induct)
+  case (1 x current stack stackSize)
+  then show ?case 
+    by(auto simp: min_def size_put Stack_Proof.size_push)
+next
+  case (2 x current aux new moved)
+  then show ?case 
+    by(auto simp: size_put split: current.splits)
+qed
+
+lemma newSize_push: "invariant common \<Longrightarrow> Suc (newSize common) = newSize (push x common)"
+proof(induction x common rule: Common.push.induct)
+  case (1 x current stack stackSize)
+  then show ?case 
+    by(auto simp: min_def size_put newSize_put)
+next
+  case (2 x current aux new moved)
+  then show ?case 
+    by(auto split: current.splits)
+qed
+
+lemma size_pop: "\<lbrakk>invariant common; 0 < size common; pop common = (x, common')\<rbrakk>
+   \<Longrightarrow> Suc (size common') = size common"
+proof(induction common rule: Common.pop.induct)
+  case (1 current idle)
+  then show ?case 
+    using size_get[of current] size_pop[of idle] size_isNotEmpty[of idle]
+    by(auto split: prod.splits)
+next
+  case (2 current aux new moved)
+  then show ?case 
+    using size_get[of current] apply(induction current rule: get.induct)
+    by auto
+qed
+
+lemma newSize_pop: "\<lbrakk>invariant common; 0 < newSize common; pop common = (x, common')\<rbrakk>
+   \<Longrightarrow>  Suc (newSize common') = newSize common"
+proof(induction common rule: Common.pop.induct)
+  case (1 current idle)
+  then show ?case
+    using newSize_get[of current]
+    by(auto split: prod.splits)
+next
+  case (2 current aux new moved)
+  then show ?case 
+  proof(induction current rule: get.induct)
+    case (1 added old remained)
+    then show ?case by auto
+  next
+    case (2 x xs added old remained)
+    then show ?case by auto
+  qed
+qed
+
+lemma size_newSize: "\<lbrakk>invariant common; 0 < size common\<rbrakk> \<Longrightarrow> 0 < newSize common"
+  by(induction common) auto
+
 end

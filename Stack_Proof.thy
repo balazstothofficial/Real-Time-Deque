@@ -50,4 +50,21 @@ lemma first_take_pop: "\<lbrakk>\<not>Stack.isEmpty stack; 0 < x\<rbrakk>
   apply(induction stack rule: pop.induct)
   by(auto simp: take_Cons')
 
+lemma popN_drop: "Stack.toList ((Stack.pop ^^ n) stack) = drop n (Stack.toList stack)" 
+proof(induction n)
+  case 0
+  then show ?case by auto
+next
+  case (Suc n)
+  then show ?case 
+    apply(auto)
+    by (metis drop_Suc isEmpty.elims(2) list.sel(2) pop.simps(1) pop_toList tl_drop toList_isEmpty)
+qed
+
+lemma popN_size: "Stack.size ((Stack.pop ^^ n) stack) = (Stack.size stack) - n"
+  apply(induction n)
+   apply auto
+  by (metis (no_types, hide_lams) One_nat_def Stack.isEmpty.elims(2) Stack.pop.simps(1) Stack.toList.simps Stack_Proof.size_pop append_Nil diff_Suc_eq_diff_pred diff_commute diff_is_0_eq le_Suc_eq list.size(3) Stack_Proof.size_listLength)
+
+
 end

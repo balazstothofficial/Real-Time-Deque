@@ -9,16 +9,6 @@ lemma invariant_listBigFirst: "invariant states \<Longrightarrow> toListBigFirst
   apply(auto split: prod.splits)
   by (metis rev_append rev_rev_ident)
 
-lemma helper: "Stack.toList ((Stack.pop ^^ n) stack) = drop n (Stack.toList stack)" 
-  apply(induction n)
-   apply auto
-  by (metis Stack.isEmpty.elims(2) Stack.pop.simps(1) Stack.toList.simps append_Nil drop_Suc first_pop list.sel(2) list.sel(3) tl_drop)
-
-lemma helper_2: "Stack.size ((Stack.pop ^^ n) stack) = (Stack.size stack) - n"
-  apply(induction n)
-   apply auto
-  by (metis (no_types, hide_lams) One_nat_def Stack.isEmpty.elims(2) Stack.pop.simps(1) Stack.toList.simps Stack_Proof.size_pop append_Nil diff_Suc_eq_diff_pred diff_commute diff_is_0_eq le_Suc_eq list.size(3) Stack_Proof.size_listLength)
-
 lemma tick_toList: "invariant states \<Longrightarrow> toList (tick states) = toList states"
 proof(induction states rule: toList.induct)
   case (1 currentB big auxB count currentS small auxS)
@@ -304,7 +294,7 @@ proof(induction "(big, small)" rule: toList.induct)
   proof(induction currentS rule: get.induct)
     case (1 added old remained)
     then show ?case 
-      apply(auto simp: helper helper_2 reverseN_drop rev_drop)
+      apply(auto simp: popN_drop popN_size reverseN_drop rev_drop)
       by (smt (z3) Small_Proof.invariant_pop_2_helper Stack_Proof.pop_toList Stack_Proof.size_pop Suc_diff_le Suc_pred append_assoc diff_Suc_Suc diff_add_inverse diff_commute diff_diff_cancel diff_is_0_eq' diff_zero drop0 length_rev rev_drop rev_rev_ident rev_take Stack_Proof.size_isNotEmpty Stack_Proof.size_listLength tl_append2 Stack_Proof.toList_isNotEmpty)
   next
     case (2 x xs added old remained)
@@ -718,7 +708,7 @@ next
     by (smt (verit, ccfv_SIG) Suc_le_mono add_Suc_right funpow_simps_right(2) le_zero_eq neq0_conv o_apply zero_less_Suc)
 qed
 
-lemma tick_inSizeWindow_1: "invariant (big, small)
+lemma tick_newSizeSmall: "invariant (big, small)
   \<Longrightarrow> tick (big, small) = (big', small')  
   \<Longrightarrow> Small.newSize small = Small.newSize small'"
 proof(induction "(big, small)" rule: tick.induct)
@@ -738,7 +728,7 @@ next
   then show ?case by(auto simp: tick_newSize)
 qed
 
-lemma tick_inSizeWindow_2: "invariant (big, small)
+lemma tick_newSizeBig: "invariant (big, small)
   \<Longrightarrow> tick (big, small) = (big', small')  
   \<Longrightarrow> Big.newSize big = Big.newSize big'"
 proof(induction "(big, small)" rule: tick.induct)
@@ -758,7 +748,7 @@ next
   then show ?case by(auto simp: tick_newSize split: Big.state.splits)
 qed
 
-lemma tick_inSizeWindow_3: "invariant (big, small)
+lemma tick_sizeSmall: "invariant (big, small)
   \<Longrightarrow> tick (big, small) = (big', small')  
   \<Longrightarrow> Small.size small = Small.size small'"
 proof(induction "(big, small)" rule: tick.induct)
@@ -778,7 +768,7 @@ next
   then show ?case by(auto simp: Common_Proof.tick_size)
 qed
 
-lemma tick_inSizeWindow_4: "invariant (big, small)
+lemma tick_sizeBig: "invariant (big, small)
   \<Longrightarrow> tick (big, small) = (big', small')  
   \<Longrightarrow> Big.size big = Big.size big'"
 proof(induction "(big, small)" rule: tick.induct)
@@ -797,402 +787,98 @@ next
   case ("2_4" v)
   then show ?case by(auto simp: Common_Proof.tick_size split: Big.state.splits)
 qed
-  
 
-
-lemma tick_inSizeWindow': "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small')
+lemma tick_inSizeWindow_1: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small')
   \<Longrightarrow> Big.newSize big + remainingSteps (big, small) + 2 \<le> 3 * Small.newSize small
   \<Longrightarrow> Big.newSize big' + remainingSteps (big', small') + 2 \<le> 3 * Small.newSize small'"
-  using remainingStepsDecline tick_inSizeWindow_1 tick_inSizeWindow_2
+  using remainingStepsDecline tick_newSizeSmall tick_newSizeBig
   by fastforce
 
-lemma tick_inSizeWindow'_2: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small')
+lemma tick_inSizeWindow_2: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small')
   \<Longrightarrow> Small.newSize small + remainingSteps (big, small) + 2 \<le> 3 * Big.newSize big
   \<Longrightarrow> Small.newSize small' + remainingSteps (big', small') + 2 \<le> 3 * Big.newSize big'"
-  using remainingStepsDecline tick_inSizeWindow_1 tick_inSizeWindow_2
+  using remainingStepsDecline tick_newSizeSmall tick_newSizeBig
   by fastforce
 
-
-lemma tick_inSizeWindow'_3: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small')
+lemma tick_inSizeWindow_3: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small')
   \<Longrightarrow> remainingSteps (big, small) + 1 \<le> 4 * Small.size small
   \<Longrightarrow> remainingSteps (big', small') + 1 \<le> 4 * Small.size small'"
-using remainingStepsDecline tick_inSizeWindow_3
+using remainingStepsDecline tick_sizeSmall
   by fastforce
 
-lemma tick_inSizeWindow'_4: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small')
+lemma tick_inSizeWindow_4: "invariant (big, small) \<Longrightarrow> tick (big, small) = (big', small')
   \<Longrightarrow> remainingSteps (big, small) + 1 \<le> 4 * Big.size big
   \<Longrightarrow> remainingSteps (big', small') + 1 \<le> 4 * Big.size big'"
-using remainingStepsDecline tick_inSizeWindow_4
+using remainingStepsDecline tick_sizeBig
   by fastforce
 
 lemma tick_inSizeWindow: "invariant states \<Longrightarrow> inSizeWindow states \<Longrightarrow> inSizeWindow (tick states)"
-  using tick_inSizeWindow' tick_inSizeWindow'_2 tick_inSizeWindow'_3 tick_inSizeWindow'_4
+  using tick_inSizeWindow_1 tick_inSizeWindow_2 tick_inSizeWindow_3 tick_inSizeWindow_4
   by (smt (z3) inSizeWindow'.elims(1) inSizeWindow.elims(1))
 
 lemma remSteps_4: "invariant states \<Longrightarrow> remainingSteps states = steps \<Longrightarrow> steps \<ge> 4 \<Longrightarrow> remainingSteps ((tick ^^ 4) states) = steps - 4"
   by (metis diff_add_inverse2 tick_remainingSteps)
 
-(* Move to Current: *)
-lemma size_put: "Current.invariant current \<Longrightarrow> Suc (Current.size current) = Current.size (put x current)"
-proof(induction x current rule: put.induct)
-  case (1 element extra added old remained)
-  then show ?case by auto
-qed
-
-lemma put_newSize: "Current.invariant current \<Longrightarrow> Suc (Current.newSize current) = Current.newSize (put x current)"
-proof(induction x current rule: put.induct)
-  case (1 element extra added old remained)
-  then show ?case by auto
-qed
-
-lemma size_get: "Current.invariant current \<Longrightarrow> 0 < Current.size current \<Longrightarrow> get current = (x, current') \<Longrightarrow> Suc (Current.size current') = Current.size current"
-proof(induction current rule: get.induct)
-  case (1 added old remained)
-  then show ?case
-    by (auto simp: Stack_Proof.size_pop Stack_Proof.size_isNotEmpty)
-next
-  case (2 x xs added old remained)
-  then show ?case by auto 
-qed
-
-lemma get_newSize: "Current.invariant current \<Longrightarrow> 0 < Current.newSize current \<Longrightarrow> get current = (x, current') \<Longrightarrow> Suc (Current.newSize current') = Current.newSize current"
-proof(induction current rule: get.induct)
-  case (1 added old remained)
-  then show ?case by auto
-next
-  case (2 x xs added old remained)
-  then show ?case by auto 
-qed
-
-(* Move to Common: *)
-lemma push_size_common: "Common.invariant common \<Longrightarrow> Suc (Common.size common) = Common.size (Common.push x common)"
-proof(induction x common rule: Common.push.induct)
-  case (1 x current stack stackSize)
-  then show ?case 
-    apply(auto simp: min_def size_put)
-    by (metis Stack_Proof.size_push States_Proof.size_put Suc_le_mono)+
-next
-  case (2 x current aux new moved)
-  then show ?case 
-    by(auto simp: size_put split: current.splits)
-qed
-
-lemma push_newSize_common: "Common.invariant common \<Longrightarrow> Suc (Common.newSize common) = Common.newSize (Common.push x common)"
-proof(induction x common rule: Common.push.induct)
-  case (1 x current stack stackSize)
-  then show ?case 
-    apply(auto simp: min_def size_put)
-    by (metis Stack_Proof.size_push States_Proof.put_newSize Suc_le_mono)+
-next
-  case (2 x current aux new moved)
-  then show ?case 
-    by(auto split: current.splits)
-qed
-
-lemma pop_size_common: "Common.invariant common \<Longrightarrow> 0 < Common.size common \<Longrightarrow> Common.pop common = (x, common') \<Longrightarrow> Suc (Common.size common') = Common.size common"
-proof(induction common rule: Common.pop.induct)
-  case (1 current idle)
-  then show ?case 
-  proof(induction idle rule: Idle.pop.induct)
-    case (1 stack stackSize)
-    then show ?case 
-    proof(induction current rule: get.induct)
-      case (1 added old remained)
-      then show ?case apply(auto simp: min_def)
-           apply (simp add: Stack_Proof.size_pop Stack_Proof.size_isNotEmpty)
-          apply (metis less_le_trans not_less_eq_eq pop_listLength Stack_Proof.size_isNotEmpty Stack_Proof.size_listLength)
-         apply (metis Stack_Proof.size_isEmpty Suc_le_mono nat_less_le pop_listLength Stack_Proof.size_listLength)
-        by (simp add: Stack_Proof.size_pop Stack_Proof.size_isNotEmpty)
-    next
-      case (2 x xs added old remained)
-      then show ?case 
-        apply(auto simp: min_def)
-          apply (metis Suc_le_lessD less_Suc_eq_le pop_listLength Stack_Proof.size_isNotEmpty Stack_Proof.size_listLength zero_less_Suc)
-         apply (metis Suc_leI le_imp_less_Suc pop_listLength Stack_Proof.size_isNotEmpty Stack_Proof.size_listLength zero_less_Suc)
-        by (metis Stack_Proof.size_isEmpty Zero_not_Suc pop_listLength Stack_Proof.size_listLength)
-    qed
-  qed
-next
-  case (2 current aux new moved)
-  then show ?case 
-  proof(induction current rule: get.induct)
-    case (1 added old remained)
-    then show ?case apply(auto) 
-       apply (metis Stack_Proof.size_isEmpty Suc_pred le_less_Suc_eq min_Suc_Suc not_gr0 not_less0 pop_listLength Stack_Proof.size_listLength)
-      by (metis Stack_Proof.size_isEmpty Stack_Proof.size_pop Suc_pred le_zero_eq min_Suc_Suc nat_less_le not_le_imp_less)
-  next
-    case (2 x xs added old remained)
-    then show ?case by auto 
-  qed
-qed
-
-lemma pop_newSize_common: "Common.invariant common \<Longrightarrow> 0 < Common.newSize common \<Longrightarrow> Common.pop common = (x, common') \<Longrightarrow>  Suc (Common.newSize common') = Common.newSize common"
-proof(induction common rule: Common.pop.induct)
-  case (1 current idle)
-  then show ?case
-  proof(induction idle rule: Idle.pop.induct)
-    case (1 stack stackSize)
-    then show ?case 
-    proof(induction current rule: get.induct)
-      case (1 added old remained)
-      then show ?case by auto
-    next
-      case (2 x xs added old remained)
-      then show ?case by auto
-    qed
-  qed
-next
-  case (2 current aux new moved)
-  then show ?case 
-  proof(induction current rule: get.induct)
-    case (1 added old remained)
-    then show ?case by auto
-  next
-    case (2 x xs added old remained)
-    then show ?case by auto
-  qed
-qed
-
-(* Move to Small: *)
-lemma push_size_small: "Small.invariant small \<Longrightarrow> Suc (Small.size small) = Small.size (Small.push x small)"
-proof(induction x small rule: Small.push.induct)
-  case (1 x state)
-  then show ?case 
-    by(auto simp: push_size_common)
-next
-  case (2 x current small auxS)
-  then show ?case 
-    by(auto simp: size_put split: current.splits)
-next
-  case (3 x current auxS big newS count)
-  then show ?case 
-    by(auto simp: size_put split: current.splits)
-qed
-
-lemma push_newSize_small: "Small.invariant small \<Longrightarrow> Suc (Small.newSize small) = Small.newSize (Small.push x small)"
-proof(induction x small rule: Small.push.induct)
-  case (1 x state)
-  then show ?case 
-    by(auto simp: push_newSize_common)
-next
-  case (2 x current small auxS)
-  then show ?case 
-    by(auto simp: size_put split: current.splits)
-next
-  case (3 x current auxS big newS count)
-  then show ?case 
-    by(auto simp: size_put split: current.splits)
-qed
-
-lemma pop_size_small: "Small.invariant small \<Longrightarrow> 0 < Small.size small \<Longrightarrow> Small.pop small = (x, small') \<Longrightarrow> Suc (Small.size small') = Small.size small"
-proof(induction small rule: Small.pop.induct)
-  case (1 state)
-  then show ?case
-    by(auto simp: pop_size_common split: prod.splits)
-next
-  case (2 current small auxS)
-  then show ?case
-  proof(induction current rule: get.induct)
-    case (1 added old remained)
-    then show ?case apply auto
-      by (metis Stack_Proof.size_pop Suc_pred less_le_trans min_Suc_Suc Stack_Proof.size_isNotEmpty)
-  next
-    case (2 x xs added old remained)
-    then show ?case by auto
-  qed
-next
-  case (3 current auxS big newS count)
-  then show ?case 
-  proof(induction current rule: get.induct)
-    case (1 added old remained)
-    then show ?case 
-      by(auto simp: min_def Stack_Proof.size_pop Stack_Proof.size_isNotEmpty)
-  next
-    case (2 x xs added old remained)
-    then show ?case by auto
-  qed
-qed
-
-lemma pop_newSize_small: "Small.invariant small \<Longrightarrow> 0 < Small.newSize small \<Longrightarrow> Small.pop small = (x, small') \<Longrightarrow> Suc (Small.newSize small') = Small.newSize small"
-proof(induction small rule: Small.pop.induct)
-  case (1 state)
-  then show ?case by(auto simp: pop_newSize_common split: prod.splits)
-next
-  case (2 current small auxS)
-  then show ?case 
-  proof(induction current rule: get.induct)
-    case (1 added old remained)
-    then show ?case by auto
-  next
-    case (2 x xs added old remained)
-    then show ?case by auto 
-  qed
-next
-  case (3 current auxS big newS count)
-  then show ?case 
-  proof(induction current rule: get.induct)
-    case (1 added old remained)
-    then show ?case by auto
-  next
-    case (2 x xs added old remained)
-    then show ?case by auto
-  qed
-qed
-
-(* Move to Big: *)
-lemma push_size_big: "Big.invariant big \<Longrightarrow> Suc (Big.size big) = Big.size (Big.push x big)"
-proof(induction x big rule: Big.push.induct)
-  case (1 x state)
-  then show ?case 
-    by(auto simp: push_size_common)
-next
-  case (2 x current small auxS)
-  then show ?case 
-    by(auto simp: size_put split: current.splits)
-qed
-
-lemma push_newSize_big: "Big.invariant big \<Longrightarrow> Suc (Big.newSize big) = Big.newSize (Big.push x big)"
-proof(induction x big rule: Big.push.induct)
-  case (1 x state)
-  then show ?case 
-    by(auto simp: push_newSize_common)
-next
-  case (2 x current small auxS)
-  then show ?case 
-    by(auto simp: size_put split: current.splits)
-qed
-
-lemma pop_size_big: "Big.invariant big \<Longrightarrow> 0 < Big.size big \<Longrightarrow> Big.pop big = (x, big') \<Longrightarrow> Suc (Big.size big') = Big.size big"
-proof(induction big rule: Big.pop.induct)
-  case (1 state)
-  then show ?case by(auto simp: pop_size_common split: prod.splits)
-next
-  case (2 current big aux count)
-  then show ?case
-  proof(induction current rule: get.induct)
-    case (1 added old remained)
-    then show ?case apply auto
-      by (metis Stack_Proof.size_pop Suc_pred min_Suc_Suc Stack_Proof.size_isNotEmpty)
-  next
-    case (2 x xs added old remained)
-    then show ?case by auto
-  qed
-qed
-
-lemma pop_newSize_big: "Big.invariant big \<Longrightarrow> 0 < Big.newSize big \<Longrightarrow> Big.pop big = (x, big') \<Longrightarrow> Suc (Big.newSize big') = Big.newSize big"
-proof(induction big rule: Big.pop.induct)
-  case (1 state)
-  then show ?case by(auto simp: pop_newSize_common split: prod.splits)
-next
-  case (2 current big aux count)
-  then show ?case
-  proof(induction current rule: get.induct)
-    case (1 added old remained)
-    then show ?case by auto
-  next
-    case (2 x xs added old remained)
-    then show ?case by auto
-  qed
-qed
-
-lemma sizes_common: "\<lbrakk>Common.invariant x; 0 < Common.size x\<rbrakk> \<Longrightarrow> 0 < Common.newSize x"
-  apply(induction x)
-  by auto
-
-lemma sizes_small: "Small.invariant small \<Longrightarrow> 0 < Small.size small \<Longrightarrow> 0 < Small.newSize small"
-  apply(induction small)
-  by(auto simp: sizes_common)
-
-lemma sizes_big: "Big.invariant big \<Longrightarrow> 0 < Big.size big \<Longrightarrow> 0 < Big.newSize big"
-  apply(induction big)
-  by(auto simp: sizes_common)
-
-
-lemma same_a1: "invariant (big, small) 
+lemma tick_pushSmall_newSizeSmall: "invariant (big, small) 
           \<Longrightarrow> tick (big, Small.push x small) = (big', small')
           \<Longrightarrow> Small.newSize small' = Suc (Small.newSize small)"
-  using invariant_push_small tick_inSizeWindow_1
-  by (metis (no_types, lifting) States.invariant.elims(2) case_prod_conv push_newSize_small)
+  using 
+    invariant_push_small[of big small x]
+    tick_newSizeSmall[of big "Small.push x small" big' small']
+    newSize_push[of small x]
+  by simp
 
-lemma same_a1p: "invariant (big, small)
-          \<Longrightarrow> 0 < Small.size small 
-          \<Longrightarrow> Small.pop small = (x, smallP)
-          \<Longrightarrow> tick (big, smallP) = (big', small')
-          \<Longrightarrow> Suc (Small.newSize small') = Small.newSize small"
-  using invariant_pop_small_size[of big small x smallP] tick_inSizeWindow_1 pop_newSize_small
-  by (metis (no_types, lifting) States.invariant.elims(2) case_prodD sizes_small)
-
-lemma same_a: "invariant (big, small) 
+lemma tick_pushSmall_sizeSmall: "invariant (big, small) 
           \<Longrightarrow> tick (big, Small.push x small) = (big', small')
           \<Longrightarrow> Small.size small' = Suc (Small.size small)"
-  using invariant_push_small tick_inSizeWindow_3
-  by (metis (no_types, lifting) States.invariant.elims(2) case_prod_conv push_size_small)
+  using 
+    invariant_push_small[of big small x]
+    tick_sizeSmall[of big "Small.push x small" big' small']
+    size_push[of small x]
+  by simp
 
-lemma same_ap: "invariant (big, small)
-          \<Longrightarrow> 0 < Small.size small 
-          \<Longrightarrow> Small.pop small = (x, smallP) 
-          \<Longrightarrow> tick (big, smallP) = (big', small')
-          \<Longrightarrow> Small.size small = Suc (Small.size small')"
-  using invariant_pop_small_size[of big small x smallP] tick_inSizeWindow_3 pop_size_small
-  by (metis (no_types, lifting) States.invariant.elims(2) case_prodD)
-
-lemma same_a1_1: "invariant (big, small) 
+lemma tick_pushBig_newSizeBig: "invariant (big, small) 
           \<Longrightarrow> tick (Big.push x big, small) = (big', small')
           \<Longrightarrow> Big.newSize big' = Suc (Big.newSize big)"
-  using invariant_push_big tick_inSizeWindow_2
-  by (metis (no_types, lifting) States.invariant.elims(2) case_prod_conv push_newSize_big)
+  using 
+    invariant_push_big[of big small x] 
+    tick_newSizeBig[of "Big.push x big" small big' small']
+    Big_Proof.newSize_push[of big x]
+  by auto
 
-lemma same_a_1p: "invariant (big, small) 
+lemma tick_popBig_sizeBig: "invariant (big, small) 
           \<Longrightarrow> 0 < Big.size big 
           \<Longrightarrow> Big.pop big = (x, bigP) 
           \<Longrightarrow> tick (bigP, small) = (big', small')
           \<Longrightarrow> Big.size big = Suc (Big.size big')"
-  using invariant_pop_big_size tick_inSizeWindow_4
-  by (metis (no_types, lifting) States.invariant.elims(2) case_prod_conv pop_size_big)
+  using 
+    invariant_pop_big_size[of big small x bigP] 
+    tick_sizeBig[of bigP small big' small']  
+    Big_Proof.size_pop[of big]
+  by auto
 
-lemma same_a1_1p: "invariant (big, small) 
+lemma tick_popBig_newSizeBig: "invariant (big, small) 
           \<Longrightarrow> 0 < Big.size big 
           \<Longrightarrow> Big.pop big = (x, bigP) 
           \<Longrightarrow> tick (bigP, small) = (big', small')
           \<Longrightarrow> Big.newSize big = Suc (Big.newSize big')"
-  using invariant_pop_big_size tick_inSizeWindow_2
-  by (metis (no_types, lifting) States.invariant.elims(2) case_prod_conv pop_newSize_big sizes_big)
+  using 
+    invariant_pop_big_size[of big small x bigP] 
+    Big_Proof.size_newSize[of big]
+    tick_newSizeBig[of bigP small big' small']  
+    Big_Proof.newSize_pop[of big]
+  by auto
 
-lemma same_a_1: "invariant (big, small) 
+lemma tick_pushBig_sizeBig: "invariant (big, small) 
           \<Longrightarrow> tick (Big.push x big, small) = (big', small')
           \<Longrightarrow> Big.size big' = Suc (Big.size big)"
-  using invariant_push_big tick_inSizeWindow_4
-  by (metis (no_types, lifting) States.invariant.elims(2) case_prod_conv push_size_big)
+  using 
+    invariant_push_big[of big small x]
+    Big_Proof.size_push[of big]
+    tick_sizeBig[of "Big.push x big" small big' small']
+  by auto
 
-lemma same_a_1_p: "invariant (big, small)
-          \<Longrightarrow> 0 < Big.size big 
-          \<Longrightarrow> Big.pop big = (x, bigP)  
-          \<Longrightarrow> tick (bigP, small) = (big', small')
-          \<Longrightarrow> Big.size big = Suc (Big.size big')"
-  using invariant_pop_big_size tick_inSizeWindow_4
-  by (metis (no_types, lifting) States.invariant.elims(2) case_prod_conv pop_size_big)
-
-lemma same_b_1: "invariant (big, small) 
-          \<Longrightarrow> tick (big, small) = (big', small')
-          \<Longrightarrow> Small.size small' = Small.size small"
-  using  tick_inSizeWindow_3 by fastforce
-
-lemma same_b_2: "invariant (big, small) 
-          \<Longrightarrow> tick (big, small) = (big', small')
-          \<Longrightarrow> Small.newSize small' = Small.newSize small"
-  using  tick_inSizeWindow_1 by fastforce
-
-lemma same_b_1_1: "invariant (big, small) 
-          \<Longrightarrow> tick (big, small) = (big', small')
-          \<Longrightarrow> Big.size big' = Big.size big"
-  using tick_inSizeWindow_4 by fastforce
-
-lemma same_b_2_1: "invariant (big, small) 
-          \<Longrightarrow> tick (big, small) = (big', small')
-          \<Longrightarrow> Big.newSize big' = Big.newSize big"
-  using  tick_inSizeWindow_2 by fastforce
-
-lemma same_b: "invariant (big, small) 
+lemma tickN_sizeSmall: "invariant (big, small) 
           \<Longrightarrow> (tick ^^ n) (big, small) = (big', small')
           \<Longrightarrow> Small.size small' =  Small.size small"
 proof(induction n arbitrary: big small big' small')
@@ -1207,7 +893,7 @@ next
   then obtain big1 small1 where tick: "tick (big, small) = (big1, small1)"
     by auto
 
-  with same_b_1 invariant1 have "Small.size small = Small.size small1"
+  with tick_sizeSmall invariant1 have "Small.size small = Small.size small1"
     by (metis Suc.prems(1))
 
 
@@ -1225,7 +911,7 @@ next
     using \<open>Small.size small = Small.size small1\<close> by presburger
 qed
 
-lemma same_b1: "invariant (big, small) 
+lemma tickN_sizeBig: "invariant (big, small) 
           \<Longrightarrow> (tick ^^ n) (big, small) = (big', small')
           \<Longrightarrow> Big.size big' = Big.size big"
 proof(induction n arbitrary: big small big' small')
@@ -1241,7 +927,7 @@ next
     by auto
 
   with invariant1 have "Big.size big = Big.size big1"
-    by (metis Suc.prems(1) same_b_1_1)
+    by (metis Suc.prems(1) tick_sizeBig)
 
 
   then have nTicks: "(tick ^^ n) (big1, small1) = (big', small')"
@@ -1258,7 +944,7 @@ next
     using \<open>Big.size big = Big.size big1\<close> by presburger
 qed
 
-lemma same_bb: "invariant (big, small) 
+lemma tickN_newSizeSmall: "invariant (big, small) 
           \<Longrightarrow> (tick ^^ n) (big, small) = (big', small')
           \<Longrightarrow> Small.newSize small' =  Small.newSize small"
 proof(induction n arbitrary: big small big' small')
@@ -1273,7 +959,7 @@ next
   then obtain big1 small1 where tick: "tick (big, small) = (big1, small1)"
     by auto
 
-  with same_b_2 invariant1 have "Small.newSize small = Small.newSize small1"
+  with tick_newSizeSmall invariant1 have "Small.newSize small = Small.newSize small1"
     by (metis Suc.prems(1))
 
 
@@ -1291,7 +977,7 @@ next
     using \<open>Small.newSize small = Small.newSize small1\<close> by presburger
 qed
 
-lemma same_bb1: "invariant (big, small) 
+lemma tickN_newSizeBig: "invariant (big, small) 
           \<Longrightarrow> (tick ^^ n) (big, small) = (big', small')
           \<Longrightarrow> Big.newSize big' =  Big.newSize big"
 proof(induction n arbitrary: big small big' small')
@@ -1306,7 +992,7 @@ next
   then obtain big1 small1 where tick: "tick (big, small) = (big1, small1)"
     by auto
 
-  with same_b_2_1 invariant1 have "Big.newSize big = Big.newSize big1"
+  with tick_newSizeBig invariant1 have "Big.newSize big = Big.newSize big1"
     by (metis Suc.prems(1))
 
 
@@ -1324,100 +1010,61 @@ next
     using \<open>Big.newSize big = Big.newSize big1\<close> by presburger
 qed
 
-lemma same_c: "invariant (big, small) 
+lemma tickN_pushSmall_sizeSmall: "invariant (big, small) 
           \<Longrightarrow> (tick ^^ n) (big, Small.push x small) = (big', small')
           \<Longrightarrow> Small.size small' = Suc (Small.size small)"
-  by (metis invariant_push_small old.prod.exhaust same_a same_b same_b_1)
+  by (metis invariant_push_small old.prod.exhaust tick_pushSmall_sizeSmall tickN_sizeSmall tick_sizeSmall)
 
-lemma same_c_2: "invariant (big, small) 
+lemma tickN_pushSmall_newSizeSmall: "invariant (big, small) 
           \<Longrightarrow> (tick ^^ n) (big, Small.push x small) = (big', small')
           \<Longrightarrow> Small.newSize small' = Suc (Small.newSize small)"
-  by (metis invariant_push_small old.prod.exhaust same_a1 same_bb same_b_2)
+  by (metis invariant_push_small old.prod.exhaust tick_pushSmall_newSizeSmall tickN_newSizeSmall tick_newSizeSmall)
 
-lemma same_c1: "invariant (big, small) 
+lemma tickN_pushBig_sizeBig: "invariant (big, small) 
           \<Longrightarrow> (tick ^^ n) (Big.push x big, small) = (big', small')
           \<Longrightarrow> Big.size big' = Suc (Big.size big)"
-  by (metis invariant_push_big old.prod.exhaust same_a_1 same_b1 same_b_1_1)
+  by (metis invariant_push_big old.prod.exhaust tick_pushBig_sizeBig tickN_sizeBig tick_sizeBig)
 
-lemma same_c_22: "invariant (big, small) 
+lemma tickN_pushBig_newSizeBig: "invariant (big, small) 
           \<Longrightarrow> (tick ^^ n) (Big.push x big, small) = (big', small')
           \<Longrightarrow> Big.newSize big' = Suc (Big.newSize big)"
-  by (metis invariant_push_big old.prod.exhaust same_a1_1 same_bb1 tick_inSizeWindow_2)
+  by (metis invariant_push_big old.prod.exhaust tick_pushBig_newSizeBig tickN_newSizeBig tick_newSizeBig)
 
-lemma same_cp: "invariant (big, small) 
+lemma tickN_popSmall_sizeSmall: "invariant (big, small) 
           \<Longrightarrow> 0 < Small.size small 
           \<Longrightarrow> Small.pop small = (x, smallP) 
           \<Longrightarrow> (tick ^^ n) (big, smallP) = (big', small')
           \<Longrightarrow> Small.size small = Suc (Small.size small')"
-  using invariant_pop_small_size pop_size_small same_b by fastforce
+  using invariant_pop_small_size size_pop tickN_sizeSmall by fastforce
 
-lemma same_c_2p: "invariant (big, small) 
+lemma tickN_popSmall_newSizeSmall: "invariant (big, small) 
           \<Longrightarrow> 0 < Small.size small 
           \<Longrightarrow> Small.pop small = (x, smallP) 
           \<Longrightarrow> (tick ^^ n) (big, smallP) = (big', small')
           \<Longrightarrow> Small.newSize small = Suc (Small.newSize small')"
-  using invariant_pop_small_size pop_newSize_small same_bb sizes_small by fastforce
+  using invariant_pop_small_size newSize_pop tickN_newSizeSmall size_newSize by fastforce
 
-lemma same_c1p: "invariant (big, small) 
+lemma tickN_popBig_sizeBig: "invariant (big, small) 
           \<Longrightarrow> 0 < Big.size big 
           \<Longrightarrow> Big.pop big = (x, bigP) 
           \<Longrightarrow> (tick ^^ n) (bigP, small) = (big', small')
           \<Longrightarrow> Big.size big = Suc (Big.size big')"
-  using invariant_pop_big_size pop_size_big same_b1 by fastforce
+  using invariant_pop_big_size Big_Proof.size_pop tickN_sizeBig by fastforce
 
-lemma same_c_22p: "invariant (big, small) 
+lemma tickN_popBig_newSizeBig: "invariant (big, small) 
           \<Longrightarrow> 0 < Big.size big 
           \<Longrightarrow> Big.pop big = (x, bigP) 
           \<Longrightarrow> (tick ^^ n) (bigP, small) = (big', small')
           \<Longrightarrow> Big.newSize big = Suc (Big.newSize big')"
-  by (metis (no_types, hide_lams) States.remainingSteps.cases invariant_pop_big_size same_a1_1p same_b_2_1 same_bb1)
- 
+  by (metis (no_types, hide_lams) States.remainingSteps.cases invariant_pop_big_size tick_popBig_newSizeBig tick_newSizeBig tickN_newSizeBig)
 
-(* Move to common *)
-lemma remainingSteps_push_common: "Common.invariant state \<Longrightarrow> Common.remainingSteps state = Common.remainingSteps (Common.push x state)"
-proof(induction x state rule: Common.push.induct)
-  case (1 x current stack stackSize)
-  then show ?case by auto
-next
-  case (2 x current aux new moved)
-  then show ?case by(auto split: current.splits)
-qed
-
-lemma remainingSteps_pop_common: "Common.invariant state \<Longrightarrow> 0 < Common.size state \<Longrightarrow> Common.pop state = (x, state') \<Longrightarrow> Common.remainingSteps state \<ge> Common.remainingSteps state'"
-proof(induction state rule: Common.pop.induct)
-  case (1 current idle)
-  then show ?case 
-  proof(induction idle rule: Idle.pop.induct)
-    case (1 stack stackSize)
-    then show ?case  
-    proof(induction current rule: get.induct)
-      case (1 added old remained)
-      then show ?case by auto
-    next
-      case (2 x xs added old remained)
-      then show ?case by auto
-    qed
-  qed
-next
-  case (2 current aux new moved)
-  then show ?case 
-  proof(induction current rule: get.induct)
-    case (1 added old remained)
-    then show ?case 
-      by auto
-  next
-    case (2 x xs added old remained)
-    then show ?case by auto
-  qed
-qed
-
-lemma same_d: "invariant (big, small)
+lemma remainingSteps_pushSmall: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) = remainingSteps (big, Small.push x small)"
 proof(induction x small rule: Small.push.induct)
   case (1 x state)
   then show ?case 
-    apply(auto simp: max_def remainingSteps_push_common)
-    by (metis remainingSteps_push_common)+
+    apply(auto simp: max_def Common_Proof.remainingSteps_push)
+    by (metis Common_Proof.remainingSteps_push)+
 next
   case (2 x current small auxS)
   then show ?case 
@@ -1434,15 +1081,15 @@ next
   qed
 qed    
 
-lemma same_dp: "
+lemma remainingSteps_popSmall: "
           invariant (big, small)
-      \<Longrightarrow> 0 < Small.size small 
-          \<Longrightarrow> Small.pop small = (x, smallP) 
-       \<Longrightarrow> remainingSteps (big, small) \<ge> remainingSteps (big, smallP)"
+     \<Longrightarrow> 0 < Small.size small 
+     \<Longrightarrow> Small.pop small = (x, smallP) 
+     \<Longrightarrow> remainingSteps (big, small) \<ge> remainingSteps (big, smallP)"
 proof(induction small rule: Small.pop.induct)
   case (1 state)
-  then show ?case apply(auto simp: max_def remainingSteps_pop_common split: prod.splits)
-    using remainingSteps_pop_common by fastforce 
+  then show ?case apply(auto simp: max_def Common_Proof.remainingSteps_pop split: prod.splits)
+    using Common_Proof.remainingSteps_pop by fastforce 
 next
   case (2 current small auxS)
   then show ?case
@@ -1466,39 +1113,10 @@ next
   qed
 qed
 
-lemma remainingSteps_push_big: "Big.invariant big \<Longrightarrow> Big.remainingSteps big = Big.remainingSteps (Big.push x big)"
-proof(induction x big rule: Big.push.induct)
-  case (1 x state)
-  then show ?case by(auto simp: remainingSteps_push_common)
-next
-  case (2 x current big aux count)
-  then show ?case
-  proof(induction current rule: put.induct)
-    case (1 element extra added old remained)
-    then show ?case by auto
-  qed
-qed
-
-lemma remainingSteps_pop_big: "Big.invariant big \<Longrightarrow> 0 < Big.size big \<Longrightarrow> Big.pop big = (x, big') \<Longrightarrow>  Big.remainingSteps big \<ge> Big.remainingSteps big'"
-proof(induction big rule: Big.pop.induct)
-  case (1 state)
-  then show ?case by(auto simp: remainingSteps_pop_common split: prod.splits)
-next
-  case (2 current big aux count)
-  then show ?case 
-  proof(induction current rule: get.induct)
-    case (1 added old remained)
-    then show ?case by auto
-  next
-    case (2 x xs added old remained)
-    then show ?case by auto
-  qed
-qed
-
-lemma same_d2p: "
+lemma remainingSteps_popBig: "
       invariant (big, small)
        \<Longrightarrow> 0 < Big.size big 
-          \<Longrightarrow> Big.pop big = (x, bigP) 
+       \<Longrightarrow> Big.pop big = (x, bigP) 
        \<Longrightarrow> remainingSteps (big, small) \<ge> remainingSteps (bigP, small)"
 proof(induction big rule: Big.pop.induct)
   case (1 state)
@@ -1540,97 +1158,89 @@ next
   qed
 qed
 
-lemma same_d2: "invariant (big, small)
+lemma remainingSteps_pushBig: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) = remainingSteps (Big.push x big, small)"
 proof(induction x big rule: Big.push.induct)
   case (1 x state)
   then show ?case 
-    apply(auto simp: max_def remainingSteps_push_common split: Small.state.splits)
-    using remainingSteps_push_common by fastforce+
+    apply(auto simp: max_def Common_Proof.remainingSteps_push split: Small.state.splits)
+    using Common_Proof.remainingSteps_push by fastforce+
 next
   case (2 x current big aux count)
   then show ?case
   proof(induction current rule: put.induct)
     case (1 element extra added old remained)
     then show ?case 
-      apply(auto simp: remainingSteps_push_big split: Small.state.splits)
+      apply(auto split: Small.state.splits)
       by (metis Big.state.simps(5))
   qed
 qed
 
 
-lemma same_ep: "invariant (big, small)
+lemma tick4_remainingSteps_popSmall: "invariant (big, small)
       \<Longrightarrow> 0 < Small.size small 
       \<Longrightarrow> Small.pop small = (x, smallP) 
        \<Longrightarrow> remainingSteps (big, smallP) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (big, smallP)) = (big', small')
        \<Longrightarrow> remainingSteps (big', small') \<le> remainingSteps (big, small) - 4"
-  by (metis diff_le_mono invariant_pop_small_size remSteps_4 same_dp)
+  by (metis diff_le_mono invariant_pop_small_size remSteps_4 remainingSteps_popSmall)
 
-lemma same_e2: "invariant (big, small)
+lemma tick4_remainingSteps_pushBig: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (Big.push x big, small)) = (big', small')
        \<Longrightarrow> remainingSteps (big', small') = remainingSteps (big, small) - 4"
-  by (metis invariant_push_big remSteps_4 same_d2)
+  by (metis invariant_push_big remSteps_4 remainingSteps_pushBig)
 
-lemma same_e: "invariant (big, small)
+lemma tick4_remainingSteps_pushSmall: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (big, Small.push x small)) = (big', small')
        \<Longrightarrow> remainingSteps (big', small') = remainingSteps (big, small) - 4"
-  by (metis invariant_push_small remSteps_4 same_d)
+  by (metis invariant_push_small remSteps_4 remainingSteps_pushSmall)
 
-lemma same_e2p: "invariant (big, small)
+lemma tick4_remainingSteps_popBig: "invariant (big, small)
        \<Longrightarrow> 0 < Big.size big 
        \<Longrightarrow> Big.pop big = (x, bigP) 
        \<Longrightarrow> remainingSteps (bigP, small) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (bigP, small)) = (big', small')
        \<Longrightarrow> remainingSteps (big', small') \<le> remainingSteps (big, small) - 4"
-  by (metis add_le_imp_le_diff invariant_pop_big_size same_d2p tick_remainingSteps)
+  by (metis add_le_imp_le_diff invariant_pop_big_size remainingSteps_popBig tick_remainingSteps)
 
-lemma same_fp': "
+lemma tick4_popSmall_sizeWindow1': "
             0 < Small.size small 
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> remainingSteps (big, small) + 1 \<le> 4 * Small.size small
        \<Longrightarrow> (remainingSteps (big, small) - 4) + 1 \<le> 4 * (Small.size small - 1)"
   by linarith
 
-lemma same_fp: "invariant (big, small)
+lemma tick4_popSmall_sizeWindow1: "invariant (big, small)
        \<Longrightarrow> 0 < Small.size small 
        \<Longrightarrow> Small.pop small = (x, smallP)
        \<Longrightarrow> remainingSteps (big, smallP) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (big, smallP)) = (big', small')
        \<Longrightarrow> remainingSteps (big, small) + 1 \<le> 4 * Small.size small
        \<Longrightarrow> remainingSteps (big', small') + 1 \<le> 4 * Small.size small'"
-  using same_fp' remSteps_4 same_cp same_dp
-  by (smt (verit, ccfv_SIG) Suc_diff_1 Suc_inject add_le_cancel_right order_trans same_ep)
+  using tick4_popSmall_sizeWindow1' remSteps_4 tickN_popSmall_sizeSmall remainingSteps_popSmall
+  by (smt (verit, ccfv_SIG) Suc_diff_1 Suc_inject add_le_cancel_right order_trans tick4_remainingSteps_popSmall)
 
-lemma same_f2p: "invariant (big, small)
+lemma tick4_popBig_sizeWindow1: "invariant (big, small)
        \<Longrightarrow> 0 < Big.size big 
        \<Longrightarrow> Big.pop big = (x, bigP) 
        \<Longrightarrow> remainingSteps (bigP, small) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (bigP, small)) = (big', small')
        \<Longrightarrow> remainingSteps (big, small) + 1 \<le> 4 * Small.size small
        \<Longrightarrow> remainingSteps (big', small') + 1 \<le> 4 * Small.size small'"
-  by (metis (no_types, lifting) add_leD1 add_mono_thms_linordered_semiring(3) invariant_pop_big_size order.trans same_b same_d2p tick_remainingSteps)
+  by (metis (no_types, lifting) add_leD1 add_mono_thms_linordered_semiring(3) invariant_pop_big_size order.trans tickN_sizeSmall remainingSteps_popBig tick_remainingSteps)
 
-lemma same_f3p: "invariant (big, small)
+lemma tick4_popSmall_sizeWindow2: "invariant (big, small)
        \<Longrightarrow> 0 < Small.size small 
        \<Longrightarrow> Small.pop small = (x, smallP)
        \<Longrightarrow> remainingSteps (big, smallP) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (big, smallP)) = (big', small')
        \<Longrightarrow> remainingSteps (big, small) + 1 \<le> 4 * Big.size big
        \<Longrightarrow> remainingSteps (big', small') + 1 \<le> 4 * Big.size big'"
-  by (smt (z3) add.commute add_leE invariant_pop_small_size le_add_diff_inverse2 nat_add_left_cancel_le remSteps_4 same_b1 same_dp)
+  by (smt (z3) add.commute add_leE invariant_pop_small_size le_add_diff_inverse2 nat_add_left_cancel_le remSteps_4 tickN_sizeBig remainingSteps_popSmall)
 
-
-lemma same_f4p': "
-           0 < Big.size big 
-       \<Longrightarrow> remainingSteps (big, small) \<ge> 4
-       \<Longrightarrow> remainingSteps (big, small) + 1 \<le> 4 * Big.size big
-       \<Longrightarrow> (remainingSteps (big, small) -  4) + 1 \<le> 4 * (Big.size big - 1)"
-  by linarith
-
-lemma same_f4p: 
+lemma tick4_popBig_sizeWindow2: 
   assumes
     "invariant (big, small)"
     "0 < Big.size big"
@@ -1642,31 +1252,30 @@ lemma same_f4p:
     "remainingSteps (big', small') + 1 \<le> 4 * Big.size big'"
 proof -
   from assms have "remainingSteps (bigP, small) + 1 \<le> 4 * Big.size big"
-    by (meson add_le_cancel_right order.trans same_d2p)
+    by (meson add_le_cancel_right order.trans remainingSteps_popBig)
 
   with assms show ?thesis
-    by (smt (z3) Suc_diff_le Suc_eq_plus1 add_mult_distrib2 diff_diff_add diff_is_0_eq invariant_pop_big_size mult_numeral_1_right numerals(1) plus_1_eq_Suc remSteps_4 same_c1p)
+    by (smt (z3) Suc_diff_le Suc_eq_plus1 add_mult_distrib2 diff_diff_add diff_is_0_eq invariant_pop_big_size mult_numeral_1_right numerals(1) plus_1_eq_Suc remSteps_4 tickN_popBig_sizeBig)
 qed
 
-lemma same_f5p: "invariant (big, small)
+lemma tick4_popSmall_sizeWindow3: "invariant (big, small)
        \<Longrightarrow> 0 < Small.size small 
        \<Longrightarrow> Small.pop small = (x, smallP)
        \<Longrightarrow> remainingSteps (big, smallP) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (big, smallP)) = (big', small')
        \<Longrightarrow>  Small.newSize small + remainingSteps (big, small) + 2 \<le> 3 * Big.newSize big
        \<Longrightarrow>  Small.newSize small' + remainingSteps (big', small') + 2 \<le> 3 * Big.newSize big'"
-  by (smt (verit, best) add_le_mono diff_Suc_1 diff_le_self dual_order.eq_iff invariant_pop_small_size nat_less_le order.trans remSteps_4 same_bb1 same_c_2p same_dp)
+  by (smt (verit, best) add_le_mono diff_Suc_1 diff_le_self dual_order.eq_iff invariant_pop_small_size nat_less_le order.trans remSteps_4 tickN_newSizeBig tickN_popSmall_newSizeSmall remainingSteps_popSmall)
 
-
-lemma same_f6p': "
+lemma tick4_popBig_sizeWindow3': "
             0 < Big.size big 
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow>  Small.newSize small + remainingSteps (big, small) + 2 \<le> 3 * Big.newSize big
        \<Longrightarrow> Small.newSize small + (remainingSteps (big, small) - 4) + 2 \<le> 3 * (Big.newSize big - 1)"
-  using invariant_pop_big_size same_bb1 same_bb same_c_22p same_e2p remSteps_4 same_d2p
+  using invariant_pop_big_size tickN_newSizeBig tickN_newSizeSmall tickN_popBig_newSizeBig tick4_remainingSteps_popBig remSteps_4 remainingSteps_popBig
   by linarith
 
-lemma same_f6p: 
+lemma tick4_popBig_sizeWindow3: 
     assumes
       "invariant (big, small)"
       "0 < Big.size big" 
@@ -1678,23 +1287,23 @@ lemma same_f6p:
       "Small.newSize small' + remainingSteps (big', small') + 2 \<le> 3 * Big.newSize big'"
 proof-
   from assms have "Small.newSize small + (remainingSteps (big, small) - 4) + 2 \<le> 3 * (Big.newSize big - 1)"
-    by (meson dual_order.trans same_d2p same_f6p')
+    by (meson dual_order.trans remainingSteps_popBig tick4_popBig_sizeWindow3')
 
   then have  "Small.newSize small + remainingSteps (big', small') + 2 \<le> 3 * (Big.newSize big - 1)"
-    by (smt (verit, ccfv_SIG) add_le_mono assms(1) assms(2) assms(3) assms(4) assms(5) dual_order.trans le_antisym less_or_eq_imp_le nat_less_le same_e2p)
+    by (smt (verit, ccfv_SIG) add_le_mono assms(1) assms(2) assms(3) assms(4) assms(5) dual_order.trans le_antisym less_or_eq_imp_le nat_less_le tick4_remainingSteps_popBig)
 
   with assms show ?thesis 
-    by (metis diff_Suc_1 invariant_pop_big_size same_bb same_c_22p)
+    by (metis diff_Suc_1 invariant_pop_big_size tickN_newSizeSmall tickN_popBig_newSizeBig)
 qed
 
-lemma same_f7p': "
+lemma tick4_popSmall_sizeWindow4': "
             0 < Small.size small 
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> Big.newSize big + remainingSteps (big, small) + 2 \<le> 3 * Small.newSize small
        \<Longrightarrow> Big.newSize big + (remainingSteps (big, small) - 4) + 2 \<le> 3 * (Small.newSize small - 1)"
   by linarith
 
-lemma same_f7p:
+lemma tick4_popSmall_sizeWindow4:
     assumes
       "invariant (big, small)"
       "0 < Small.size small"
@@ -1705,24 +1314,24 @@ lemma same_f7p:
     shows
        "Big.newSize big' + remainingSteps (big', small') + 2 \<le> 3 * Small.newSize small'"
 proof-
-  from assms same_f7p' have  "Big.newSize big + (remainingSteps (big, small) - 4) + 2 \<le> 3 * (Small.newSize small - 1)"
-    by (smt (verit, best) add_leE le_add_diff_inverse same_dp)
+  from assms tick4_popSmall_sizeWindow4' have  "Big.newSize big + (remainingSteps (big, small) - 4) + 2 \<le> 3 * (Small.newSize small - 1)"
+    by (smt (verit, best) add_leE le_add_diff_inverse remainingSteps_popSmall)
 
   with assms have "Big.newSize big + remainingSteps (big', small') + 2 \<le> 3 * (Small.newSize small - 1)"
-    by (meson add_le_mono le_refl order_trans same_ep)
+    by (meson add_le_mono le_refl order_trans tick4_remainingSteps_popSmall)
 
   with assms show ?thesis 
-    by (metis diff_Suc_1 invariant_pop_small_size same_bb1 same_c_2p)
+    by (metis diff_Suc_1 invariant_pop_small_size tickN_newSizeBig tickN_popSmall_newSizeSmall)
 qed
 
-lemma same_f8p': "
+lemma tick4_popBig_sizeWindow4': "
            0 < Big.size big 
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow>  Big.newSize big + remainingSteps (big, small) + 2 \<le> 3 * Small.newSize small
        \<Longrightarrow>  (Big.newSize big - 1) + (remainingSteps (big, small) - 4) + 2 \<le> 3 * Small.newSize small"
   by linarith
 
-lemma same_f8p: 
+lemma tick4_popBig_sizeWindow4: 
   assumes
     "invariant (big, small)"
     "0 < Big.size big "
@@ -1733,128 +1342,128 @@ lemma same_f8p:
   shows
     "Big.newSize big' + remainingSteps (big', small') + 2 \<le> 3 * Small.newSize small'"
 proof -
-  from assms same_f8p' 
+  from assms tick4_popBig_sizeWindow4' 
   have "(Big.newSize big - 1) + (remainingSteps (big, small) - 4) + 2 \<le> 3 * Small.newSize small"
     by linarith
 
   with assms have  "(Big.newSize big - 1) + remainingSteps (big', small') + 2 \<le> 3 * Small.newSize small"
-    by (meson add_le_mono dual_order.eq_iff order_trans same_e2p)
+    by (meson add_le_mono dual_order.eq_iff order_trans tick4_remainingSteps_popBig)
 
   with assms show ?thesis 
-    by (metis diff_Suc_1 invariant_pop_big_size same_bb same_c_22p)
+    by (metis diff_Suc_1 invariant_pop_big_size tickN_newSizeSmall tickN_popBig_newSizeBig)
 qed
 
-lemma same_f: "invariant (big, small)
+lemma tick4_pushSmall_sizeWindow1: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (big, Small.push x small)) = (big', small')
        \<Longrightarrow> remainingSteps (big, small) + 1 \<le> 4 * Small.size small
        \<Longrightarrow> remainingSteps (big', small') + 1 \<le> 4 * Small.size small'"
-  by (smt (z3) add.commute add_leD1 add_le_mono le_add1 le_add_diff_inverse2 mult_Suc_right nat_1_add_1 numeral_Bit0 same_c same_e)
+  by (smt (z3) add.commute add_leD1 add_le_mono le_add1 le_add_diff_inverse2 mult_Suc_right nat_1_add_1 numeral_Bit0 tickN_pushSmall_sizeSmall tick4_remainingSteps_pushSmall)
 
-lemma same_f2: "invariant (big, small)
+lemma tick4_pushBig_sizeWindow1: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (Big.push x big, small)) = (big', small')
        \<Longrightarrow> remainingSteps (big, small) + 1 \<le> 4 * Small.size small
        \<Longrightarrow> remainingSteps (big', small') + 1 \<le> 4 * Small.size small'"
-  by (metis (full_types) Suc_diff_le add.commute invariant_push_big less_Suc_eq_le less_imp_diff_less plus_1_eq_Suc same_b same_e2)
+  by (metis (full_types) Suc_diff_le add.commute invariant_push_big less_Suc_eq_le less_imp_diff_less plus_1_eq_Suc tickN_sizeSmall tick4_remainingSteps_pushBig)
 
-lemma same_f3: "invariant (big, small)
+lemma tick4_pushSmall_sizeWindow2: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (big, Small.push x small)) = (big', small')
        \<Longrightarrow> remainingSteps (big, small) + 1 \<le> 4 * Big.size big
        \<Longrightarrow> remainingSteps (big', small') + 1 \<le> 4 * Big.size big'"
-  by (metis (full_types) Suc_diff_le add.commute invariant_push_small less_Suc_eq_le less_imp_diff_less plus_1_eq_Suc same_b1 same_e)
+  by (metis (full_types) Suc_diff_le add.commute invariant_push_small less_Suc_eq_le less_imp_diff_less plus_1_eq_Suc tickN_sizeBig tick4_remainingSteps_pushSmall)
 
-lemma same_f4: "invariant (big, small)
+lemma tick4_pushBig_sizeWindow2: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (Big.push x big, small)) = (big', small')
        \<Longrightarrow> remainingSteps (big, small) + 1 \<le> 4 * Big.size big
        \<Longrightarrow> remainingSteps (big', small') + 1 \<le> 4 * Big.size big'"
-  by (smt (z3) Suc_diff_le Suc_eq_plus1 less_Suc_eq_le less_imp_diff_less mult.commute mult_Suc same_c1 same_e2 trans_le_add2)
+  by (smt (z3) Suc_diff_le Suc_eq_plus1 less_Suc_eq_le less_imp_diff_less mult.commute mult_Suc tickN_pushBig_sizeBig tick4_remainingSteps_pushBig trans_le_add2)
 
-lemma same_f5': "
+lemma tick4_pushSmall_sizeWindow3': "
             remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> Small.newSize small + remainingSteps (big, small) + 2 \<le> 3 * Big.newSize big
        \<Longrightarrow> (Suc (Small.newSize small)) + (remainingSteps (big, small) - 4) + 2 \<le> 3 * Big.newSize big"
   using distrib_left dual_order.trans le_add_diff_inverse2 by force
 
-lemma same_f5: "invariant (big, small)
+lemma tick4_pushSmall_sizeWindow3: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (big, Small.push x small)) = (big', small')
        \<Longrightarrow>  Small.newSize small + remainingSteps (big, small) + 2 \<le> 3 * Big.newSize big
        \<Longrightarrow>  Small.newSize small' + remainingSteps (big', small') + 2 \<le> 3 * Big.newSize big'"
-  using same_bb1 same_c_2 same_e
-  by (metis invariant_push_small same_f5')
+  using tickN_newSizeBig tickN_pushSmall_newSizeSmall tick4_remainingSteps_pushSmall
+  by (metis invariant_push_small tick4_pushSmall_sizeWindow3')
 
-lemma same_f6': "
+lemma tick4_pushBig_sizeWindow3': "
             remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> Small.newSize small + remainingSteps (big, small) + 2 \<le> 3 * Big.newSize big
        \<Longrightarrow> Small.newSize small + (remainingSteps (big, small) - 4) + 2 \<le> 3 * (Suc (Big.newSize big))"
   using distrib_left dual_order.trans le_add_diff_inverse2 by force
 
-lemma same_f6: "invariant (big, small)
+lemma tick4_pushBig_sizeWindow3: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (Big.push x big, small)) = (big', small')
        \<Longrightarrow>  Small.newSize small + remainingSteps (big, small) + 2 \<le> 3 * Big.newSize big
        \<Longrightarrow>  Small.newSize small' + remainingSteps (big', small') + 2 \<le> 3 * Big.newSize big'"
-  by (metis invariant_push_big same_bb same_c_22 same_e2 same_f6')
+  by (metis invariant_push_big tickN_newSizeSmall tickN_pushBig_newSizeBig tick4_remainingSteps_pushBig tick4_pushBig_sizeWindow3')
 
-lemma same_f7': "
+lemma tick4_pushSmall_sizeWindow4': "
             remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> Big.newSize big + remainingSteps (big, small) + 2 \<le> 3 * Small.newSize small
        \<Longrightarrow> Big.newSize big + (remainingSteps (big, small) - 4) + 2 \<le> 3 * (Suc (Small.newSize small))"
   using distrib_left dual_order.trans le_add_diff_inverse2 by force
 
-lemma same_f7: "invariant (big, small)
+lemma tick4_pushSmall_sizeWindow4: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (big, Small.push x small)) = (big', small')
        \<Longrightarrow>  Big.newSize big + remainingSteps (big, small) + 2 \<le> 3 * Small.newSize small
        \<Longrightarrow>  Big.newSize big' + remainingSteps (big', small') + 2 \<le> 3 * Small.newSize small'"
-  by (metis invariant_push_small same_bb1 same_c_2 same_e same_f7')
+  by (metis invariant_push_small tickN_newSizeBig tickN_pushSmall_newSizeSmall tick4_remainingSteps_pushSmall tick4_pushSmall_sizeWindow4')
 
-lemma same_f8': "
+lemma tick4_pushBig_sizeWindow4': "
             remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> Big.newSize big + remainingSteps (big, small) + 2 \<le> 3 * Small.newSize small
        \<Longrightarrow> (Suc (Big.newSize big)) + (remainingSteps (big, small) - 4) + 2 \<le> 3 * Small.newSize small"
   using distrib_left dual_order.trans le_add_diff_inverse2 by force
 
-lemma same_f8: "invariant (big, small)
+lemma tick4_pushBig_sizeWindow4: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> ((tick ^^ 4) (Big.push x big, small)) = (big', small')
        \<Longrightarrow>  Big.newSize big + remainingSteps (big, small) + 2 \<le> 3 * Small.newSize small
        \<Longrightarrow>  Big.newSize big' + remainingSteps (big', small') + 2 \<le> 3 * Small.newSize small'"
-  by (metis invariant_push_big same_bb same_c_22 same_e2 same_f8')
+  by (metis invariant_push_big tickN_newSizeSmall tickN_pushBig_newSizeBig tick4_remainingSteps_pushBig tick4_pushBig_sizeWindow4')
 
-lemma same: "invariant (big, small)
+lemma tick4_pushSmall_sizeWindow: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> inSizeWindow (big, small)
        \<Longrightarrow> inSizeWindow ((tick ^^ 4) (big, Small.push x small))"
-  using same_f same_f3 same_f5 same_f7 
+  using tick4_pushSmall_sizeWindow1 tick4_pushSmall_sizeWindow2 tick4_pushSmall_sizeWindow3 tick4_pushSmall_sizeWindow4 
   by (smt (verit) inSizeWindow'.elims(3) inSizeWindow'.simps inSizeWindow.elims(2) inSizeWindow.elims(3))
 
-lemma same2: "invariant (big, small)
+lemma tick4_pushBig_sizeWindow: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) \<ge> 4
        \<Longrightarrow> inSizeWindow (big, small)
        \<Longrightarrow> inSizeWindow ((tick ^^ 4) (Big.push x big, small))"
-  using same_f2 same_f4 same_f6 same_f8
+  using tick4_pushBig_sizeWindow1 tick4_pushBig_sizeWindow2 tick4_pushBig_sizeWindow3 tick4_pushBig_sizeWindow4
   by (smt (verit) inSizeWindow'.elims(3) inSizeWindow'.simps inSizeWindow.elims(2) inSizeWindow.elims(3))
 
-lemma same3: "invariant (big, small)
+lemma tick4_popSmall_sizeWindow: "invariant (big, small)
        \<Longrightarrow> 0 < Small.size small 
        \<Longrightarrow> Small.pop small = (x, smallP)
        \<Longrightarrow> remainingSteps (big, smallP) \<ge> 4
        \<Longrightarrow> inSizeWindow (big, small)
        \<Longrightarrow> inSizeWindow ((tick ^^ 4) (big, smallP))"
-  using same_fp same_f3p same_f5p same_f7p 
+  using tick4_popSmall_sizeWindow1 tick4_popSmall_sizeWindow2 tick4_popSmall_sizeWindow3 tick4_popSmall_sizeWindow4 
   by (smt (verit) inSizeWindow'.elims(3) inSizeWindow'.simps inSizeWindow.elims(2) inSizeWindow.elims(3))
 
-lemma same4: "invariant (big, small)
+lemma tick4_popBig_sizeWindow: "invariant (big, small)
        \<Longrightarrow> 0 < Big.size big 
        \<Longrightarrow> Big.pop big = (x, bigP) 
        \<Longrightarrow> remainingSteps (bigP, small) \<ge> 4
        \<Longrightarrow> inSizeWindow (big, small)
        \<Longrightarrow> inSizeWindow ((tick ^^ 4) (bigP, small))"
-  using same_f2p same_f4p same_f6p same_f8p
+  using tick4_popBig_sizeWindow1 tick4_popBig_sizeWindow2 tick4_popBig_sizeWindow3 tick4_popBig_sizeWindow4
   by (smt (verit) inSizeWindow'.elims(3) inSizeWindow'.simps inSizeWindow.elims(2) inSizeWindow.elims(3))
 
 lemma sizeWindow_smallSize: "inSizeWindow (big, small) \<Longrightarrow> 0 < Small.size small"
@@ -1873,4 +1482,34 @@ lemma sizeWindow_bigNewSize: "inSizeWindow (big, small) \<Longrightarrow> 0 < Bi
   apply(induction big arbitrary: small)
   by auto
 
+lemma remainingSteps_tickN: "invariant states \<Longrightarrow>  n < remainingSteps states 
+    \<Longrightarrow>  remainingSteps states - n = remainingSteps ((tick ^^ n) states)"
+  by (metis diff_add_inverse2 less_or_eq_imp_le tick_remainingSteps)
+
+lemma tick_inSizeWindow': "invariant states \<Longrightarrow>
+    inSizeWindow' states x \<Longrightarrow> 
+    inSizeWindow' (tick states) x"
+proof(induction states x rule: inSizeWindow'.induct)
+  case (1 big small steps)
+  then show ?case 
+    using tick_newSizeBig[of big small] tick_newSizeSmall[of big small] tick_sizeBig[of big small] tick_sizeSmall[of big small]
+    apply(auto split: )
+  proof -
+    assume a1: "\<And>big' small'. States.tick (big, small) = (big', small') \<Longrightarrow> Big.newSize big = Big.newSize big'"
+    assume a2: "\<And>big' small'. States.tick (big, small) = (big', small') \<Longrightarrow> Small.newSize small = Small.newSize small'"
+    assume a3: "\<And>big' small'. States.tick (big, small) = (big', small') \<Longrightarrow> Big.size big = Big.size big'"
+    assume a4: "\<And>big' small'. States.tick (big, small) = (big', small') \<Longrightarrow> Small.size small = Small.size small'"
+    assume a5: "Suc (Suc (Small.newSize small + steps)) \<le> 3 * Big.newSize big"
+    assume a6: "Suc (Suc (Big.newSize big + steps)) \<le> 3 * Small.newSize small"
+    assume a7: "Suc steps \<le> 4 * Small.size small"
+    assume a8: "Suc steps \<le> 4 * Big.size big"
+  
+      have "\<forall>p n. (\<exists>s sa. (\<not> n + 1 \<le> 4 * Big.size (s::'a Big.state) \<or> \<not> n + 1 \<le> 4 * Small.size sa \<or> \<not> Big.newSize s + n + 2 \<le> 3 * Small.newSize sa \<or> \<not> Small.newSize sa + n + 2 \<le> 3 * Big.newSize s) \<and> (s, sa) = p) \<or> inSizeWindow' p n"
+        by simp
+      then show ?thesis
+        using a8 a7 a6 a5 a4 a3 a2 a1 by (smt (z3) Suc_1 Suc_eq_plus1 add_Suc_shift)
+    qed
+qed
+
+  
 end

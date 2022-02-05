@@ -25,36 +25,6 @@ next
 qed
 
 (* TODO: *)
-lemma helper: "\<not>Current.isEmpty current \<Longrightarrow> invariant (Reverse current big aux count) \<Longrightarrow> 
-    top current = hd (Big.toList (Reverse current big aux count))"
-proof(induction current rule: get.induct)
-  case (1 added old remained)
-  then show ?case 
-    apply(auto simp: reverseN_take rev_take)
-    by (smt (verit, ccfv_threshold) Nat.diff_diff_right add.commute diff_is_0_eq diff_le_self drop_all_iff first_toList hd_append2 hd_take le_add_diff length_rev minus_nat.diff_0 nat_le_linear self_append_conv2 take_eq_Nil)
-next
-  case (2 x xs added old remained)
-  then show ?case by auto
-qed
-
-lemma helper_2: "\<not>Current.isEmpty current \<Longrightarrow> invariant (Reverse current big aux count) \<Longrightarrow> 
-    Big.toList (Reverse (bottom current) big aux count) = tl (Big.toList (Reverse current big aux count))"
-proof(induction current rule: get.induct)
-  case (1 added old remained)
-  then have "
-         drop (Suc (length (Stack.toList big) + length aux) - (length (Stack.toList big) - count + remained)) (rev aux) =
-         tl (drop (length (Stack.toList big) + length aux - (length (Stack.toList big) - count + remained)) (rev aux))"
-    apply(auto simp: reverseN_drop)
-    by (simp add: Suc_diff_le drop_Suc Stack_Proof.size_listLength tl_drop)
-
-  with 1  show ?case 
-    apply(auto simp: reverseN_take rev_take)
-    by (smt (verit, del_insts) Nat.diff_diff_right Suc_diff_le diff_add_inverse diff_is_0_eq' drop_Suc drop_all_iff le_add_diff le_add_diff_inverse2 length_rev nat_le_linear not_less_eq_eq self_append_conv2 Stack_Proof.size_listLength tl_append2 tl_drop)
-next
-  case (2 x xs added old remained)
-  then show ?case by auto
-qed
-
 lemma helper_size: "0 < Big.size (Reverse current big aux count) \<Longrightarrow> invariant (Reverse current big aux count) \<Longrightarrow> 
     top current = hd (Big.toList (Reverse current big aux count))"
 proof(induction current rule: get.induct)
@@ -263,5 +233,87 @@ lemma remainingSteps_tick_0: "\<lbrakk>invariant big; remainingSteps big = 0\<rb
   \<Longrightarrow> remainingSteps (tick big) = 0"
   apply(induction big)
   by(auto simp: remainingSteps_tick_0 split: current.splits)
+
+lemma remainingSteps_push: "invariant big \<Longrightarrow> remainingSteps big = remainingSteps (push x big)"
+proof(induction x big rule: push.induct)
+  case (1 x state)
+  then show ?case 
+    by(auto simp: remainingSteps_push)
+next
+  case (2 x current big aux count)
+  then show ?case
+  proof(induction current rule: put.induct)
+    case (1 element extra added old remained)
+    then show ?case 
+      by auto
+  qed
+qed
+
+lemma remainingSteps_pop_big: "\<lbrakk>invariant big; 0 < size big; pop big = (x, big')\<rbrakk>
+   \<Longrightarrow> remainingSteps big' \<le> remainingSteps big"
+proof(induction big rule: Big.pop.induct)
+  case (1 state)
+  then show ?case 
+    by(auto simp: remainingSteps_pop split: prod.splits)
+next
+  case (2 current big aux count)
+  then show ?case 
+  proof(induction current rule: get.induct)
+    case (1 added old remained)
+    then show ?case by auto
+  next
+    case (2 x xs added old remained)
+    then show ?case by auto
+  qed
+qed
+
+lemma size_push: "invariant big \<Longrightarrow> Suc (size big) = size (Big.push x big)"
+proof(induction x big rule: Big.push.induct)
+  case (1 x state)
+  then show ?case 
+    by(auto simp: size_push)
+next
+  case (2 x current small auxS)
+  then show ?case 
+    by(auto simp: size_put split: current.splits)
+qed
+
+lemma newSize_push: "invariant big \<Longrightarrow> Suc (newSize big) = newSize (push x big)"
+proof(induction x big rule: Big.push.induct)
+  case (1 x state)
+  then show ?case 
+    by(auto simp: newSize_push)
+next
+  case (2 x current small auxS)
+  then show ?case 
+    by(auto simp: size_put split: current.splits)
+qed
+
+lemma size_pop: "\<lbrakk>invariant big; 0 < size big; pop big = (x, big')\<rbrakk>
+   \<Longrightarrow> Suc (size big') = size big"
+proof(induction big rule: Big.pop.induct)
+  case (1 state)
+  then show ?case by(auto simp: size_pop split: prod.splits)
+next
+  case (2 current big aux count)
+  then show ?case
+    using size_get[of current] apply(induction current rule: get.induct)
+    by auto
+qed
+
+lemma newSize_pop: "\<lbrakk>invariant big; 0 < newSize big; pop big = (x, big')\<rbrakk>
+    \<Longrightarrow> Suc (newSize big') = newSize big"
+proof(induction big rule: Big.pop.induct)
+  case (1 state)
+  then show ?case 
+    by(auto simp: newSize_pop split: prod.splits)
+next
+  case (2 current big aux count)
+  then show ?case
+    by(induction current rule: get.induct) auto
+qed
+
+lemma size_newSize: "\<lbrakk>invariant big; 0 < size big\<rbrakk> \<Longrightarrow> 0 < newSize big"
+  by(induction big)(auto simp: size_newSize)
 
 end
