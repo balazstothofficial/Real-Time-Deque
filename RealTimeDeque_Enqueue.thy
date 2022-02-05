@@ -2,7 +2,7 @@ theory RealTimeDeque_Enqueue
   imports Deque RealTimeDeque Transformation_Proof
 begin
 
-lemma helper_1_4: "\<lbrakk>\<not> leftLength \<le> 3 * Stack.size right; idle.Idle left leftLength = Idle.push x left'; Idle.invariant left'; rightLength = Stack.size right;
+lemma helper: "\<lbrakk>\<not> leftLength \<le> 3 * Stack.size right; idle.Idle left leftLength = Idle.push x left'; Idle.invariant left'; rightLength = Stack.size right;
      \<not> Idle.isEmpty left'; \<not> Stack.isEmpty right; \<not> Stack.isEmpty left\<rbrakk>
     \<Longrightarrow> Stack.size right - (Suc (2 * Stack.size right) - Stack.size ((Stack.pop ^^ (leftLength - Suc (Stack.size right))) left)) = 0"
 proof -
@@ -20,7 +20,7 @@ proof -
     ultimately have "leftLength \<le> rightLength + 1 \<longrightarrow> rightLength - (rightLength + (rightLength + 1) - List.length (drop (leftLength - (rightLength + 1)) (Stack.toList left))) = 0"
       using diff_zero by fastforce }
   ultimately show ?thesis
-    using a2 popN_size
+    using a2
     by (metis (no_types, lifting) Nat.add_diff_assoc One_nat_def popN_drop add_Suc_right add_diff_cancel_left' diff_cancel2 diff_diff_cancel linear mult_2 plus_1_eq_Suc Stack_Proof.size_listLength)
 qed
 
@@ -67,7 +67,7 @@ lemma list_enqueueLeft: "invariant deque \<Longrightarrow> listLeft (enqueueLeft
           apply(auto simp: reverseN_take popN_drop leftNotEmpty)
           apply (metis Idle.invariant.simps Idle_Proof.invariant_push diff_le_self)
           apply (simp add: Stack_Proof.size_listLength)+
-          apply (smt (verit) popN_drop append_take_drop_id diff_is_0_eq helper_1_4 leftNotEmpty length_rev rev_append rev_rev_ident Stack_Proof.size_listLength take_all_iff)
+          apply (smt (verit) popN_drop append_take_drop_id diff_is_0_eq helper leftNotEmpty length_rev rev_append rev_rev_ident Stack_Proof.size_listLength take_all_iff)
           by (metis Idle.invariant.simps Idle_Proof.invariant_push add_Suc_right diff_add_inverse)
        
         then have "toListLeft ?transformation = x # Idle.toList left' @ rev (Stack.toList right)"
@@ -131,16 +131,13 @@ lemma list_enqueueLeft: "invariant deque \<Longrightarrow> listLeft (enqueueLeft
       by (metis rev_append rev_rev_ident)+
   qed
 
-lemma test_2: "List.length (Stack.toList stack) = Stack.size stack"
-  apply(induction stack)
-  by auto
 
-lemma helper_1_3: "\<lbrakk>\<not> leftLength \<le> 3 * Stack.size right; idle.Idle left leftLength = Idle.push x left'; Idle.invariant left'; rightLength = Stack.size right;
+lemma helper2: "\<lbrakk>\<not> leftLength \<le> 3 * Stack.size right; idle.Idle left leftLength = Idle.push x left'; Idle.invariant left'; rightLength = Stack.size right;
      \<not> Idle.isEmpty left'; \<not> Stack.isEmpty right; \<not> Stack.isEmpty left\<rbrakk>
     \<Longrightarrow> Suc (List.length (Stack.toList right) + Stack.size right) - leftLength = 0"
-  by(auto simp: test_2)
+  by(auto simp: size_listLength)
 
-lemma helper_1_2: "\<lbrakk>\<not> leftLength \<le> 3 * Stack.size right; idle.Idle left leftLength = Idle.push x left'; Idle.invariant left'; rightLength = Stack.size right;
+lemma helper3: "\<lbrakk>\<not> leftLength \<le> 3 * Stack.size right; idle.Idle left leftLength = Idle.push x left'; Idle.invariant left'; rightLength = Stack.size right;
      \<not> Idle.isEmpty left'; \<not> Stack.isEmpty right; \<not> Stack.isEmpty left\<rbrakk>
     \<Longrightarrow> rev (
             take 
@@ -150,58 +147,9 @@ lemma helper_1_2: "\<lbrakk>\<not> leftLength \<le> 3 * Stack.size right; idle.I
                     )
                ) =
          Stack.toList right"
-  by(auto simp: rev_take helper_1_3 test_2 helper_1_4)
+  by(auto simp: rev_take helper2 size_listLength[symmetric] helper)
 
-lemma anja: "0 < Stack.size left \<Longrightarrow> \<not>Stack.isEmpty left"
-  apply(induction left rule: Stack.isEmpty.induct)
-  by auto
-
-lemma anja_2: "0 < Idle.size idle \<Longrightarrow> \<not>Idle.isEmpty idle"
-  apply(induction idle rule: Idle.isEmpty.induct)
-  by(auto simp: anja)
-
-lemma anja_3: "\<not>Stack.isEmpty left \<Longrightarrow> 0 < Stack.size left"
-  apply(induction left rule: Stack.isEmpty.induct)
-  by auto
-
-lemma anja_4: "\<not>Idle.isEmpty idle \<Longrightarrow> 0 < Idle.size idle "
-  apply(induction idle rule: Idle.isEmpty.induct)
-  by(auto simp: anja_3)
-
-lemma maybe3: "\<lbrakk>
-          \<not> l \<le> 3 * r; 
-          Suc l' = l;
-          0 < l;
-          0 < l';
-          0 < r;
-          l' \<le> 3 * r;
-          l + l - Suc (Suc (r + r)) \<le> Suc (l + r)
-       \<rbrakk> \<Longrightarrow> Suc (l + r - 4) \<le> 4 * r"
-  by auto
-
-lemma maybe4: "\<lbrakk>
-    \<not> l \<le> 3 * r; 
-    0 < l;
-    0 < l'; 
-    0 < r; 
-    l' \<le> 3 * r;
-    l + l - Suc (Suc (r + r)) \<le> Suc (l + r);
-    Suc l' = l
-\<rbrakk> \<Longrightarrow> 0 < r"
-  by auto
-
-lemma maybe5: " \<lbrakk>
-   \<not> l \<le> 3 * r; 
-   0 < l;
-   0 < l'; 
-   0 < r; 
-   l' \<le> 3 * r;
-   l + l - Suc (Suc (r + r)) \<le> Suc (l + r);
-   Suc l' = l
-\<rbrakk> \<Longrightarrow> Suc 0 < l - Suc r"
-  by auto
-
-lemma helper_1: "\<lbrakk>
+lemma helper4: "\<lbrakk>
   \<not> leftLength \<le> 3 * Stack.size right; 
   idle.Idle left leftLength = Idle.push x left'; 
   Idle.invariant left'; rightLength = Stack.size right;
@@ -213,9 +161,20 @@ lemma helper_1: "\<lbrakk>
           (rev (Stack.toList ((Stack.pop ^^ (leftLength - Suc (Stack.size right))) left))) @
          rev (take (leftLength - Suc (Stack.size right)) (Stack.toList left)) =
          Stack.toList right @ rev (Stack.toList left)"
-  by (metis (no_types, lifting) popN_drop append_Nil2 append_assoc append_take_drop_id helper_1_2 rev_append reverseN_take)
+  by (metis (no_types, lifting) popN_drop append_Nil2 append_assoc append_take_drop_id helper3 rev_append reverseN_take)
 
-lemma fixed_5: "States.inSizeWindow ((States.tick ^^ n) (big, small)) \<Longrightarrow> inSizeWindow ((tick ^^ n) (Left small big))"
+lemma calculation_helper: "\<lbrakk>
+          \<not> l \<le> 3 * r; 
+          Suc l' = l;
+          0 < l;
+          0 < l';
+          0 < r;
+          l' \<le> 3 * r;
+          l + l - Suc (Suc (r + r)) \<le> Suc (l + r)
+       \<rbrakk> \<Longrightarrow> Suc (l + r - 4) \<le> 4 * r"
+  by auto
+
+lemma inSizeWindowStates_inSizeWindowLeft: "States.inSizeWindow ((States.tick ^^ n) (big, small)) \<Longrightarrow> inSizeWindow ((tick ^^ n) (Left small big))"
 proof(induction n arbitrary: big small)
   case 0
   then show ?case by auto
@@ -225,7 +184,7 @@ next
     by (simp add: case_prod_unfold funpow_swap1)
 qed
 
-lemma fixed_6: "States.inSizeWindow ((States.tick ^^ n) (big, small)) \<Longrightarrow> inSizeWindow ((tick ^^ n) (Right big small))"
+lemma inSizeWindowStates_inSizeWindowRight: "States.inSizeWindow ((States.tick ^^ n) (big, small)) \<Longrightarrow> inSizeWindow ((tick ^^ n) (Right big small))"
 proof(induction n arbitrary: big small)
   case 0
   then show ?case by auto
@@ -261,8 +220,7 @@ next
     by (metis (no_types, lifting) Transformation.tick.simps(2) comp_def funpow_Suc_right prod.case_eq_if) 
 qed
 
-
-lemma remSteps_idle_5: "Transformation.invariant transformation \<Longrightarrow> remainingSteps transformation > 0 \<longleftrightarrow> (
+lemma remainingSteps_notIdle: "Transformation.invariant transformation \<Longrightarrow> remainingSteps transformation > 0 \<longleftrightarrow> (
     case transformation of 
       Left (Small.Common (Common.Idle _ _)) (Big.Common (Common.Idle _ _))  \<Rightarrow> False 
     | Right (Big.Common (Common.Idle _ _)) (Small.Common (Common.Idle _ _))  \<Rightarrow> False 
@@ -270,21 +228,17 @@ lemma remSteps_idle_5: "Transformation.invariant transformation \<Longrightarrow
   apply(induction transformation)
   by(auto split: Big.state.splits Small.state.splits Common.state.splits current.splits)
 
-lemma remSteps_idle_6: "Transformation.invariant (Left small big) \<Longrightarrow> remainingSteps (Left small big) = 0 \<longleftrightarrow> (
+lemma remainingSteps_left_idle: "Transformation.invariant (Left small big) \<Longrightarrow> remainingSteps (Left small big) = 0 \<longleftrightarrow> (
     case (Left small big) of 
       Left (Small.Common (Common.Idle _ _)) (Big.Common (Common.Idle _ _))  \<Rightarrow> True 
     | _ \<Rightarrow> False) "
   by(auto split: Big.state.splits Small.state.splits Common.state.splits current.splits)
 
-lemma remSteps_idle_6': "Transformation.invariant (Right big small) \<Longrightarrow> remainingSteps (Right big small) = 0 \<longleftrightarrow> (
+lemma remainingSteps_right_idle: "Transformation.invariant (Right big small) \<Longrightarrow> remainingSteps (Right big small) = 0 \<longleftrightarrow> (
     case (Right big small) of 
       Right (Big.Common (Common.Idle _ _)) (Small.Common (Common.Idle _ _))  \<Rightarrow> True 
     | _ \<Rightarrow> False) "
   by(auto split: Big.state.splits Small.state.splits Common.state.splits current.splits)
-
-lemma geficke2:  "States.inSizeWindow ((States.tick ^^ n) (right, Small.push x left)) \<Longrightarrow>
-     Transformation.inSizeWindow ((tick ^^ n) (transformation.Left (Small.push x left) right))"
-  by (simp add: fixed_5)
 
 lemma invariant_enqueueLeft: "invariant deque \<Longrightarrow> invariant (enqueueLeft x deque)"
 proof(induction x deque rule: enqueueLeft.induct)
@@ -348,7 +302,7 @@ next
         apply(auto simp: Stack_Proof.size_listLength popN_drop leftNotEmpty)
            apply (metis Idle.invariant.simps Idle_Proof.invariant_push diff_le_self Stack_Proof.size_listLength)
           apply (simp add: reverseN_take)
-        apply (smt (verit, best) popN_drop Suc_leI diff_add_inverse diff_add_inverse2 diff_diff_left helper_1 le_eq_less_or_eq leftNotEmpty length_drop mult_Suc numeral_3_eq_3 plus_1_eq_Suc reverseN_reverseN Stack_Proof.size_listLength suc)
+        apply (smt (verit, best) popN_drop Suc_leI diff_add_inverse diff_add_inverse2 diff_diff_left helper4 le_eq_less_or_eq leftNotEmpty length_drop mult_Suc numeral_3_eq_3 plus_1_eq_Suc reverseN_reverseN Stack_Proof.size_listLength suc)
         by (metis Idle.invariant.simps Idle_Proof.invariant_push add_Suc_right diff_add_inverse Stack_Proof.size_listLength)
 
       with remSteps have "5 < Transformation.remainingSteps (tick ?transformation)"
@@ -382,7 +336,11 @@ next
         leftLength = Stack.size left; 
         Suc (Idle.size left') = Stack.size left
      \<rbrakk> \<Longrightarrow> Suc (Stack.size left + Stack.size right - 4) \<le> 4 * Stack.size right"
-        using anja_3[of left] anja_3[of right] anja_4[of left'] maybe3 by auto
+        using Stack_Proof.size_isNotEmpty[of left] 
+              Stack_Proof.size_isNotEmpty[of right] 
+              size_isNotEmpty[of left'] 
+              calculation_helper
+        by auto
 
       from False leftNotEmpty have inSizeWindow: "inSizeWindow' ?transformation (remainingSteps ?transformation - 6)"
         apply(auto simp: test max_def suc)
@@ -447,12 +405,12 @@ next
       by (metis One_nat_def add_Suc_shift funpow_0 invariant numeral_2_eq_2 numeral_Bit0 plus_1_eq_Suc remainingStepsDecline_4)
 
     from True have sizeWindow: "inSizeWindow ?tickedTransformation"
-      using tick4_pushSmall_sizeWindow[of right left x] states_inv states_rem states_window geficke2 by auto
+      using tick4_pushSmall_sizeWindow[of right left x] states_inv states_rem states_window inSizeWindowStates_inSizeWindowLeft by auto
 
     have "case ?tickedTransformation of
       Left (Small.state.Common (state.Idle _ _)) (Big.state.Common (state.Idle _ _)) \<Rightarrow> False
     | _ \<Rightarrow> True"
-      using tick_same_left[of ?newLeft right] remSteps_idle_5[of ?tickedTransformation]
+      using tick_same_left[of ?newLeft right] remainingSteps_notIdle[of ?tickedTransformation]
       apply(auto split: prod.splits transformation.splits Small.state.splits Big.state.splits Common.state.splits)
       using remSteps by auto
 
@@ -488,7 +446,7 @@ next
 
     with remSteps have "case Left tickedLeft tickedRight of
       Left (Small.state.Common (state.Idle _ _)) (Big.state.Common (state.Idle _ _)) \<Rightarrow> True
-    | _ \<Rightarrow> False" using remSteps_idle_6[of ] tick_same_left
+    | _ \<Rightarrow> False" using remainingSteps_left_idle[of ] tick_same_left
       using local.invariant_fourTicks by auto
 
     then obtain l idleLeft r idleRight where idle: "Left tickedLeft tickedRight = 
@@ -604,13 +562,13 @@ next
       by (metis One_nat_def add_Suc_shift funpow_0 invariant numeral_2_eq_2 numeral_Bit0 plus_1_eq_Suc remainingStepsDecline_4)
 
     from True have sizeWindow: "inSizeWindow ?tickedTransformation"
-      using tick4_pushBig_sizeWindow[of left right x] states_inv states_rem states_window geficke2
-      using fixed_6 by blast
+      using tick4_pushBig_sizeWindow[of left right x] states_inv states_rem states_window inSizeWindowStates_inSizeWindowLeft
+      using inSizeWindowStates_inSizeWindowRight by blast
 
     have "case ?tickedTransformation of
       Right (Big.state.Common (state.Idle _ _)) (Small.state.Common (state.Idle _ _)) \<Rightarrow> False
     | _ \<Rightarrow> True"
-      using tick_same_right[of ?newLeft right] remSteps_idle_5[of ?tickedTransformation]
+      using tick_same_right[of ?newLeft right] remainingSteps_notIdle[of ?tickedTransformation]
       apply(auto split: prod.splits transformation.splits Small.state.splits Big.state.splits Common.state.splits)
       using remSteps by auto
 
@@ -646,7 +604,7 @@ next
 
     with remSteps have "case Right tickedLeft tickedRight of
       Right (Big.state.Common (state.Idle _ _)) (Small.state.Common (state.Idle _ _)) \<Rightarrow> True
-    | _ \<Rightarrow> False" using remSteps_idle_6' tick_same_right
+    | _ \<Rightarrow> False" using remainingSteps_right_idle tick_same_right
       using local.invariant_fourTicks by auto
 
     then obtain l idleLeft r idleRight where idle: "Right tickedLeft tickedRight = 

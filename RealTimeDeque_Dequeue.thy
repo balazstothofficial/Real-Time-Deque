@@ -2,7 +2,7 @@ theory RealTimeDeque_Dequeue
   imports Deque RealTimeDeque Transformation_Proof
 begin
 
-lemma maybe: "\<lbrakk>Idle.pop left = (x, idle.Idle left' leftLength'); Idle.invariant left\<rbrakk> \<Longrightarrow>  Stack.toList left' = tl (Idle.toList left)"
+lemma idle_pop_toList: "\<lbrakk>Idle.pop left = (x, idle.Idle left' leftLength'); Idle.invariant left\<rbrakk> \<Longrightarrow>  Stack.toList left' = tl (Idle.toList left)"
   apply(induction left rule: Idle.pop.induct)
   apply auto
   by (metis Stack.isEmpty.elims(2) Stack.pop.simps(1) Stack_Proof.pop_toList toList_isEmpty list.sel(2))
@@ -29,8 +29,8 @@ lemma list_dequeueLeft':
       case True
       then show ?case 
         apply auto
-        apply (metis Idle.toList.simps Idle_Proof.pop_toList list.sel(3))
-        by (metis Idle.toList.simps Idle_Proof.pop_toList list.distinct(1) list.sel(3) tl_append2)
+        apply (metis Idle.toList.simps Idle_Proof.pop_toList)
+        by (metis Idle.toList.simps Idle_Proof.pop_toList)
     next
       case False
       then show ?case
@@ -55,14 +55,14 @@ lemma list_dequeueLeft':
           by (metis Idle.invariant.simps Idle_Proof.invariant_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 Stack_Proof.size_listLength trans_le_add2)
 
         with True have "toListLeft ?transformation = tl (Idle.toList left) @ rev (Stack.toList right)"
-          by(auto simp: maybe)
+          by(auto simp: idle_pop_toList)
 
         with invariant have "toListLeft (sixTicks ?transformation) = tl (Idle.toList left) @ rev (Stack.toList right)"
           by (auto simp: sixTicks)
 
         with True show ?case apply(auto simp: Let_def invariant_sixTicks tick_toList split: prod.splits)
-           apply (metis Idle.toList.simps Idle_Proof.pop_toList maybe)
-          by (metis Idle.toList.simps Idle_Proof.pop_toList maybe)
+           apply (metis Idle.toList.simps Idle_Proof.pop_toList idle_pop_toList)
+          by (metis Idle.toList.simps Idle_Proof.pop_toList idle_pop_toList)
 
       next
         case False
@@ -71,8 +71,8 @@ lemma list_dequeueLeft':
 
         with False show ?case 
           apply(induction right1 right2 rule: toSmallDeque.induct)
-          apply auto
-          apply (metis (mono_tags, lifting) Cons_eq_append_conv Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList le_zero_eq length_0_conv list.sel(3) not_less_eq_eq Stack_Proof.size_listLength)
+                              apply auto
+          apply (metis Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Suc_leI gr_zeroI length_0_conv pop_toList_2 size_listLength)
           apply (metis (mono_tags, lifting) Cons_eq_append_conv Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList le_zero_eq length_0_conv list.sel(3) not_less_eq_eq Stack_Proof.size_listLength)
           apply (metis (mono_tags, lifting) False.hyps Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList One_nat_def append_Nil2 append_eq_append_conv2 le_zero_eq length_0_conv list.distinct(1) list.sel(3) not_less_eq_eq same_append_eq Stack_Proof.size_listLength tl_append2)
           apply (metis (mono_tags, lifting) False.hyps Idle.invariant.simps Idle.toList.simps Idle_Proof.invariant_pop Idle_Proof.pop_toList One_nat_def append_Nil2 append_eq_append_conv2 le_zero_eq length_0_conv list.distinct(1) list.sel(3) not_less_eq_eq same_append_eq Stack_Proof.size_listLength tl_append2)
@@ -200,16 +200,6 @@ lemma list_firstLeft:
   using list_dequeueLeft' apply(auto split: prod.splits)
   by (smt (z3) list.sel(1) list_dequeueLeft')
 
-lemma maybe2: "\<lbrakk>
-  \<not> Suc l \<le> 3 * r; 
-  l > 0;
-  r > 0;
-  l \<le> 3 * r;
-  r \<le> 3 * l;
-  Suc l + Suc l - Suc (Suc (r + r)) \<le> Suc (Suc l + r)
-\<rbrakk> \<Longrightarrow> 10 + (9 * r + Suc l) \<le> 12 * (Suc l - Suc r)"
-  by auto
-
 lemma tick_same_left: "case tick (Left small big) of Left _ _ \<Rightarrow> True | _ \<Rightarrow> False"
   by(auto split: prod.splits)
 
@@ -236,7 +226,7 @@ next
     by (metis (no_types, lifting) Transformation.tick.simps(2) comp_def funpow_Suc_right prod.case_eq_if) 
 qed
 
-lemma fixed_5: "States.inSizeWindow ((States.tick ^^ n) (big, small)) \<Longrightarrow> inSizeWindow ((tick ^^ n) (Left small big))"
+lemma inSizeWindowStates_inSizeWindowLeft: "States.inSizeWindow ((States.tick ^^ n) (big, small)) \<Longrightarrow> inSizeWindow ((tick ^^ n) (Left small big))"
 proof(induction n arbitrary: big small)
   case 0
   then show ?case by auto
@@ -246,7 +236,7 @@ next
     by (simp add: case_prod_unfold funpow_swap1)
 qed
 
-lemma fixed_6: "States.inSizeWindow ((States.tick ^^ n) (big, small)) \<Longrightarrow> inSizeWindow ((tick ^^ n) (Right big small))"
+lemma inSizeWindowStates_inSizeWindowRight: "States.inSizeWindow ((States.tick ^^ n) (big, small)) \<Longrightarrow> inSizeWindow ((tick ^^ n) (Right big small))"
 proof(induction n arbitrary: big small)
   case 0
   then show ?case by auto
@@ -256,11 +246,7 @@ next
     by (simp add: case_prod_unfold funpow_swap1)
 qed
 
-lemma geficke2:  "States.inSizeWindow ((States.tick ^^ n) (right, Small.push x left)) \<Longrightarrow>
-     Transformation.inSizeWindow ((tick ^^ n) (transformation.Left (Small.push x left) right))"
-  by (simp add: fixed_5)
-
-lemma remSteps_idle_5: "Transformation.invariant transformation \<Longrightarrow> remainingSteps transformation > 0 \<longleftrightarrow> (
+lemma remainingSteps_notIdle: "Transformation.invariant transformation \<Longrightarrow> remainingSteps transformation > 0 \<longleftrightarrow> (
     case transformation of 
       Left (Small.Common (Common.Idle _ _)) (Big.Common (Common.Idle _ _))  \<Rightarrow> False 
     | Right (Big.Common (Common.Idle _ _)) (Small.Common (Common.Idle _ _))  \<Rightarrow> False 
@@ -268,13 +254,13 @@ lemma remSteps_idle_5: "Transformation.invariant transformation \<Longrightarrow
   apply(induction transformation)
   by(auto split: Big.state.splits Small.state.splits Common.state.splits current.splits)
 
-lemma remSteps_idle_6: "Transformation.invariant (Left small big) \<Longrightarrow> remainingSteps (Left small big) = 0 \<longleftrightarrow> (
+lemma remainingSteps_left_idle: "Transformation.invariant (Left small big) \<Longrightarrow> remainingSteps (Left small big) = 0 \<longleftrightarrow> (
     case (Left small big) of 
       Left (Small.Common (Common.Idle _ _)) (Big.Common (Common.Idle _ _))  \<Rightarrow> True 
     | _ \<Rightarrow> False) "
   by(auto split: Big.state.splits Small.state.splits Common.state.splits current.splits)
 
-lemma remSteps_idle_6': "Transformation.invariant (Right big small) \<Longrightarrow> remainingSteps (Right big small) = 0 \<longleftrightarrow> (
+lemma remainingSteps_right_idle: "Transformation.invariant (Right big small) \<Longrightarrow> remainingSteps (Right big small) = 0 \<longleftrightarrow> (
     case (Right big small) of 
       Right (Big.Common (Common.Idle _ _)) (Small.Common (Common.Idle _ _))  \<Rightarrow> True 
     | _ \<Rightarrow> False) "
@@ -415,13 +401,13 @@ lemma invariant_dequeueLeft:
         by (metis One_nat_def add_Suc_shift funpow_0 invariant numeral_2_eq_2 numeral_Bit0 plus_1_eq_Suc remainingStepsDecline_4)
 
       from True have sizeWindow: "inSizeWindow ?tickedTransformation"
-        using tick4_popSmall_sizeWindow[of right left x] states_inv states_rem states_window geficke2
-        by (metis Transformation.remainingSteps.simps(1) \<open>0 < Small.size left\<close> fixed_5 less_imp_le_nat t)
+        using tick4_popSmall_sizeWindow[of right left x] states_inv states_rem states_window inSizeWindowStates_inSizeWindowLeft
+        by (metis Transformation.remainingSteps.simps(1) \<open>0 < Small.size left\<close> inSizeWindowStates_inSizeWindowLeft less_imp_le_nat t)
 
       have "case ?tickedTransformation of
         Left (Small.state.Common (state.Idle _ _)) (Big.state.Common (state.Idle _ _)) \<Rightarrow> False
       | _ \<Rightarrow> True"
-        using tick_same_left[of newLeft right] remSteps_idle_5[of ?tickedTransformation]
+        using tick_same_left[of newLeft right] remainingSteps_notIdle[of ?tickedTransformation]
         apply(auto split: prod.splits transformation.splits Small.state.splits Big.state.splits Common.state.splits)
         using remSteps by auto
 
@@ -465,7 +451,7 @@ lemma invariant_dequeueLeft:
 
       with remSteps have "case Left tickedLeft tickedRight of
         Left (Small.state.Common (state.Idle _ _)) (Big.state.Common (state.Idle _ _)) \<Rightarrow> True
-      | _ \<Rightarrow> False" using remSteps_idle_6[of ] tick_same_left
+      | _ \<Rightarrow> False" using remainingSteps_left_idle[of ] tick_same_left
         using local.invariant_fourTicks by auto
 
       then obtain l idleLeft r idleRight where idle: "Left tickedLeft tickedRight = 
@@ -600,7 +586,7 @@ lemma invariant_dequeueLeft:
 
       with remSteps have "case Left tickedLeft tickedRight of
         Left (Small.state.Common (state.Idle _ _)) (Big.state.Common (state.Idle _ _)) \<Rightarrow> True
-      | _ \<Rightarrow> False" using remSteps_idle_6[of ] tick_same_left
+      | _ \<Rightarrow> False" using remainingSteps_left_idle[of ] tick_same_left
         using local.invariant_fourTicks by auto
 
       then obtain l idleLeft r idleRight where idle: "Left tickedLeft tickedRight = 
@@ -754,13 +740,13 @@ lemma invariant_dequeueLeft:
         by (metis One_nat_def add_Suc_shift funpow_0 invariant numeral_2_eq_2 numeral_Bit0 plus_1_eq_Suc remainingStepsDecline_4)
 
       from True have sizeWindow: "inSizeWindow ?tickedTransformation"
-        using tick4_popBig_sizeWindow[of left right x] states_inv states_rem states_window geficke2
-        by (metis Transformation.remainingSteps.simps(2) \<open>0 < Big.size left\<close> fixed_6 less_imp_le t)
+        using tick4_popBig_sizeWindow[of left right x] states_inv states_rem states_window inSizeWindowStates_inSizeWindowLeft
+        by (metis Transformation.remainingSteps.simps(2) \<open>0 < Big.size left\<close> inSizeWindowStates_inSizeWindowRight less_imp_le t)
 
       have "case ?tickedTransformation of
         Right (Big.state.Common (state.Idle _ _)) (Small.state.Common (state.Idle _ _)) \<Rightarrow> False
       | _ \<Rightarrow> True"
-        using tick_same_right[of newLeft right] remSteps_idle_5[of ?tickedTransformation]
+        using tick_same_right[of newLeft right] remainingSteps_notIdle[of ?tickedTransformation]
         apply(auto split: prod.splits transformation.splits Small.state.splits Big.state.splits Common.state.splits)
         using remSteps by auto
 
@@ -804,7 +790,7 @@ lemma invariant_dequeueLeft:
 
       with remSteps have "case Right tickedLeft tickedRight of
         Right (Big.state.Common (state.Idle _ _)) (Small.state.Common (state.Idle _ _)) \<Rightarrow> True
-      | _ \<Rightarrow> False" using remSteps_idle_6'[of ] tick_same_right
+      | _ \<Rightarrow> False" using remainingSteps_right_idle[of ] tick_same_right
         using local.invariant_fourTicks by auto
 
       then obtain l idleLeft r idleRight where idle: "Right tickedLeft tickedRight = 
@@ -940,7 +926,7 @@ lemma invariant_dequeueLeft:
 
       with remSteps have "case Right tickedLeft tickedRight of
         Right (Big.state.Common (state.Idle _ _)) (Small.state.Common (state.Idle _ _)) \<Rightarrow> True
-      | _ \<Rightarrow> False" using remSteps_idle_6'[of ] tick_same_right
+      | _ \<Rightarrow> False" using remainingSteps_right_idle[of ] tick_same_right
         using local.invariant_fourTicks by auto
 
       then obtain l idleLeft r idleRight where idle: "Right tickedLeft tickedRight = 
