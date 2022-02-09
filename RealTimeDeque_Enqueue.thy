@@ -25,111 +25,111 @@ proof -
 qed
 
 lemma list_enqueueLeft: "invariant deque \<Longrightarrow> listLeft (enqueueLeft x deque) = x # listLeft deque"
-  proof(induction x deque rule: enqueueLeft.induct)
-    case (1 x)
-    then show ?case by auto
-  next
-    case (2 x y)
-    then show ?case by auto
-  next
-    case (3 x y z)
-    then show ?case by auto
-  next
-    case (4 x a b c)
-    then show ?case by auto
-  next
-    case (5 x left' right rightLength)
+proof(induction x deque rule: enqueueLeft.induct)
+  case (1 x)
+  then show ?case by auto
+next
+  case (2 x y)
+  then show ?case by auto
+next
+  case (3 x y z)
+  then show ?case by auto
+next
+  case (4 x a b c)
+  then show ?case by auto
+next
+  case (5 x left' right rightLength)
+  then show ?case 
+  proof(induction "Idle.push x left'")
+    case (Idle left leftLength)
     then show ?case 
-    proof(induction "Idle.push x left'")
-      case (Idle left leftLength)
-      then show ?case 
-      proof(induction "3 * rightLength \<ge> leftLength")
-        case True
+    proof(induction "3 * rightLength \<ge> leftLength")
+      case True
+      then show ?case
+        apply(auto split: idle.splits)
+        by (metis Idle.toList.simps Idle_Proof.push_toList)+
+    next
+      case False
+      let ?transformation = "(Right 
+          (Reverse (Current [] 0 left (leftLength - Suc (Stack.size right))) left [] (leftLength - Suc (Stack.size right)))
+          (Reverse1 (Current [] 0 right (Suc (2 * Stack.size right))) right []))"
+
+      from False have leftNotEmpty: "\<not> Stack.isEmpty left"
+      proof(induction x left' rule: Idle.push.induct)
+        case (1 x stack stackSize)
         then show ?case
-          apply(auto split: idle.splits)
-          by (metis Idle.toList.simps Idle_Proof.push_toList)+
-      next
-        case False
-        let ?transformation = "(Right 
-            (Reverse (Current [] 0 left (leftLength - Suc (Stack.size right))) left [] (leftLength - Suc (Stack.size right)))
-            (Reverse1 (Current [] 0 right (Suc (2 * Stack.size right))) right []))"
-
-        from False have leftNotEmpty: "\<not> Stack.isEmpty left"
-        proof(induction x left' rule: Idle.push.induct)
-          case (1 x stack stackSize)
-          then show ?case
-            apply(induction x stack rule: Stack.push.induct)
-            by auto
-        qed
-
-        from False have invariant: "Transformation.invariant ?transformation"
-          apply(auto)
-          apply(auto simp: reverseN_take popN_drop leftNotEmpty)
-          apply (metis Idle.invariant.simps Idle_Proof.invariant_push diff_le_self)
-          apply (simp add: Stack_Proof.size_listLength)+
-          apply (smt (verit) popN_drop append_take_drop_id diff_is_0_eq helper leftNotEmpty length_rev rev_append rev_rev_ident Stack_Proof.size_listLength take_all_iff)
-          by (metis Idle.invariant.simps Idle_Proof.invariant_push add_Suc_right diff_add_inverse)
-       
-        then have "toListLeft ?transformation = x # Idle.toList left' @ rev (Stack.toList right)"
-          apply(auto simp: reverseN_take)
-          by (metis (no_types, lifting) Idle.hyps Idle.toList.simps Idle_Proof.push_toList append_Cons append_assoc rev_append rev_swap)
-
-        with invariant have 
-           "toListLeft (sixTicks ?transformation) = x # Idle.toList left' @ rev (Stack.toList right)"
-          by (auto simp: sixTicks)
-
-        with False show ?case
-          by(auto simp: Let_def split: idle.splits)
+          apply(induction x stack rule: Stack.push.induct)
+          by auto
       qed
+
+      from False have invariant: "Transformation.invariant ?transformation"
+        apply(auto)
+        apply(auto simp: reverseN_take popN_drop leftNotEmpty)
+        apply (metis Idle.invariant.simps Idle_Proof.invariant_push diff_le_self)
+        apply (simp add: Stack_Proof.size_listLength)+
+        apply (smt (verit) popN_drop append_take_drop_id diff_is_0_eq helper leftNotEmpty length_rev rev_append rev_rev_ident Stack_Proof.size_listLength take_all_iff)
+        by (metis Idle.invariant.simps Idle_Proof.invariant_push add_Suc_right diff_add_inverse)
+     
+      then have "toListLeft ?transformation = x # Idle.toList left' @ rev (Stack.toList right)"
+        apply(auto simp: reverseN_take)
+        by (metis (no_types, lifting) Idle.hyps Idle.toList.simps Idle_Proof.push_toList append_Cons append_assoc rev_append rev_swap)
+
+      with invariant have 
+         "toListLeft (sixTicks ?transformation) = x # Idle.toList left' @ rev (Stack.toList right)"
+        by (auto simp: sixTicks)
+
+      with False show ?case
+        by(auto simp: Let_def split: idle.splits)
     qed
-  next
-    case (6 x left right)
-    let ?newLeft = "Small.push x left"
-    let ?newTransfomation = "Left ?newLeft right"
-    let ?tickedTransformation = "fourTicks ?newTransfomation"
-
-    from 6 have invariant: "Transformation.invariant ?newTransfomation"
-      by (meson RealTimeDeque.invariant.simps(6) Transformation.invariant.simps(1) invariant_push_small)
-
-    then have toList: "toListLeft ?newTransfomation = x # Small.toCurrentList left @ rev (Big.toCurrentList right)"
-      by(auto simp: push_small push_toCurrentList)
-                          
-    from invariant have fourTicks: "Transformation.invariant ?tickedTransformation"
-      using invariant_fourTicks by blast
-
-    then have "toListLeft ?tickedTransformation = x # Small.toCurrentList left @ rev (Big.toCurrentList right)"
-      using Transformation_Proof.fourTicks invariant toList by fastforce
-
-    with 6 show ?case
-      by(auto simp: Let_def split: transformation.splits state_splits)
-  next
-    case (7 x left right)
-
-    let ?newLeft = "Big.push x left"
-    let ?newTransfomation = "Right ?newLeft right"
-    let ?tickedTransformation = "fourTicks ?newTransfomation"
-
-    from 7 have invariant: "Transformation.invariant ?newTransfomation"
-      by (meson RealTimeDeque.invariant.simps Transformation.invariant.simps invariant_push_big)
-
-    then have toListRight: "toListRight ?newTransfomation = Small.toCurrentList right @ rev (Big.toCurrentList (Big.push x left))"
-      by auto
-
-    with invariant have toListLeft: "toListLeft ?newTransfomation = x # Big.toCurrentList left @ rev (Small.toCurrentList right)"
-      apply(auto simp: push_big split: prod.splits)
-      by (metis Big_Proof.push_toCurrentList append_Cons rev_append rev_rev_ident)
-    
-    from invariant have fourTicks: "Transformation.invariant ?tickedTransformation"
-      using invariant_fourTicks by blast
-
-    then have "toListLeft ?tickedTransformation = x # Big.toCurrentList left @ rev (Small.toCurrentList right)"
-      using Transformation_Proof.fourTicks invariant toListLeft by fastforce
-
-
-    with 7 show ?case 
-      apply(auto simp: Let_def split: transformation.split prod.split Big.state.split Common.state.split Small.state.split)
-      by (metis rev_append rev_rev_ident)+
   qed
+next
+  case (6 x left right)
+  let ?newLeft = "Small.push x left"
+  let ?newTransfomation = "Left ?newLeft right"
+  let ?tickedTransformation = "fourTicks ?newTransfomation"
+
+  from 6 have invariant: "Transformation.invariant ?newTransfomation"
+    by (meson RealTimeDeque.invariant.simps(6) Transformation.invariant.simps(1) invariant_push_small)
+
+  then have toList: "toListLeft ?newTransfomation = x # Small.toCurrentList left @ rev (Big.toCurrentList right)"
+    by(auto simp: push_small push_toCurrentList)
+                        
+  from invariant have fourTicks: "Transformation.invariant ?tickedTransformation"
+    using invariant_fourTicks by blast
+
+  then have "toListLeft ?tickedTransformation = x # Small.toCurrentList left @ rev (Big.toCurrentList right)"
+    using Transformation_Proof.fourTicks invariant toList by fastforce
+
+  with 6 show ?case
+    by(auto simp: Let_def split: transformation.splits state_splits)
+next
+  case (7 x left right)
+
+  let ?newLeft = "Big.push x left"
+  let ?newTransfomation = "Right ?newLeft right"
+  let ?tickedTransformation = "fourTicks ?newTransfomation"
+
+  from 7 have invariant: "Transformation.invariant ?newTransfomation"
+    by (meson RealTimeDeque.invariant.simps Transformation.invariant.simps invariant_push_big)
+
+  then have toListRight: "toListRight ?newTransfomation = Small.toCurrentList right @ rev (Big.toCurrentList (Big.push x left))"
+    by auto
+
+  with invariant have toListLeft: "toListLeft ?newTransfomation = x # Big.toCurrentList left @ rev (Small.toCurrentList right)"
+    apply(auto simp: push_big split: prod.splits)
+    by (metis Big_Proof.push_toCurrentList append_Cons rev_append rev_rev_ident)
+  
+  from invariant have fourTicks: "Transformation.invariant ?tickedTransformation"
+    using invariant_fourTicks by blast
+
+  then have "toListLeft ?tickedTransformation = x # Big.toCurrentList left @ rev (Small.toCurrentList right)"
+    using Transformation_Proof.fourTicks invariant toListLeft by fastforce
+
+
+  with 7 show ?case 
+    apply(auto simp: Let_def split: transformation.split prod.split Big.state.split Common.state.split Small.state.split)
+    by (metis rev_append rev_rev_ident)+
+qed
 
 
 lemma helper2: "\<lbrakk>\<not> leftLength \<le> 3 * Stack.size right; idle.Idle left leftLength = Idle.push x left'; Idle.invariant left'; rightLength = Stack.size right;
@@ -269,6 +269,8 @@ next
         by (metis Idle.size.simps Idle_Proof.size_push diff_is_0_eq' le_diff_conv mult.commute mult_Suc zero_le_numeral)
     next
       case False
+
+      
       let ?newLeftLength = "leftLength - (Stack.size right) - 1"
       let ?newRightLength = "Suc (2 * Stack.size right)"
       let ?transformation = "(Right 
@@ -283,26 +285,23 @@ next
             by auto
         qed
 
-      from False have "0 < leftLength"
-        by auto
-
-      from False have test: "leftLength = Stack.size left" 
-        apply auto
-        by (metis Idle.invariant.simps Idle_Proof.invariant_push)
-
-      from False have suc: "Suc (Idle.size left') = leftLength"
+      from False  have leftLength: "leftLength = Stack.size left" 
+        using Idle_Proof.invariant_push[of left' x]
+        by(induction left') auto
+         
+      from False have oldSize: "Suc (Idle.size left') = leftLength"
         apply auto 
-        by (metis Idle.size.simps Idle_Proof.size_push local.test)    
+        by (metis Idle.size.simps Idle_Proof.size_push leftLength)    
 
       from False have remSteps: "6 < Transformation.remainingSteps ?transformation"
         apply(auto simp: max_def)
-        by (smt (z3) add.commute add_2_eq_Suc' diff_add_inverse2 diff_is_0_eq le_less_Suc_eq length_greater_0_conv local.test mult_Suc Stack_Proof.size_isNotEmpty not_le not_less_eq numeral_3_eq_3 numeral_Bit0 Stack_Proof.size_listLength suc)
+        by (smt (z3) add.commute add_2_eq_Suc' diff_add_inverse2 diff_is_0_eq le_less_Suc_eq length_greater_0_conv leftLength mult_Suc Stack_Proof.size_isNotEmpty not_le not_less_eq numeral_3_eq_3 numeral_Bit0 Stack_Proof.size_listLength oldSize)
         
       from False have invariant: "Transformation.invariant ?transformation"
         apply(auto simp: Stack_Proof.size_listLength popN_drop leftNotEmpty)
            apply (metis Idle.invariant.simps Idle_Proof.invariant_push diff_le_self Stack_Proof.size_listLength)
           apply (simp add: reverseN_take)
-        apply (smt (verit, best) popN_drop Suc_leI diff_add_inverse diff_add_inverse2 diff_diff_left helper4 le_eq_less_or_eq leftNotEmpty length_drop mult_Suc numeral_3_eq_3 plus_1_eq_Suc reverseN_reverseN Stack_Proof.size_listLength suc)
+        apply (smt (verit, best) popN_drop Suc_leI diff_add_inverse diff_add_inverse2 diff_diff_left helper4 le_eq_less_or_eq leftNotEmpty length_drop mult_Suc numeral_3_eq_3 plus_1_eq_Suc reverseN_reverseN Stack_Proof.size_listLength oldSize)
         by (metis Idle.invariant.simps Idle_Proof.invariant_push add_Suc_right diff_add_inverse Stack_Proof.size_listLength)
 
       with remSteps have "5 < Transformation.remainingSteps (tick ?transformation)"
@@ -316,50 +315,26 @@ next
         using remainingStepsDecline_4[of ?transformation 5 5] 
         by (smt (z3) One_nat_def Suc_eq_plus1 add_Suc_right invariant numeral_2_eq_2 numeral_3_eq_3 numeral_Bit0 remainingStepsDecline_4)
 
-      from False leftNotEmpty have " Stack.size right \<le> 3 * Idle.size left'"
-        by auto
-
-      have dummy: "4 + 8 * Stack.size right \<le> 12 * (Stack.size left - Suc (Stack.size right)) \<longleftrightarrow>
-            16 + 20 * Stack.size right \<le> 12 * Stack.size left"
-        by auto
-
-      have dummy_2: "\<lbrakk>
-        \<not> Stack.size left \<le> 3 * Stack.size right; 
-        idle.Idle left (Stack.size left) = Idle.push x left';
-        \<not> Stack.isEmpty left; 
-        Idle.invariant left';
-        rightLength = Stack.size right; 
-        \<not> Idle.isEmpty left'; 
-        \<not> Stack.isEmpty right; 
-        Idle.size left' \<le> 3 * Stack.size right;
-        Stack.size left + Stack.size left - Suc (Suc (Stack.size right + Stack.size right)) \<le> Suc (Stack.size left + Stack.size right);
-        leftLength = Stack.size left; 
-        Suc (Idle.size left') = Stack.size left
-     \<rbrakk> \<Longrightarrow> Suc (Stack.size left + Stack.size right - 4) \<le> 4 * Stack.size right"
-        using Stack_Proof.size_isNotEmpty[of left] 
+ 
+      from False leftNotEmpty have inSizeWindow: "inSizeWindow' ?transformation (remainingSteps ?transformation - 6)"
+        apply(auto simp: max_def oldSize leftLength)
+        subgoal
+          proof(induction "Stack.size left + Stack.size right \<le> 4")
+            case True
+            then show ?case
+              apply(auto)
+              by (smt (z3) add_Suc_shift add_diff_cancel_right' add_leE diff_zero first_pop length_Cons less_Suc_eq_le mult.commute mult_2_right mult_Suc_right not_less_eq numeral_3_eq_3 numeral_Bit0 Stack_Proof.size_listLength)
+          next
+            case False
+            then show ?case
+              by auto
+          qed
+        using oldSize leftLength
+              Stack_Proof.size_isNotEmpty[of left] 
               Stack_Proof.size_isNotEmpty[of right] 
               size_isNotEmpty[of left'] 
               calculation_helper
         by auto
-
-      from False leftNotEmpty have inSizeWindow: "inSizeWindow' ?transformation (remainingSteps ?transformation - 6)"
-        apply(auto simp: test max_def suc)
-        subgoal using local.test suc 
-        proof(induction "Stack.size left + Stack.size right \<le> 4")
-          case True
-          then show ?case
-            apply(auto simp: dummy)
-            by (smt (z3) add_Suc_shift add_diff_cancel_right' add_leE diff_zero first_pop length_Cons less_Suc_eq_le mult.commute mult_2_right mult_Suc_right not_less_eq numeral_3_eq_3 numeral_Bit0 Stack_Proof.size_listLength)
-        next
-          case False
-          then show ?case
-            by auto
-        qed
-        using local.test suc
-              apply(auto simp: min_def) 
-        subgoal using dummy_2 by auto
-        subgoal using dummy_2 by auto
-        done
 
       then have "inSizeWindow' (sixTicks ?transformation) (remainingSteps (sixTicks ?transformation))"
         using sizeWindow_steps invariant remSteps by blast
