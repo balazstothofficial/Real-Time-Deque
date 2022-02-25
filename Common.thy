@@ -3,7 +3,7 @@ theory Common
 begin
 
 datatype 'a state = 
-    Copy "'a current" "'a list" "'a list" nat
+     Copy "'a current" "'a list" "'a list" nat
     | Idle "'a current" "'a idle"
 
 fun toList :: "'a state \<Rightarrow> 'a list" where
