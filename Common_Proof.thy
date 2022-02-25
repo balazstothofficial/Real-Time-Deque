@@ -122,7 +122,7 @@ proof(induction common arbitrary: x rule: pop.induct)
     by(auto simp: size_isNotEmpty invariant_pop)
 
   from 1 current have secondProperty: "Current.invariant current'"
-    by(auto simp: invariant_size_get split: prod.splits)
+    by(auto simp: invariant_size_get eq_snd_iff split: prod.splits)
 
   from 1 current idle have thirdProperty: "Current.newSize current' = Idle.size idle'"
     using size_pop[of idle x idle'] newSize_get[of current] 

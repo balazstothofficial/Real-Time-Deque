@@ -647,8 +647,8 @@ next
     using Stack_Proof.size_isEmpty apply blast
     using Stack_Proof.size_isNotEmpty apply blast 
     using Common_Proof.remainingSteps_tick_0 Common_Proof.remainingSteps_tick apply fastforce
-    using Stack_Proof.size_pop Common_Proof.remainingSteps_tick_0 Common_Proof.remainingSteps_tick apply fastforce
     apply (metis (no_types, hide_lams) add.commute add_Suc_right diff_add_inverse2 max_0L max_Suc_Suc neq0_conv pop_listLength Common_Proof.remainingSteps_tick_0 Common_Proof.remainingSteps_tick Stack_Proof.size_listLength)
+    apply (smt (z3) Common_Proof.remainingSteps_tick Common_Proof.remainingSteps_tick_0 add_Suc_right diff_add_inverse max_Suc_Suc max_def max_nat.neutr_eq_iff neq0_conv pop_listLength size_listLength)
     by (metis (no_types, hide_lams) max.commute max_0L max_Suc_Suc neq0_conv Common_Proof.remainingSteps_tick_0 Common_Proof.remainingSteps_tick)
 next
   case ("2_3" left v va vb vc vd)
@@ -658,7 +658,8 @@ next
     using Stack_Proof.size_isEmpty apply blast
     using Stack_Proof.size_isNotEmpty apply blast 
     using Common_Proof.remainingSteps_tick_0 Common_Proof.remainingSteps_tick apply fastforce
-    using Stack_Proof.size_pop Common_Proof.remainingSteps_tick_0 Common_Proof.remainingSteps_tick by fastforce+
+    apply (smt (z3) Common_Proof.remainingSteps_tick Common_Proof.remainingSteps_tick_0 Stack_Proof.size_pop Suc_pred add.commute add_Suc_right diff_add_inverse le_add1 le_add_same_cancel1 max_Suc_Suc max_def neq0_conv plus_1_eq_Suc)
+    by (smt (z3) Common_Proof.remainingSteps_tick Common_Proof.remainingSteps_tick_0 Stack_Proof.size_isNotEmpty Stack_Proof.size_pop Suc_pred add.commute add_Suc_right add_diff_cancel_right' max.commute max_0R max_Suc_Suc neq0_conv)
 next
   case ("2_4" left v)
   then show ?case 

@@ -50,15 +50,7 @@ fun invariant :: "'a state \<Rightarrow> bool" where
     \<and> take remained (Stack.toList old) = rev (take remained (reverseN count (Stack.toList big) aux))
 )"
 
-(* \<and> remained \<ge> count *)
 
-(* TODO: Hopefully not need:
-fun pop_invariant :: "'a state \<Rightarrow> bool" where
-  "pop_invariant (Common state) = True"
-| "pop_invariant (Reverse (Current _ _ _ remained) _ _ count) \<longleftrightarrow> remained > count"
- *) 
-
-(* Just for proof *)
 fun remainingSteps :: "'a state \<Rightarrow> nat" where
   "remainingSteps (Common state) = Common.remainingSteps state"
 | "remainingSteps (Reverse (Current _ _ _ remaining) _ _ count) = count + remaining + 1"

@@ -11,12 +11,11 @@ fun get :: "'a current \<Rightarrow> 'a * 'a current" where
   "get (Current [] added old remained)     = (first old, Current [] added (pop old) (remained - 1))"
 | "get (Current (x#xs) added old remained) = (x, Current xs (added - 1) old remained)"
 
-(* TODO: Use fst and snd instead of let? *)
 fun top :: "'a current \<Rightarrow> 'a" where
-  "top current = (let (element, _) = get current in element)"
+  "top current = fst (get current)"
 
 fun bottom :: "'a current \<Rightarrow> 'a current" where
-  "bottom current = (let (_, bottom) = get current in bottom)"
+  "bottom current = snd (get current)"
 
 fun toList :: "'a current \<Rightarrow> 'a list" where
   "toList (Current extra _ old _) = extra @ (Stack.toList old)"
