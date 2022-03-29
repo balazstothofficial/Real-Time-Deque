@@ -347,8 +347,8 @@ next
         case (1 added old remained)
         then show ?case 
           apply(auto simp: reverseN_drop)
-          apply (smt (verit, ccfv_threshold) Suc_diff_Suc append_take_drop_id diff_Suc_1 diff_add_inverse2 diff_commute diff_diff_cancel diff_is_0_eq drop_all_iff length_rev less_le_trans list.sel(3) not_le same_append_eq self_append_conv2 take_all_iff take_hd_drop tl_append2)
-          by (metis (no_types, lifting) Nat.diff_diff_right Suc_diff_le drop_Suc drop_all_iff leD le_add_diff_inverse le_diff_conv length_rev less_add_same_cancel2 less_imp_le_nat tl_append2 tl_drop zero_less_diff)
+          apply (smt (verit, ccfv_threshold) Suc_diff_Suc append_take_drop_id diff_Suc_1 diff_add_inverse2 diff_commute diff_diff_cancel diff_is_0_eq drop_eq_Nil length_rev less_le_trans list.sel(3) not_le same_append_eq self_append_conv2 take_all_iff take_hd_drop tl_append2)
+          by (metis (no_types, lifting) Nat.diff_diff_right Suc_diff_le drop_Suc drop_eq_Nil leD le_add_diff_inverse le_diff_conv length_rev less_add_same_cancel2 less_imp_le_nat tl_append2 tl_drop zero_less_diff)
       next
         case (2 x xs added old remained)
         then show ?case by auto
@@ -647,9 +647,9 @@ next
     using Stack_Proof.size_isEmpty apply blast
     using Stack_Proof.size_isNotEmpty apply blast 
     using Common_Proof.remainingSteps_tick_0 Common_Proof.remainingSteps_tick apply fastforce
-    apply (metis (no_types, hide_lams) add.commute add_Suc_right diff_add_inverse2 max_0L max_Suc_Suc neq0_conv pop_listLength Common_Proof.remainingSteps_tick_0 Common_Proof.remainingSteps_tick Stack_Proof.size_listLength)
+    apply (metis (no_types, opaque_lifting) add.commute add_Suc_right diff_add_inverse2 max_0L max_Suc_Suc neq0_conv pop_listLength Common_Proof.remainingSteps_tick_0 Common_Proof.remainingSteps_tick Stack_Proof.size_listLength)
     apply (smt (z3) Common_Proof.remainingSteps_tick Common_Proof.remainingSteps_tick_0 add_Suc_right diff_add_inverse max_Suc_Suc max_def max_nat.neutr_eq_iff neq0_conv pop_listLength size_listLength)
-    by (metis (no_types, hide_lams) max.commute max_0L max_Suc_Suc neq0_conv Common_Proof.remainingSteps_tick_0 Common_Proof.remainingSteps_tick)
+    by (metis (no_types, opaque_lifting) max.commute max_0L max_Suc_Suc neq0_conv Common_Proof.remainingSteps_tick_0 Common_Proof.remainingSteps_tick)
 next
   case ("2_3" left v va vb vc vd)
   then show ?case 
@@ -694,7 +694,7 @@ next
     case (Suc n)
     then show ?case
       using remainingStepsDecline_2[of states]
-      by (metis (no_types, hide_lams) States_Proof.invariant_tick \<open>0 < States.remainingSteps states\<close> funpow_simps_right(2) neq0_conv not_less_eq_eq o_apply remainingSteps0')
+      by (metis (no_types, opaque_lifting) States_Proof.invariant_tick \<open>0 < States.remainingSteps states\<close> funpow_simps_right(2) neq0_conv not_less_eq_eq o_apply remainingSteps0')
   qed
 qed
 
@@ -1057,7 +1057,7 @@ lemma tickN_popBig_newSizeBig: "invariant (big, small)
           \<Longrightarrow> Big.pop big = (x, bigP) 
           \<Longrightarrow> (tick ^^ n) (bigP, small) = (big', small')
           \<Longrightarrow> Big.newSize big = Suc (Big.newSize big')"
-  by (metis (no_types, hide_lams) States.remainingSteps.cases invariant_pop_big_size tick_popBig_newSizeBig tick_newSizeBig tickN_newSizeBig)
+  by (metis (no_types, opaque_lifting) States.remainingSteps.cases invariant_pop_big_size tick_popBig_newSizeBig tick_newSizeBig tickN_newSizeBig)
 
 lemma remainingSteps_pushSmall: "invariant (big, small)
        \<Longrightarrow> remainingSteps (big, small) = remainingSteps (big, Small.push x small)"

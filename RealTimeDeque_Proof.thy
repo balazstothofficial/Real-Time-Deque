@@ -78,7 +78,7 @@ next
     using Small_Proof.toCurrentList_size apply force
     apply(auto simp: max_def split: prod.splits Big.state.splits Small.state.splits if_splits)
     subgoal 
-      by (simp add: Nat.diff_diff_right diff_is_0_eq' list.size(3) min.absorb1 minus_nat.diff_0 mult_is_0 not_numeral_le_zero numeral_2_eq_2 Stack_Proof.size_listLength split: current.splits)
+      by(simp add: Nat.diff_diff_right diff_is_0_eq' list.size(3) min.absorb1 minus_nat.diff_0 mult_is_0 not_numeral_le_zero numeral_2_eq_2 Stack_Proof.size_listLength split: current.splits)
     subgoal by(auto split!: current.splits)
     subgoal by(auto split: current.splits)
     subgoal by(auto split: current.splits)

@@ -485,7 +485,7 @@ next
 
     then have "Big.newSize right \<le> 3 * Small.newSize ?newLeft"
       using leftSizes1
-      by (metis (no_types, hide_lams) "6.prems" RealTimeDeque.invariant.simps(6) Transformation.invariant.simps(1) dual_order.trans funpow_0 le_add2 mult_le_mono2 plus_1_eq_Suc tickN_pushSmall_newSizeSmall)
+      by (metis (no_types, opaque_lifting) "6.prems" RealTimeDeque.invariant.simps(6) Transformation.invariant.simps(1) dual_order.trans funpow_0 le_add2 mult_le_mono2 plus_1_eq_Suc tickN_pushSmall_newSizeSmall)
 
     then have "Big.newSize right \<le> 3 * Small.newSize tickedLeft"
       by (simp add: leftSizes)

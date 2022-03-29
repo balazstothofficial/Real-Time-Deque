@@ -31,7 +31,7 @@ proof(induction current rule: get.induct)
   case (1 added old remained)
   then show ?case 
     apply(auto simp: reverseN_take rev_take)
-    by (smt (z3) Nat.diff_diff_right add.commute diff_is_0_eq drop_all_iff first_toList hd_append hd_take le_add_diff length_rev minus_nat.diff_0 nat_le_linear Stack_Proof.size_isNotEmpty take_eq_Nil)
+    by (smt (z3) Nat.diff_diff_right add.commute diff_is_0_eq drop_eq_Nil first_toList hd_append hd_take le_add_diff length_rev minus_nat.diff_0 nat_le_linear Stack_Proof.size_isNotEmpty take_eq_Nil)
    
 next
   case (2 x xs added old remained)

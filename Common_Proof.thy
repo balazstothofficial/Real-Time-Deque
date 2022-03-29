@@ -175,6 +175,9 @@ lemma push_toCurrentList: "toCurrentList (push x left) = x # toCurrentList left"
   apply(induction x left rule: push.induct)
   by(auto simp: put_toList)
 
+lemma take_1: "0 < x \<and> 0 < y \<Longrightarrow> take x xs = take y ys \<Longrightarrow> take 1 xs = take 1 ys"
+  by (metis One_nat_def bot_nat_0.not_eq_extremum hd_take take_Suc take_eq_Nil)
+
 (* TODO: Also rename to "pop_toList" *)
 lemma toList_pop: "invariant common \<Longrightarrow> 0 < size common \<Longrightarrow> pop common = (x, common') \<Longrightarrow>
    toList common = x # toList common'"
@@ -239,15 +242,23 @@ next
           apply auto
           using Stack_Proof.size_isNotEmpty by blast
 
+     
+
+
         from False have "take 1 (Stack.toList old) = take 1 (rev (take (remained - length new) aux))"
           apply(auto simp: reverseN_take)
-          by (smt (verit, ccfv_threshold) Nil_is_append_conv Nil_is_rev_conv bot_nat_0.extremum_uniqueI diff_is_0_eq hd_append2 hd_take length_greater_0_conv less_add_same_cancel2 less_le_trans toList_isNotEmpty not_le Stack_Proof.size_listLength take_eq_Nil take_hd)
-
-
+          apply(induction "0 < Stack.size old \<and> 0 < remained")
+          using take_1[of 
+                remained 
+                "Stack.size old" 
+                "Stack.toList old" 
+                "(rev (take (remained - length new) aux)) @ take (Stack.size old + length new - remained) new"
+              ]
+          by auto
+          
         then have c: "[first old] = [last (take (remained - length new) aux)]"
           using take_last first_take a b
           by metis
-
 
         with False show ?case 
           apply(auto simp: reverseN_take min_def split: if_splits)

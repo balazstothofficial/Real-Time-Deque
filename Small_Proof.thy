@@ -75,12 +75,12 @@ next
          rev (take (List.length (Stack.toList old)) (rev (tl (Stack.toList small))))"
       apply(auto simp: min_def)
       apply (smt (verit, ccfv_threshold) One_nat_def Stack_Proof.pop_toList Suc_diff_eq_diff_pred Suc_diff_le append_Cons append_eq_append_conv2 append_self_conv diff_is_0_eq first_pop length_greater_0_conv length_tl list.size(3) rev_is_Nil_conv rev_singleton_conv Stack_Proof.size_listLength take_all take_eq_Nil tl_Nil toList_isEmpty)
-      apply (smt (z3) append_same_eq append_take_drop_id butlast_append butlast_rev drop_all_iff drop_butlast length_rev)
+      apply (metis Stack_Proof.pop_toList append.right_neutral diff_is_0_eq' length_rev list.sel(3) notEmpty not_less_eq_eq pop_listLength rev.simps(2) take_Cons' take_append)
       subgoal by(auto simp: a)
       subgoal 
         apply(auto simp: b notEmpty) 
         by (metis Stack_Proof.pop_toList first_pop notEmpty)
-      by (metis append_eq_conv_conj append_take_drop_id butlast_append butlast_rev drop_all_iff length_rev Stack_Proof.size_listLength)    
+      by (metis add.right_neutral add_Suc_right append.right_neutral diff_is_0_eq' length_rev list.sel(3) list.size(4) not_less_eq_eq rev.simps(2) take0 take_append)
 
     with Current show ?case 
       by(auto simp: Stack_Proof.pop_toList Stack_Proof.size_listLength)
@@ -234,8 +234,7 @@ lemma tick_size: "invariant small \<Longrightarrow> size small = size (tick smal
 
 lemma size_isEmpty: "invariant small \<Longrightarrow> size small = 0 \<Longrightarrow> isEmpty small"
   apply(induction small)
-    apply(auto simp: size_isEmpty Current_Proof.size_isEmpty toList_isEmpty split: current.splits)
-  by (simp_all add: min_def toList_isEmpty)
+  by(auto simp: size_isEmpty Current_Proof.size_isEmpty toList_isEmpty split: current.splits)
 
 lemma size_push: "invariant small \<Longrightarrow> Suc (size small) = size (push x small)"
 proof(induction x small rule: Small.push.induct)
