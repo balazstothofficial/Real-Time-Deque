@@ -13,9 +13,15 @@ datatype 'a deque =
 definition empty where
   "empty \<equiv> Empty"
 
-fun isEmpty :: "'a deque \<Rightarrow> bool" where
-  "isEmpty Empty = True"
-| "isEmpty _ = False"
+instantiation deque::(type) emptyable
+begin
+
+fun is_empty :: "'a deque \<Rightarrow> bool" where
+  "is_empty Empty = True"
+| "is_empty _ = False"
+
+instance..
+end
 
 fun swap :: "'a deque \<Rightarrow> 'a deque" where
   "swap Empty = Empty"  
@@ -26,26 +32,26 @@ fun swap :: "'a deque \<Rightarrow> 'a deque" where
 | "swap (Transforming (Left small big)) = (Transforming (Right big small))"
 | "swap (Transforming (Right big small)) = (Transforming (Left small big))"
 
-fun toSmallDeque :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a deque" where
-  "toSmallDeque []     [] = Empty"
+fun small_deque :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a deque" where
+  "small_deque []     [] = Empty"
 
-| "toSmallDeque (x#[]) [] = One x"
-| "toSmallDeque [] (x#[]) = One x"
+| "small_deque (x#[]) [] = One x"
+| "small_deque [] (x#[]) = One x"
 
-| "toSmallDeque (x#[])(y#[]) = Two y x"
-| "toSmallDeque (x#y#[]) [] = Two y x"
-| "toSmallDeque [] (x#y#[])= Two y x"
+| "small_deque (x#[])(y#[]) = Two y x"
+| "small_deque (x#y#[]) [] = Two y x"
+| "small_deque [] (x#y#[])= Two y x"
 
-| "toSmallDeque [] (x#y#z#[])   = Three z y x"
-| "toSmallDeque (x#y#z#[]) []   = Three z y x"
-| "toSmallDeque (x#y#[]) (z#[]) = Three z y x"
-| "toSmallDeque (x#[]) (y#z#[]) = Three z y x"
+| "small_deque [] (x#y#z#[])   = Three z y x"
+| "small_deque (x#y#z#[]) []   = Three z y x"
+| "small_deque (x#y#[]) (z#[]) = Three z y x"
+| "small_deque (x#[]) (y#z#[]) = Three z y x"
 
-fun dequeueLeft' :: "'a deque \<Rightarrow> 'a * 'a deque" where
-  "dequeueLeft' (One x) = (x, Empty)"
-| "dequeueLeft' (Two x y) = (x, One y)"
-| "dequeueLeft' (Three x y z) = (x, Two y z)"
-| "dequeueLeft' (Idle left (idle.Idle right rightLength)) = (
+fun deqL' :: "'a deque \<Rightarrow> 'a * 'a deque" where
+  "deqL' (One x) = (x, Empty)"
+| "deqL' (Two x y) = (x, One y)"
+| "deqL' (Three x y z) = (x, Two y z)"
+| "deqL' (Idle left (idle.Idle right rightLength)) = (
    case Idle.pop left of (x, (idle.Idle left leftLength)) \<Rightarrow>
     if 3 * leftLength \<ge> rightLength 
     then 
@@ -59,15 +65,15 @@ fun dequeueLeft' :: "'a deque \<Rightarrow> 'a * 'a deque" where
       let right = Reverse (Current [] 0 right newRightLength) right [] newRightLength in
 
       let transformation = Left left right in
-      let transformation = sixTicks transformation in
+      let transformation = six_steps transformation in
       
       (x, Transforming transformation)
     else 
-      case right of Stack r1 r2 \<Rightarrow> (x, toSmallDeque r1 r2)
+      case right of Stack r1 r2 \<Rightarrow> (x, small_deque r1 r2)
   )"
-| "dequeueLeft' (Transforming (Left left right)) = (
+| "deqL' (Transforming (Left left right)) = (
     let (x, left) = Small.pop left in 
-    let transformation = fourTicks (Left left right) in
+    let transformation = four_steps (Left left right) in
     case transformation of 
         Left 
           (Small.Common (Common.Idle _ left)) 
@@ -75,9 +81,9 @@ fun dequeueLeft' :: "'a deque \<Rightarrow> 'a * 'a deque" where
             (x, Idle left right)
      | _ \<Rightarrow> (x, Transforming transformation)
   )"
-| "dequeueLeft' (Transforming (Right left right)) = (
+| "deqL' (Transforming (Right left right)) = (
     let (x, left) = Big.pop left in 
-    let transformation = fourTicks (Right left right) in
+    let transformation = four_steps (Right left right) in
     case transformation of 
         Right 
           (Big.Common (Common.Idle _ left)) 
@@ -86,30 +92,30 @@ fun dequeueLeft' :: "'a deque \<Rightarrow> 'a * 'a deque" where
      | _ \<Rightarrow> (x, Transforming transformation)
   )"
 
-fun dequeueRight' :: "'a deque \<Rightarrow> 'a * 'a deque" where
-  "dequeueRight' deque = (
-    let (x, deque) = dequeueLeft' (swap deque) 
+fun deqR' :: "'a deque \<Rightarrow> 'a * 'a deque" where
+  "deqR' deque = (
+    let (x, deque) = deqL' (swap deque) 
     in (x, swap deque)
   )"
 
-fun dequeueLeft :: "'a deque \<Rightarrow> 'a deque" where
-  "dequeueLeft deque = (let (_, deque) = dequeueLeft' deque in deque)"
+fun deqL :: "'a deque \<Rightarrow> 'a deque" where
+  "deqL deque = (let (_, deque) = deqL' deque in deque)"
 
-fun dequeueRight :: "'a deque \<Rightarrow> 'a deque" where
-  "dequeueRight deque = (let (_, deque) = dequeueRight' deque in deque)"
+fun deqR :: "'a deque \<Rightarrow> 'a deque" where
+  "deqR deque = (let (_, deque) = deqR' deque in deque)"
 
-fun firstLeft :: "'a deque \<Rightarrow> 'a" where
-  "firstLeft deque = (let (x, _) = dequeueLeft' deque in x)" 
+fun firstL :: "'a deque \<Rightarrow> 'a" where
+  "firstL deque = (let (x, _) = deqL' deque in x)" 
 
-fun firstRight :: "'a deque \<Rightarrow> 'a" where
-  "firstRight deque = (let (x, _) = dequeueRight' deque in x)" 
+fun firstR :: "'a deque \<Rightarrow> 'a" where
+  "firstR deque = (let (x, _) = deqR' deque in x)" 
 
-fun enqueueLeft :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
-  "enqueueLeft x Empty = One x"
-| "enqueueLeft x (One y) = Two x y"
-| "enqueueLeft x (Two y z) = Three x y z"
-| "enqueueLeft x (Three a b c) = Idle (idle.Idle (Stack [x, a] []) 2) (idle.Idle (Stack [c, b] []) 2)"
-| "enqueueLeft x (Idle left (idle.Idle right rightLength)) = (
+fun enqL :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
+  "enqL x Empty = One x"
+| "enqL x (One y) = Two x y"
+| "enqL x (Two y z) = Three x y z"
+| "enqL x (Three a b c) = Idle (idle.Idle (Stack [x, a] []) 2) (idle.Idle (Stack [c, b] []) 2)"
+| "enqL x (Idle left (idle.Idle right rightLength)) = (
     case Idle.push x left of idle.Idle left leftLength \<Rightarrow> 
       if 3 * rightLength \<ge> leftLength
       then 
@@ -122,22 +128,22 @@ fun enqueueLeft :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
         let right = Reverse1 (Current [] 0 right newRightLength) right [] in
   
         let transformation = Right left right in
-        let transformation = sixTicks transformation in
+        let transformation = six_steps transformation in
         
         Transforming transformation
   )"
-| "enqueueLeft x (Transforming (Left left right)) = (
+| "enqL x (Transforming (Left left right)) = (
     let left = Small.push x left in 
-    let transformation = fourTicks (Left left right) in
+    let transformation = four_steps (Left left right) in
     case transformation of 
         Left 
           (Small.Common (Common.Idle _ left)) 
           (Big.Common (Common.Idle _ right)) \<Rightarrow> Idle left right
      | _ \<Rightarrow> Transforming transformation
   )"
-| "enqueueLeft x (Transforming (Right left right)) = (
+| "enqL x (Transforming (Right left right)) = (
     let left = Big.push x left in 
-    let transformation = fourTicks (Right left right) in
+    let transformation = four_steps (Right left right) in
     case transformation of 
         Right 
           (Big.Common (Common.Idle _ left)) 
@@ -145,46 +151,52 @@ fun enqueueLeft :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
      | _ \<Rightarrow> Transforming transformation
   )"
 
-fun enqueueRight :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
-  "enqueueRight x deque = (
-    let deque = enqueueLeft x (swap deque) 
+fun enqR :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
+  "enqR x deque = (
+    let deque = enqL x (swap deque) 
     in swap deque
   )"    
  
-fun listLeft :: "'a deque \<Rightarrow> 'a list" where
-  "listLeft Empty = []"
-| "listLeft (One x) = [x]"
-| "listLeft (Two x y) = [x, y]"
-| "listLeft (Three x y z) = [x, y, z]"
-| "listLeft (Idle left right) = Idle.toList left @ (rev (Idle.toList right))"
-| "listLeft (Transforming transformation) = toListLeft transformation"
+fun listL :: "'a deque \<Rightarrow> 'a list" where
+  "listL Empty = []"
+| "listL (One x) = [x]"
+| "listL (Two x y) = [x, y]"
+| "listL (Three x y z) = [x, y, z]"
+| "listL (Idle left right) = Idle.list left @ (rev (Idle.list right))"
+| "listL (Transforming transformation) = Transformation.listL transformation"
 
-fun listRight :: "'a deque \<Rightarrow> 'a list" where
-  "listRight Empty = []"
-| "listRight (One x) = [x]"
-| "listRight (Two x y) = [y, x]"
-| "listRight (Three x y z) = [z, y, x]"
-| "listRight (Idle left right) = Idle.toList right @ (rev (Idle.toList left))"
-| "listRight (Transforming transformation) = toListRight transformation"
+fun listR :: "'a deque \<Rightarrow> 'a list" where
+  "listR Empty = []"
+| "listR (One x) = [x]"
+| "listR (Two x y) = [y, x]"
+| "listR (Three x y z) = [z, y, x]"
+| "listR (Idle left right) = Idle.list right @ (rev (Idle.list left))"
+| "listR (Transforming transformation) = Transformation.listR transformation"
 
-fun invariant :: "'a deque \<Rightarrow> bool" where
-  "invariant Empty = True"
-| "invariant (One _) = True"
-| "invariant (Two _ _) = True"
-| "invariant (Three _ _ _) = True"
-| "invariant (Idle left right) \<longleftrightarrow>
-   Idle.invariant left  \<and>
-   Idle.invariant right \<and>
-   \<not> Idle.isEmpty left  \<and> 
-   \<not> Idle.isEmpty right \<and>
+instantiation deque::(type) invar
+begin
+
+fun invar :: "'a deque \<Rightarrow> bool" where
+  "invar Empty = True"
+| "invar (One _) = True"
+| "invar (Two _ _) = True"
+| "invar (Three _ _ _) = True"
+| "invar (Idle left right) \<longleftrightarrow>
+   Idle.invar left  \<and>
+   Idle.invar right \<and>
+   \<not> Idle.is_empty left  \<and> 
+   \<not> Idle.is_empty right \<and>
    3 * Idle.size right \<ge> Idle.size left \<and>
    3 * Idle.size left \<ge> Idle.size right
   "
-| "invariant (Transforming transformation) \<longleftrightarrow> 
-   Transformation.invariant transformation \<and>
-   inSizeWindow transformation \<and>
-   0 < remainingSteps transformation
+| "invar (Transforming transformation) \<longleftrightarrow> 
+   Transformation.invar transformation \<and>
+   size_ok transformation \<and>
+   0 < remaining_steps transformation
   "
+
+instance..
+end
 
 (* For Test: *)
 fun runningFold :: "('a deque \<Rightarrow> 'a deque) list \<Rightarrow> 'a deque \<Rightarrow> 'a deque list" where
@@ -196,14 +208,14 @@ fun runningFold :: "('a deque \<Rightarrow> 'a deque) list \<Rightarrow> 'a dequ
 
 value "runningFold 
   [
-  enqueueLeft (0::int), 
-  enqueueLeft 1, 
-  enqueueLeft 2,
-  enqueueLeft 3,
-  enqueueLeft 4,   
-  enqueueLeft 5,
-  dequeueRight,
-  dequeueRight
+  enqL (0::int), 
+  enqL 1, 
+  enqL 2,
+  enqL 3,
+  enqL 4,   
+  enqL 5,
+  deqR,
+  deqR
   ] 
   Empty"
 

@@ -4,53 +4,53 @@ begin
 
 locale Deque =
 fixes empty :: "'q"
-fixes enqueueLeft :: "'a \<Rightarrow> 'q \<Rightarrow> 'q"
-fixes enqueueRight :: "'a \<Rightarrow> 'q \<Rightarrow> 'q"
-fixes firstLeft :: "'q \<Rightarrow> 'a"
-fixes firstRight :: "'q \<Rightarrow> 'a"
-fixes dequeueLeft :: "'q \<Rightarrow> 'q"
-fixes dequeueRight :: "'q \<Rightarrow> 'q"
-fixes isEmpty :: "'q \<Rightarrow> bool"
-fixes listLeft :: "'q \<Rightarrow> 'a list"
-fixes listRight :: "'q \<Rightarrow> 'a list"
-fixes invariant :: "'q \<Rightarrow> bool"
+fixes enqL :: "'a \<Rightarrow> 'q \<Rightarrow> 'q"
+fixes enqR :: "'a \<Rightarrow> 'q \<Rightarrow> 'q"
+fixes firstL :: "'q \<Rightarrow> 'a"
+fixes firstR :: "'q \<Rightarrow> 'a"
+fixes deqL :: "'q \<Rightarrow> 'q"
+fixes deqR :: "'q \<Rightarrow> 'q"
+fixes is_empty :: "'q \<Rightarrow> bool"
+fixes listL :: "'q \<Rightarrow> 'a list"
+fixes listR :: "'q \<Rightarrow> 'a list"
+fixes invar :: "'q \<Rightarrow> bool"
 
-assumes listLeft_empty:
- "listLeft empty = []"
-assumes listRight_empty:
- "listRight empty = []"
+assumes listL_empty:
+ "listL empty = []"
+assumes listR_empty:
+ "listR empty = []"
 
-assumes list_enqueueLeft:   
- "invariant q \<Longrightarrow> listLeft(enqueueLeft x q) = x # listLeft q"
+assumes list_enqL:   
+ "invar q \<Longrightarrow> listL(enqL x q) = x # listL q"
 assumes list_enqueueRight:  
- "invariant q \<Longrightarrow> listRight(enqueueRight x q) = x # listRight q"
+ "invar q \<Longrightarrow> listR(enqR x q) = x # listR q"
 assumes list_dequeueLeft:   
- "\<lbrakk>invariant q; \<not> listLeft q = []\<rbrakk> \<Longrightarrow> listLeft(dequeueLeft q) = tl(listLeft q)"
+ "\<lbrakk>invar q; \<not> listL q = []\<rbrakk> \<Longrightarrow> listL(deqL q) = tl(listL q)"
 assumes list_dequeueRight: 
- "\<lbrakk>invariant q; \<not> listRight q = []\<rbrakk> \<Longrightarrow> listRight(dequeueRight q) = tl(listRight q)"
+ "\<lbrakk>invar q; \<not> listR q = []\<rbrakk> \<Longrightarrow> listR(deqR q) = tl(listR q)"
 
-assumes list_firstLeft:
- "\<lbrakk>invariant q; \<not> listLeft q = []\<rbrakk> \<Longrightarrow> firstLeft q = hd(listLeft q)"
-assumes list_firstRight:
- "\<lbrakk>invariant q; \<not> listRight q = []\<rbrakk> \<Longrightarrow> firstRight q = hd(listRight q)"
+assumes list_firstL:
+ "\<lbrakk>invar q; \<not> listL q = []\<rbrakk> \<Longrightarrow> firstL q = hd(listL q)"
+assumes list_firstR:
+ "\<lbrakk>invar q; \<not> listR q = []\<rbrakk> \<Longrightarrow> firstR q = hd(listR q)"
 
-assumes listLeft_isEmpty:  
- "invariant q \<Longrightarrow> isEmpty q = (listLeft q = [])"
+assumes listL_is_empty:  
+ "invar q \<Longrightarrow> is_empty q = (listL q = [])"
 assumes listRight_isEmpty:
- "invariant q \<Longrightarrow> isEmpty q = (listRight q = [])"
+ "invar q \<Longrightarrow> is_empty q = (listR q = [])"
 
-assumes invariant_empty: 
- "invariant empty"
+assumes invar_empty: 
+ "invar empty"
 
-assumes invariant_enqueueLeft:  
- "invariant q \<Longrightarrow> invariant(enqueueLeft x q)"
-assumes invariant_enqueueRight: 
- "invariant q \<Longrightarrow> invariant(enqueueRight x q)"
-assumes invariant_dequeueLeft: 
- "\<lbrakk>invariant q; \<not> isEmpty q\<rbrakk>  \<Longrightarrow> invariant(dequeueLeft q)"
-assumes invariant_dequeueRight: 
- "\<lbrakk>invariant q; \<not> isEmpty q\<rbrakk>  \<Longrightarrow> invariant(dequeueRight q)"
-assumes listLeft_listRight: 
- "invariant q \<Longrightarrow> listLeft q = rev (listRight q)"
+assumes invar_enqL:  
+ "invar q \<Longrightarrow> invar(enqL x q)"
+assumes invar_enqR: 
+ "invar q \<Longrightarrow> invar(enqR x q)"
+assumes invar_deqL: 
+ "\<lbrakk>invar q; \<not> is_empty q\<rbrakk>  \<Longrightarrow> invar(deqL q)"
+assumes invar_deqR: 
+ "\<lbrakk>invar q; \<not> is_empty q\<rbrakk>  \<Longrightarrow> invar(deqR q)"
+assumes listL_listR: 
+ "invar q \<Longrightarrow> listL q = rev (listR q)"
 
 end

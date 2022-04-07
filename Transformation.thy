@@ -6,42 +6,54 @@ datatype 'a transformation =
    Left "'a Small.state" "'a Big.state"
  | Right "'a Big.state" "'a Small.state"
 
-fun toListLeft :: "'a transformation \<Rightarrow> 'a list" where
-  "toListLeft (Left small big)  = States.toListSmallFirst (big, small)"
-| "toListLeft (Right big small) = States.toListBigFirst (big, small)"
+fun listL :: "'a transformation \<Rightarrow> 'a list" where
+  "listL (Left small big)  = States.list_small_first (big, small)"
+| "listL (Right big small) = States.list_big_first (big, small)"
  
-fun toListRight :: "'a transformation \<Rightarrow> 'a list" where
-  "toListRight (Left small big)  = States.toListBigFirst (big, small)"
-| "toListRight (Right big small) = States.toListSmallFirst (big, small)"
+fun listR :: "'a transformation \<Rightarrow> 'a list" where
+  "listR (Left small big)  = States.list_big_first (big, small)"
+| "listR (Right big small) = States.list_small_first (big, small)"
 
-fun tick :: "'a transformation \<Rightarrow> 'a transformation" where
-  "tick (Left small big) = (case States.tick (big, small) of (big, small) \<Rightarrow> Left small big)"
-| "tick (Right big small) = (case States.tick (big, small) of (big, small) \<Rightarrow> Right big small)"  
+fun step :: "'a transformation \<Rightarrow> 'a transformation" where
+  "step (Left small big) = (case States.step (big, small) of (big, small) \<Rightarrow> Left small big)"
+| "step (Right big small) = (case States.step (big, small) of (big, small) \<Rightarrow> Right big small)"  
 
-abbreviation fourTicks where
-  "fourTicks \<equiv> tick^^4"
+abbreviation four_steps where
+  "four_steps \<equiv> step^^4"
 
-abbreviation sixTicks where
-  "sixTicks \<equiv> tick^^6"
+abbreviation six_steps where
+  "six_steps \<equiv> step^^6"
 
-fun invariant :: "'a transformation \<Rightarrow> bool" where
-  "invariant (Left small big)  \<longleftrightarrow> States.invariant (big, small)"
-| "invariant (Right big small) \<longleftrightarrow> States.invariant (big, small)"
+instantiation transformation::(type) invar
+begin
 
-fun isEmpty :: "'a transformation \<Rightarrow> bool" where
-  "isEmpty (Left small big)  \<longleftrightarrow> States.isEmpty (big, small)"
-| "isEmpty (Right big small) \<longleftrightarrow> States.isEmpty (big, small)"
+fun invar :: "'a transformation \<Rightarrow> bool" where
+  "invar (Left small big)  \<longleftrightarrow> States.invar (big, small)"
+| "invar (Right big small) \<longleftrightarrow> States.invar (big, small)"
 
-fun remainingSteps where
-  "remainingSteps (Left small big) = States.remainingSteps (big, small)"
-| "remainingSteps (Right big small) = States.remainingSteps (big, small)"
+instance..
+end
 
-fun inSizeWindow :: "'a transformation \<Rightarrow> bool" where
-  "inSizeWindow (Left small big) = States.inSizeWindow (big, small)"
-| "inSizeWindow (Right big small) = States.inSizeWindow (big, small)"
+instantiation transformation::(type) emptyable
+begin
 
-fun inSizeWindow' :: "'a transformation \<Rightarrow> nat \<Rightarrow> bool" where
-  "inSizeWindow' (Left small big) steps = States.inSizeWindow' (big, small) steps"
-| "inSizeWindow' (Right big small) steps = States.inSizeWindow' (big, small) steps"
+fun is_empty :: "'a transformation \<Rightarrow> bool" where
+  "is_empty (Left small big)  \<longleftrightarrow> States.is_empty (big, small)"
+| "is_empty (Right big small) \<longleftrightarrow> States.is_empty (big, small)"
+
+instance..
+end
+
+fun remaining_steps where
+  "remaining_steps (Left small big) = States.remaining_steps (big, small)"
+| "remaining_steps (Right big small) = States.remaining_steps (big, small)"
+
+fun size_ok :: "'a transformation \<Rightarrow> bool" where
+  "size_ok (Left small big) = States.size_ok (big, small)"
+| "size_ok (Right big small) = States.size_ok (big, small)"
+
+fun size_ok' :: "'a transformation \<Rightarrow> nat \<Rightarrow> bool" where
+  "size_ok' (Left small big) steps = States.size_ok' (big, small) steps"
+| "size_ok' (Right big small) steps = States.size_ok' (big, small) steps"
 
 end

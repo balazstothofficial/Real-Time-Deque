@@ -2,18 +2,18 @@ theory Common
   imports Current Idle ReverseN
 begin
 
-datatype 'a state = 
-     Copy "'a current" "'a list" "'a list" nat
+datatype (plugins del: size)'a state = 
+      Copy "'a current" "'a list" "'a list" nat
     | Idle "'a current" "'a idle"
 
-fun toList :: "'a state \<Rightarrow> 'a list" where
-  "toList (Idle _ idle) = Idle.toList idle"
-| "toList (Copy (Current extra _ _ remained) old new moved) 
+fun list :: "'a state \<Rightarrow> 'a list" where
+  "list (Idle _ idle) = Idle.list idle"
+| "list (Copy (Current extra _ _ remained) old new moved) 
    = extra @ reverseN (remained - moved) old new"
 
-fun toCurrentList :: "'a state \<Rightarrow> 'a list" where
-  "toCurrentList (Idle current _) = Current.toList current"
-| "toCurrentList (Copy current _ _ _) = Current.toList current"
+fun list_current :: "'a state \<Rightarrow> 'a list" where
+  "list_current (Idle current _) = Current.list current"
+| "list_current (Copy current _ _ _) = Current.list current"
 
 (* TODO: Maybe inline function? *)
 fun normalize :: "'a state \<Rightarrow> 'a state" where
@@ -25,9 +25,9 @@ fun normalize :: "'a state \<Rightarrow> 'a state" where
   )"
 | "normalize state = state"
 
-fun tick :: "'a state \<Rightarrow> 'a state" where
-  "tick (Idle current idle) = Idle current idle"
-| "tick (Copy current aux new moved) = (
+fun step :: "'a state \<Rightarrow> 'a state" where
+  "step (Idle current idle) = Idle current idle"
+| "step (Copy current aux new moved) = (
     case current of Current _ _ _ remained \<Rightarrow>
       normalize (
         if moved < remained
@@ -46,38 +46,55 @@ fun pop :: "'a state \<Rightarrow> 'a * 'a state" where
 | "pop (Copy current aux new moved) = 
       (top current, normalize (Copy (bottom current) aux new moved))"
 
-fun isEmpty :: "'a state \<Rightarrow> bool" where
-  "isEmpty (Idle current idle)  \<longleftrightarrow> Current.isEmpty current \<or> Idle.isEmpty idle"
-| "isEmpty (Copy current _ _ _) \<longleftrightarrow> Current.isEmpty current"
+instantiation state ::(type) emptyable
+begin
 
-fun invariant :: "'a state \<Rightarrow> bool" where
-  "invariant (Idle current idle) \<longleftrightarrow>
-      Idle.invariant idle 
-    \<and> Current.invariant current 
-    \<and> Current.newSize current = Idle.size idle
-    \<and> take (Idle.size idle) (Current.toList current) = 
-      take (Current.size current) (Idle.toList idle)"
-| "invariant (Copy current aux new moved) \<longleftrightarrow> (
+fun is_empty :: "'a state \<Rightarrow> bool" where
+  "is_empty (Idle current idle)  \<longleftrightarrow> Current.is_empty current \<or> Idle.is_empty idle"
+| "is_empty (Copy current _ _ _) \<longleftrightarrow> Current.is_empty current"
+
+instance..
+end
+
+instantiation state::(type) invar
+begin
+
+fun invar :: "'a state \<Rightarrow> bool" where
+  "invar (Idle current idle) \<longleftrightarrow>
+      Idle.invar idle 
+    \<and> Current.invar current 
+    \<and> size_new current = size idle
+    \<and> take (size idle) (Current.list current) = 
+      take (Current.size current) (Idle.list idle)"
+| "invar (Copy current aux new moved) \<longleftrightarrow> (
     case current of Current _ _ old remained \<Rightarrow>
       moved < remained
-    \<and> moved = List.length new
-    \<and> remained \<le> List.length aux + moved
-    \<and> Current.invariant current
-    \<and> take remained (Stack.toList old) = take (Stack.size old) (reverseN (remained - moved) aux new)
+    \<and> moved = length new
+    \<and> remained \<le> length aux + moved
+    \<and> Current.invar current
+    \<and> take remained (Stack.list old) = take (Stack.size old) (reverseN (remained - moved) aux new)
  )"
 
-fun remainingSteps :: "'a state \<Rightarrow> nat" where
-  "remainingSteps (Idle _ _) = 0"
-| "remainingSteps (Copy (Current _ _ _ remained) aux new moved) = remained - moved"
+instance..
+end
 
+instantiation state::(type) size
+begin
 
 (* Use size for emptiness? *)
 fun size :: "'a state \<Rightarrow> nat" where
   "size (Idle current idle) = min (Current.size current) (Idle.size idle)"
-| "size (Copy current _ _ _) = min (Current.size current) (Current.newSize current)"
+| "size (Copy current _ _ _) = min (Current.size current) (Current.size_new current)"
 
-fun newSize :: "'a state \<Rightarrow> nat" where
-  "newSize (Idle current _) = Current.newSize current"
-| "newSize (Copy current _ _ _) = Current.newSize current"
+instance..
+end
+
+fun size_new :: "'a state \<Rightarrow> nat" where
+  "size_new (Idle current _) = Current.size_new current"
+| "size_new (Copy current _ _ _) = Current.size_new current"
+
+fun remaining_steps :: "'a state \<Rightarrow> nat" where
+  "remaining_steps (Idle _ _) = 0"
+| "remaining_steps (Copy (Current _ _ _ remained) aux new moved) = remained - moved"
 
 end
