@@ -1,5 +1,5 @@
 theory RealTimeDeque
-  imports Transformation
+  imports Transforming
 begin
 
 datatype 'a deque =
@@ -8,7 +8,7 @@ datatype 'a deque =
   | Two 'a 'a
   | Three 'a 'a 'a 
   | Idle "'a idle" "'a idle"
-  | Transforming "'a transformation"
+  | Transforming "'a states"
 
 definition empty where
   "empty \<equiv> Empty"
@@ -64,32 +64,32 @@ fun deqL' :: "'a deque \<Rightarrow> 'a * 'a deque" where
       let left  = Reverse1 (Current [] 0 left newLeftLength) left [] in
       let right = Reverse (Current [] 0 right newRightLength) right [] newRightLength in
 
-      let transformation = Left left right in
-      let transformation = six_steps transformation in
+      let states = Left left right in
+      let states = six_steps states in
       
-      (x, Transforming transformation)
+      (x, Transforming states)
     else 
       case right of Stack r1 r2 \<Rightarrow> (x, small_deque r1 r2)
   )"
 | "deqL' (Transforming (Left left right)) = (
     let (x, left) = Small.pop left in 
-    let transformation = four_steps (Left left right) in
-    case transformation of 
+    let states = four_steps (Left left right) in
+    case states of 
         Left 
           (Small.Common (Common.Idle _ left)) 
           (Big.Common (Common.Idle _ right)) \<Rightarrow>
             (x, Idle left right)
-     | _ \<Rightarrow> (x, Transforming transformation)
+     | _ \<Rightarrow> (x, Transforming states)
   )"
 | "deqL' (Transforming (Right left right)) = (
     let (x, left) = Big.pop left in 
-    let transformation = four_steps (Right left right) in
-    case transformation of 
+    let states = four_steps (Right left right) in
+    case states of 
         Right 
           (Big.Common (Common.Idle _ left)) 
           (Small.Common (Common.Idle _ right)) \<Rightarrow>
             (x, Idle left right)
-     | _ \<Rightarrow> (x, Transforming transformation)
+     | _ \<Rightarrow> (x, Transforming states)
   )"
 
 fun deqR' :: "'a deque \<Rightarrow> 'a * 'a deque" where
@@ -127,28 +127,28 @@ fun enqL :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
         let left  = Reverse  (Current [] 0 left newLeftLength) left [] newLeftLength in
         let right = Reverse1 (Current [] 0 right newRightLength) right [] in
   
-        let transformation = Right left right in
-        let transformation = six_steps transformation in
+        let states = Right left right in
+        let states = six_steps states in
         
-        Transforming transformation
+        Transforming states
   )"
 | "enqL x (Transforming (Left left right)) = (
     let left = Small.push x left in 
-    let transformation = four_steps (Left left right) in
-    case transformation of 
+    let states = four_steps (Left left right) in
+    case states of 
         Left 
           (Small.Common (Common.Idle _ left)) 
           (Big.Common (Common.Idle _ right)) \<Rightarrow> Idle left right
-     | _ \<Rightarrow> Transforming transformation
+     | _ \<Rightarrow> Transforming states
   )"
 | "enqL x (Transforming (Right left right)) = (
     let left = Big.push x left in 
-    let transformation = four_steps (Right left right) in
-    case transformation of 
+    let states = four_steps (Right left right) in
+    case states of 
         Right 
           (Big.Common (Common.Idle _ left)) 
           (Small.Common (Common.Idle _ right)) \<Rightarrow> Idle left right
-     | _ \<Rightarrow> Transforming transformation
+     | _ \<Rightarrow> Transforming states
   )"
 
 fun enqR :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
@@ -163,15 +163,10 @@ fun listL :: "'a deque \<Rightarrow> 'a list" where
 | "listL (Two x y) = [x, y]"
 | "listL (Three x y z) = [x, y, z]"
 | "listL (Idle left right) = Idle.list left @ (rev (Idle.list right))"
-| "listL (Transforming transformation) = Transformation.listL transformation"
+| "listL (Transforming states) = Transforming.listL states"
 
-fun listR :: "'a deque \<Rightarrow> 'a list" where
-  "listR Empty = []"
-| "listR (One x) = [x]"
-| "listR (Two x y) = [y, x]"
-| "listR (Three x y z) = [z, y, x]"
-| "listR (Idle left right) = Idle.list right @ (rev (Idle.list left))"
-| "listR (Transforming transformation) = Transformation.listR transformation"
+abbreviation listR :: "'a deque \<Rightarrow> 'a list" where
+  "listR deque \<equiv> rev (listL deque)"
 
 instantiation deque::(type) invar
 begin
@@ -189,10 +184,10 @@ fun invar :: "'a deque \<Rightarrow> bool" where
    3 * Idle.size right \<ge> Idle.size left \<and>
    3 * Idle.size left \<ge> Idle.size right
   "
-| "invar (Transforming transformation) \<longleftrightarrow> 
-   Transformation.invar transformation \<and>
-   size_ok transformation \<and>
-   0 < remaining_steps transformation
+| "invar (Transforming states) \<longleftrightarrow> 
+   Transforming.invar states \<and>
+   size_ok states \<and>
+   0 < remaining_steps states
   "
 
 instance..
