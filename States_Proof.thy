@@ -81,7 +81,7 @@ proof(induction "(Big.push x big, small)" rule: lists.induct)
   next
     case (2 x current big aux count)
     then show ?case 
-      apply(induction x current rule: put.induct)
+      apply(induction x current rule: Current.push.induct)
       by auto
   qed
 next
@@ -123,12 +123,12 @@ next
   next
     case (2 x current small auxS)
     then show ?case 
-      apply(induction x current rule: put.induct)
+      apply(induction x current rule: Current.push.induct)
       by auto
   next
     case (3 x current auxS big newS count)
     then show ?case 
-      apply(induction x current rule: put.induct)
+      apply(induction x current rule: Current.push.induct)
       by auto
   qed
 next
@@ -145,7 +145,7 @@ next
   next
     case (3 x current auxS big newS count)
     then show ?case 
-      apply(induction x current rule: put.induct)
+      apply(induction x current rule: Current.push.induct)
       by auto
   qed
 next
@@ -188,7 +188,7 @@ lemma invar_pop_big_size_2_1_1: "\<lbrakk>
 proof(induction "(big, small)" rule: lists.induct)
   case (1 currentB big auxB count currentS small auxS)
   then show ?case 
-  proof(induction currentB rule: get.induct)
+  proof(induction currentB rule: Current.pop.induct)
     case (1 added old remained)
     then show ?case
     proof(induction  "(Reverse2 currentS (drop (List.length (Stack.list small) - count) (rev (Stack.list small)) @ auxS) ((Stack.pop ^^ count) big) [] 0)" rule: Small.list.induct)
@@ -292,7 +292,7 @@ lemma invar_pop_small_size_2_1: "\<lbrakk>
 proof(induction "(big, small)" rule: lists.induct)
   case (1 currentB big auxB count currentS small auxS)
   then show ?case 
-  proof(induction currentS rule: get.induct)
+  proof(induction currentS rule: Current.pop.induct)
     case (1 added old remained)
     then show ?case 
       apply(auto simp: popN_drop popN_size reverseN_drop rev_drop)
@@ -310,7 +310,7 @@ next
   next
     case (Reverse2 x1 x2 x3a x4 x5)
     then show ?case 
-    proof(induction x1 rule: get.induct)
+    proof(induction x1 rule: Current.pop.induct)
       case (1 added old remained)
       then show ?case 
         apply(auto simp: reverseN_take)
@@ -325,7 +325,7 @@ next
     proof(induction common rule: Common.pop.induct)
       case (1 current idle)
       then show ?case 
-      proof(induction current rule: get.induct)
+      proof(induction current rule: Current.pop.induct)
         case (1 added old remained)
        
   
@@ -344,7 +344,7 @@ next
     next
       case (2 current aux new moved)
       then show ?case 
-      proof(induction current rule: get.induct)
+      proof(induction current rule: Current.pop.induct)
         case (1 added old remained)
         then show ?case 
           apply(auto simp: reverseN_drop)
@@ -359,7 +359,7 @@ next
 next
   case ("2_2" current auxS big newS count)
   then show ?case 
-  proof(induction current rule: get.induct)
+  proof(induction current rule: Current.pop.induct)
     case (1 added old remained)
     then show ?case 
       apply(auto simp: reverseN_drop) 
@@ -377,7 +377,7 @@ next
     proof(induction idle rule: Idle.pop.induct)
       case (1 stack stackSize)
       then show ?case 
-      proof(induction current rule: get.induct)
+      proof(induction current rule: Current.pop.induct)
         case (1 added old remained)
         then show ?case 
           apply(auto split: Big.state.splits)
@@ -392,7 +392,7 @@ next
   next
     case (2 current aux new moved)
     then show ?case 
-    proof(induction current rule: get.induct)
+    proof(induction current rule: Current.pop.induct)
       case (1 added old remained)
       then show ?case 
         apply(auto simp: reverseN_take split: Big.state.splits)
@@ -439,7 +439,7 @@ proof(induction small rule: Small.pop.induct)
 next
   case (2 current small auxS)
   then show ?case 
-  proof(induction current rule: get.induct)
+  proof(induction current rule: Current.pop.induct)
     case (1 added old remained)
     then show ?case 
       by(auto simp: Stack_Proof.size_pop Stack_Proof.size_not_empty split: Big.state.splits)
@@ -471,7 +471,7 @@ proof(induction x big arbitrary: small rule: Big.push.induct)
   proof(induction x state rule: Common.push.induct)
     case (1 x current stack stackSize)
     then show ?case 
-    proof(induction x current rule: put.induct)
+    proof(induction x current rule: Current.push.induct)
       case (1 x extra added old remained)
       then show ?case 
         apply(induction x stack rule: Stack.push.induct)
@@ -480,13 +480,13 @@ proof(induction x big arbitrary: small rule: Big.push.induct)
   next
     case (2 x current aux new moved)
     then show ?case 
-      apply(induction x current rule: put.induct)
+      apply(induction x current rule: Current.push.induct)
       by auto
   qed
 next
   case (2 x current big aux count)
   then show ?case
-  proof(induction x current rule: put.induct)
+  proof(induction x current rule: Current.push.induct)
     case (1 x extra added old remained)
     then show ?case
       by(auto split: prod.splits Small.state.splits)
@@ -500,7 +500,7 @@ proof(induction x small arbitrary: big rule: Small.push.induct)
   proof(induction x state rule: Common.push.induct)
     case (1 x current stack stackSize)
     then show ?case 
-    proof(induction x current rule: put.induct)
+    proof(induction x current rule: Current.push.induct)
       case (1 x extra added old remained)
       then show ?case 
         apply(induction x stack rule: Stack.push.induct)
@@ -509,7 +509,7 @@ proof(induction x small arbitrary: big rule: Small.push.induct)
   next
     case (2 x current aux new moved)
     then show ?case 
-      proof(induction x current rule: put.induct)
+      proof(induction x current rule: Current.push.induct)
         case (1 x extra added old remained)
         then show ?case 
           by(auto split: state_splits)
@@ -518,7 +518,7 @@ proof(induction x small arbitrary: big rule: Small.push.induct)
 next
   case (2 x current small auxS)
   then show ?case
-   proof(induction x current rule: put.induct)
+   proof(induction x current rule: Current.push.induct)
      case (1 x extra added old remained)
      then show ?case 
        by(auto split: state_splits)
@@ -526,7 +526,7 @@ next
 next
   case (3 x current auxS big newS count)
   then show ?case 
-  proof(induction x current rule: put.induct)
+  proof(induction x current rule: Current.push.induct)
     case (1 x extra added old remained)
     then show ?case
       by(auto split: state_splits)
@@ -1069,14 +1069,14 @@ proof(induction x small rule: Small.push.induct)
 next
   case (2 x current small auxS)
   then show ?case 
-  proof(induction x current rule: put.induct)
+  proof(induction x current rule: Current.push.induct)
     case (1 x extra added old remained)
     then show ?case by auto
   qed
 next
   case (3 x current auxS big newS count)
   then show ?case
-  proof(induction x current rule: put.induct)
+  proof(induction x current rule: Current.push.induct)
     case (1 x extra added old remained)
     then show ?case by auto
   qed
@@ -1094,7 +1094,7 @@ proof(induction small rule: Small.pop.induct)
 next
   case (2 current small auxS)
   then show ?case
-  proof(induction current rule: get.induct)
+  proof(induction current rule: Current.pop.induct)
     case (1 added old remained)
     then show ?case 
       by(auto split: Big.state.splits) 
@@ -1105,7 +1105,7 @@ next
 next
   case (3 current auxS big newS count)
   then show ?case 
-  proof(induction current rule: get.induct)
+  proof(induction current rule: Current.pop.induct)
     case (1 added old remained)
     then show ?case by auto
   next
@@ -1128,7 +1128,7 @@ proof(induction big rule: Big.pop.induct)
     proof(induction idle rule: Idle.pop.induct)
       case (1 stack stackSize)
       then show ?case 
-      proof(induction current rule: get.induct)
+      proof(induction current rule: Current.pop.induct)
         case (1 added old remained)
         then show ?case by(auto split: Small.state.splits)
       next
@@ -1139,7 +1139,7 @@ proof(induction big rule: Big.pop.induct)
   next
     case (2 current aux new moved)
     then show ?case 
-    proof(induction current rule: get.induct)
+    proof(induction current rule: Current.pop.induct)
       case (1 added old remained)
       then show ?case by(auto split: Small.state.splits)
     next
@@ -1150,7 +1150,7 @@ proof(induction big rule: Big.pop.induct)
 next
   case (2 current big aux count)
   then show ?case
-  proof(induction current rule: get.induct)
+  proof(induction current rule: Current.pop.induct)
     case (1 added old remained)
     then show ?case by(auto split: Small.state.splits current.splits)
   next
@@ -1169,7 +1169,7 @@ proof(induction x big rule: Big.push.induct)
 next
   case (2 x current big aux count)
   then show ?case
-  proof(induction current rule: put.induct)
+  proof(induction current rule: Current.push.induct)
     case (1 x extra added old remained)
     then show ?case 
       apply(auto split: Small.state.splits)

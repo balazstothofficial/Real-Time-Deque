@@ -44,7 +44,7 @@ next
 
 
       from Current have a: "rev aux @ Stack.list small =
-         rev (take (List.length aux + List.length (Stack.list small) - (List.length (Stack.list small) - Suc 0)) (first small # aux)) @
+         rev (take (List.length aux + List.length (Stack.list small) - (List.length (Stack.list small) - Suc 0)) (Stack.first small # aux)) @
          tl (Stack.list small)"
         apply(auto simp: not_empty split: if_splits)
         by (smt (verit, ccfv_threshold) Nat.add_diff_assoc One_nat_def append_Cons append_eq_append_conv2 diff_add_inverse diff_le_self first_pop length_tl list.sel(3) list.size(4) nat_le_linear rev.simps(2) self_append_conv2 take_all list_empty)
@@ -53,7 +53,7 @@ next
       x = Stack.list small \<Longrightarrow>
      Stack.size old \<le> Suc (Stack.size (Stack.pop small) + List.length aux) \<and>
      rev (take (Stack.size old - List.length (Stack.list small)) aux) @ Stack.list small =
-     rev (take (Stack.size old - List.length (Stack.list (Stack.pop small))) (first small # aux)) @
+     rev (take (Stack.size old - List.length (Stack.list (Stack.pop small))) (Stack.first small # aux)) @
      rev (take (Stack.size old) (rev (Stack.list (Stack.pop small))));
 
      a # x = Stack.list small; 
@@ -64,15 +64,15 @@ next
      \<not> List.length aux \<le> Stack.size old - List.length (Stack.list small); 
      aux \<noteq> []; 
       List.length (Stack.list small) \<le> Stack.size old
-    \<rbrakk>  \<Longrightarrow>  rev (take (Stack.size old - (List.length (Stack.list small) - Suc 0)) (first small # aux)) = 
-            rev (take (Stack.size old - List.length (Stack.list small)) aux) @ [first small]"
+    \<rbrakk>  \<Longrightarrow>  rev (take (Stack.size old - (List.length (Stack.list small) - Suc 0)) (Stack.first small # aux)) = 
+            rev (take (Stack.size old - List.length (Stack.list small)) aux) @ [Stack.first small]"
         by (metis One_nat_def Suc_diff_eq_diff_pred Suc_diff_le length_greater_0_conv list.distinct(1) rev.simps(2) take_Suc_Cons)
 
        
     from Current have "
      rev (take (List.length (Stack.list old) - List.length (Stack.list small)) aux) @
      rev (take (List.length (Stack.list old)) (rev (Stack.list small))) =
-         rev (take (List.length (Stack.list old) - (List.length (Stack.list small) - Suc 0)) (first small # aux)) @
+         rev (take (List.length (Stack.list old) - (List.length (Stack.list small) - Suc 0)) (Stack.first small # aux)) @
          rev (take (List.length (Stack.list old)) (rev (tl (Stack.list small))))"
       apply(auto simp: min_def)
       apply (smt (verit, ccfv_threshold) One_nat_def Stack_Proof.pop_list Suc_diff_eq_diff_pred Suc_diff_le append_Cons append_eq_append_conv2 append_self_conv diff_is_0_eq first_pop length_greater_0_conv length_tl list.size(3) rev_is_Nil_conv rev_singleton_conv Stack_Proof.size_list_length take_all take_eq_Nil tl_Nil list_empty)
@@ -138,7 +138,7 @@ case (1 state)
 next
   case (2 current small auxS)
   then show ?case 
-  proof(induction current rule: get.induct)
+  proof(induction current rule: Current.pop.induct)
     case (1 added old remained)
     then show ?case 
       apply(auto)
@@ -152,7 +152,7 @@ next
 next
   case (3 current auxS big newS count)
   then show ?case
-  proof(induction current rule: get.induct)
+  proof(induction current rule: Current.pop.induct)
     case (1 added old remained)
     then show ?case 
       apply auto 
@@ -169,7 +169,7 @@ lemma push_list_common: "small = Common common \<Longrightarrow> list (push x sm
 
 lemma push_list_reverse2: "small = (Reverse2 current auxS big newS count)
   \<Longrightarrow> list (push x small) = x # list small"
-proof(induction x current rule: put.induct)
+proof(induction x current rule: Current.push.induct)
   case (1 x extra added old remained)
   then show ?case by auto
 qed
@@ -181,7 +181,7 @@ lemma pop_list_reverse2: "\<lbrakk>
   invar small; 
   pop small = (x, small')
 \<rbrakk> \<Longrightarrow> x # list small' = list small"
-proof(induction current arbitrary: x rule: get.induct)
+proof(induction current arbitrary: x rule: Current.pop.induct)
   case (1 added old remained)
   then show ?case 
     apply(auto simp: reverseN_take)
@@ -193,7 +193,7 @@ qed
 
 lemma push_list_current: "list_current (push x small) = x # list_current small"
   apply(induction x small rule: push.induct)
-  by(auto simp: push_list_current put_list)
+  by(auto simp: push_list_current Current_Proof.push_list)
 
 lemma pop_list_current: "invar small \<Longrightarrow> 0 < size small \<Longrightarrow> pop small = (x, small')
   \<Longrightarrow> x # list_current small' = list_current small"
@@ -203,7 +203,7 @@ proof(induction small arbitrary: x rule: pop.induct)
 next
   case (2 current small auxS)
   then show ?case 
-  proof(induction current rule: get.induct)
+  proof(induction current rule: Current.pop.induct)
     case (1 added old remained)
     then show ?case 
       apply auto
@@ -215,7 +215,7 @@ next
 next
   case (3 current auxS big newS count)
   then show ?case 
-  proof(induction current rule: get.induct)
+  proof(induction current rule: Current.pop.induct)
     case (1 added old remained)
     then show ?case 
       by(auto simp: first_pop Stack_Proof.size_not_empty)
@@ -247,11 +247,11 @@ proof(induction x small rule: push.induct)
 next
   case (2 x current small auxS)
   then show ?case 
-    by(auto simp: size_put split: current.splits)
+    by(auto simp: size_push split: current.splits)
 next
   case (3 x current auxS big newS count)
   then show ?case 
-    by(auto simp: size_put split: current.splits)
+    by(auto simp: size_push split: current.splits)
 qed
 
 lemma size_new_push: "invar small \<Longrightarrow> Suc (size_new small) = size_new (push x small)"
@@ -262,11 +262,11 @@ proof(induction x small rule: push.induct)
 next
   case (2 x current small auxS)
   then show ?case 
-    by(auto simp: size_put split: current.splits)
+    by(auto simp: size_push split: current.splits)
 next
   case (3 x current auxS big newS count)
   then show ?case 
-    by(auto simp: size_put split: current.splits)
+    by(auto simp: size_push split: current.splits)
 qed
 
 lemma size_pop: "\<lbrakk>invar small; 0 < size small; pop small = (x, small')\<rbrakk>
@@ -278,12 +278,12 @@ proof(induction small rule: pop.induct)
 next
   case (2 current small auxS)
   then show ?case
-    using size_get[of current] apply(induction current rule: get.induct)
+    using Current_Proof.size_pop[of current] apply(induction current rule: Current.pop.induct)
     by auto
 next
   case (3 current auxS big newS count)
   then show ?case 
-    using size_get[of current] apply(induction current rule: get.induct)
+    using Current_Proof.size_pop[of current] apply(induction current rule: Current.pop.induct)
     by auto
 qed
 
@@ -296,11 +296,11 @@ proof(induction small rule: pop.induct)
 next
   case (2 current small auxS)
   then show ?case 
-  by(induction current rule: get.induct) auto
+  by(induction current rule: Current.pop.induct) auto
 next
   case (3 current auxS big newS count)
   then show ?case 
-    by(induction current rule: get.induct) auto
+    by(induction current rule: Current.pop.induct) auto
 qed
 
 lemma size_size_new: "\<lbrakk>invar small; 0 < size small\<rbrakk> \<Longrightarrow> 0 < size_new small"

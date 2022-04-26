@@ -21,15 +21,15 @@ fun step :: "'a state \<Rightarrow> 'a state" where
   "step (Common state) = Common (Common.step state)"
 | "step (Reverse current _ aux 0) = Common (normalize (Copy current aux [] 0))"
 | "step (Reverse current big aux count) = 
-     Reverse current (Stack.pop big) ((first big)#aux) (count - 1)"
+     Reverse current (Stack.pop big) ((Stack.first big)#aux) (count - 1)"
 
 fun push :: "'a \<Rightarrow> 'a state \<Rightarrow> 'a state" where
   "push x (Common state) = Common (Common.push x state)"
-| "push x (Reverse current big aux count) = Reverse (put x current) big aux count"
+| "push x (Reverse current big aux count) = Reverse (Current.push x current) big aux count"
 
 fun pop :: "'a state \<Rightarrow> 'a * 'a state" where
   "pop (Common state) = (let (x, state) = Common.pop state in (x, Common state))"
-| "pop (Reverse current big aux count) = (top current, Reverse (bottom current) big aux count)"
+| "pop (Reverse current big aux count) = (first current, Reverse (drop_first current) big aux count)"
 
 instantiation state ::(type) emptyable
 begin

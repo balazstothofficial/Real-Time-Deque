@@ -38,13 +38,13 @@ fun step :: "'a state \<Rightarrow> 'a state" where
 
 fun push :: "'a \<Rightarrow> 'a state \<Rightarrow> 'a state" where
   "push x (Idle current (idle.Idle stack stackSize)) = 
-      Idle (put x current) (idle.Idle (Stack.push x stack) (Suc stackSize))"
-| "push x (Copy current aux new moved) = Copy (put x current) aux new moved"
+      Idle (Current.push x current) (idle.Idle (Stack.push x stack) (Suc stackSize))"
+| "push x (Copy current aux new moved) = Copy (Current.push x current) aux new moved"
 
 fun pop :: "'a state \<Rightarrow> 'a * 'a state" where
-  "pop (Idle current idle) = (let (x, idle) = Idle.pop idle in (x, Idle (bottom current) idle))"
+  "pop (Idle current idle) = (let (x, idle) = Idle.pop idle in (x, Idle (drop_first current) idle))"
 | "pop (Copy current aux new moved) = 
-      (top current, normalize (Copy (bottom current) aux new moved))"
+      (first current, normalize (Copy (drop_first current) aux new moved))"
 
 instantiation state ::(type) emptyable
 begin

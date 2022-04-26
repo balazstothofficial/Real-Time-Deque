@@ -431,7 +431,8 @@ next
       using invar step_n_left_size_new_big by blast
 
     have size_new_left: "Suc (Small.size_new newLeft) = Small.size_new left"
-      by (metis left_not_empty funpow_0 step_n_pop_size_new_small states_invar popped)
+      using left_not_empty step_n_pop_size_new_small states_invar popped 
+      by (metis "5.prems"(1) RealTimeDeque.invar.simps(6) Transforming.invar.simps(1) funpow_0)
 
     with stepped invar_four_steps 
     have size_new_stepped_left: "Small.size_new newLeft = Small.size_new steppedL"
@@ -658,7 +659,8 @@ next
       by blast
 
     have size_new_left: "Suc (Big.size_new newLeft) = Big.size_new left"
-      by (metis left_not_empty funpow_0 step_n_pop_size_new_big states_invar popped)
+      using left_not_empty funpow_0 step_n_pop_size_new_big states_invar popped
+      by (metis "6.prems"(1) RealTimeDeque.invar.simps(6) Transforming.invar.simps(2))
 
     with stepped invar_four_steps
     have size_new_steppedL: "Big.size_new newLeft = Big.size_new steppedL"

@@ -20,14 +20,14 @@ proof(induction x big rule: push.induct)
 next
   case (2 x current big aux count)
   then show ?case
-    apply(induction x current rule: put.induct)
+    apply(induction x current rule: Current.push.induct)
     by auto
 qed
 
 (* TODO: *)
 lemma helper_size: "0 < size (Reverse current big aux count) \<Longrightarrow> invar (Reverse current big aux count) \<Longrightarrow> 
-    top current = hd (list (Reverse current big aux count))"
-proof(induction current rule: get.induct)
+    first current = hd (list (Reverse current big aux count))"
+proof(induction current rule: Current.pop.induct)
   case (1 added old remained)
   then show ?case 
     apply(auto simp: reverseN_take rev_take)
@@ -39,8 +39,8 @@ next
 qed
 
 lemma helper_2_size: "0 < size (Reverse current big aux count) \<Longrightarrow> invar (Reverse current big aux count) \<Longrightarrow> 
-    list (Reverse (bottom current) big aux count) = tl (list (Reverse current big aux count))"
-proof(induction current rule: get.induct)
+    list (Reverse (drop_first current) big aux count) = tl (list (Reverse current big aux count))"
+proof(induction current rule: Current.pop.induct)
   case (1 added old remained)
   then have "
          drop (Suc (length (Stack.list big) + length aux) - (length (Stack.list big) - count + remained)) (rev aux) =
@@ -96,11 +96,11 @@ next
     by (metis length_rev length_take min.absorb2 Stack_Proof.size_list_length take_append take_take)
 next
   case (3 current big aux count)
-  then have a: "rev (Stack.list big) @ aux = rev (Stack.list (Stack.pop big)) @ first big # aux"
+  then have a: "rev (Stack.list big) @ aux = rev (Stack.list (Stack.pop big)) @ Stack.first big # aux"
     apply(auto split: current.splits)
     by (metis Zero_not_Suc bot_nat_0.extremum_uniqueI first_pop list.size(3) rev.simps(2) Stack_Proof.size_list_length Stack_Proof.list_not_empty)
 
-  from 3 have b: "reverseN (Suc count) (Stack.list big) aux = reverseN count (Stack.list (Stack.pop big)) (first big # aux)"
+  from 3 have b: "reverseN (Suc count) (Stack.list big) aux = reverseN count (Stack.list (Stack.pop big)) (Stack.first big # aux)"
     apply(auto simp: reverseN_take split: current.splits)
     by (metis Stack_Proof.size_empty Zero_not_Suc bot_nat_0.extremum_uniqueI first_pop rev.simps(2) take_Suc_Cons)
 
@@ -125,7 +125,7 @@ proof(induction big arbitrary: x rule: pop.induct)
 next
   case (2 current big aux count)
   then show ?case 
-  proof(induction current rule: get.induct)
+  proof(induction current rule: Current.pop.induct)
     case (1 added old remained)
     have a: "Stack.list (Stack.pop old) = tl (Stack.list old)"
       apply(induction old rule: Stack.pop.induct)
@@ -183,7 +183,7 @@ qed
 
 lemma push_list_current: "list_current (push x big) = x # list_current big"
   apply(induction x big rule: push.induct)
-  by(auto simp: push_list_current put_list)
+  by(auto simp: push_list_current Current_Proof.push_list)
 
 lemma pop_list_current: "invar big \<Longrightarrow> 0 < size big \<Longrightarrow> pop big = (x, big') \<Longrightarrow> x # list_current big' = list_current big"
 proof(induction big arbitrary: x rule: pop.induct)
@@ -194,7 +194,7 @@ next
   case (2 current big aux count)
   
   then show ?case 
-  proof(induction current rule: get.induct)
+  proof(induction current rule: Current.pop.induct)
     case (1 added old remained)
     then show ?case
       apply auto
@@ -242,7 +242,7 @@ proof(induction x big rule: push.induct)
 next
   case (2 x current big aux count)
   then show ?case
-  proof(induction current rule: put.induct)
+  proof(induction current rule: Current.push.induct)
     case (1 x extra added old remained)
     then show ?case 
       by auto
@@ -258,7 +258,7 @@ proof(induction big rule: pop.induct)
 next
   case (2 current big aux count)
   then show ?case 
-  proof(induction current rule: get.induct)
+  proof(induction current rule: Current.pop.induct)
     case (1 added old remained)
     then show ?case by auto
   next
@@ -275,7 +275,7 @@ proof(induction x big rule: push.induct)
 next
   case (2 x current small auxS)
   then show ?case 
-    by(auto simp: size_put split: current.splits)
+    by(auto simp: size_push split: current.splits)
 qed
 
 lemma size_new_push: "invar big \<Longrightarrow> Suc (size_new big) = size_new (push x big)"
@@ -286,7 +286,7 @@ proof(induction x big rule: Big.push.induct)
 next
   case (2 x current small auxS)
   then show ?case 
-    by(auto simp: size_put split: current.splits)
+    by(auto simp: size_push split: current.splits)
 qed
 
 lemma size_pop: "\<lbrakk>invar big; 0 < size big; pop big = (x, big')\<rbrakk>
@@ -297,7 +297,7 @@ proof(induction big rule: pop.induct)
 next
   case (2 current big aux count)
   then show ?case
-    using size_get[of current] apply(induction current rule: get.induct)
+    using Current_Proof.size_pop[of current] apply(induction current rule: Current.pop.induct)
     by auto
 qed
 
@@ -310,7 +310,7 @@ proof(induction big rule: pop.induct)
 next
   case (2 current big aux count)
   then show ?case
-    by(induction current rule: get.induct) auto
+    by(induction current rule: Current.pop.induct) auto
 qed
 
 lemma size_size_new: "\<lbrakk>invar big; 0 < size big\<rbrakk> \<Longrightarrow> 0 < size_new big"

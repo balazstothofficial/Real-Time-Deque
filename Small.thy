@@ -22,18 +22,19 @@ fun step :: "'a state \<Rightarrow> 'a state" where
 | "step (Reverse1 current small auxS) = (
     if Stack.is_empty small 
     then Reverse1 current small auxS 
-    else Reverse1 current (Stack.pop small) ((first small)#auxS)
+    else Reverse1 current (Stack.pop small) ((Stack.first small)#auxS)
   )"
 | "step (Reverse2 current auxS big newS count) = (
     if Stack.is_empty big
     then Common (normalize (Copy current auxS newS count))
-    else Reverse2 current auxS (Stack.pop big) ((first big)#newS) (count + 1)
+    else Reverse2 current auxS (Stack.pop big) ((Stack.first big)#newS) (count + 1)
   )"
 
 fun push :: "'a \<Rightarrow> 'a state \<Rightarrow> 'a state" where
   "push x (Common state) = Common (Common.push x state)"
-| "push x (Reverse1 current small auxS) = Reverse1 (put x current) small auxS"
-| "push x (Reverse2 current auxS big newS count) = Reverse2 (put x current) auxS big newS count"
+| "push x (Reverse1 current small auxS) = Reverse1 (Current.push x current) small auxS"
+| "push x (Reverse2 current auxS big newS count) = 
+    Reverse2 (Current.push x current) auxS big newS count"
 
 fun pop :: "'a state \<Rightarrow> 'a * 'a state" where
   "pop (Common state) = (
@@ -41,9 +42,9 @@ fun pop :: "'a state \<Rightarrow> 'a * 'a state" where
     in (x, Common state)
   )"
 | "pop (Reverse1 current small auxS) = 
-    (top current, Reverse1 (bottom current) small auxS)"
+    (first current, Reverse1 (drop_first current) small auxS)"
 | "pop (Reverse2 current auxS big newS count) = 
-    (top current, Reverse2 (bottom current) auxS big newS count)"
+    (first current, Reverse2 (drop_first current) auxS big newS count)"
 
 instantiation state::(type) emptyable
 begin
