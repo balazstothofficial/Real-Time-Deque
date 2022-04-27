@@ -25,7 +25,11 @@ fun normalize :: "'a state \<Rightarrow> 'a state" where
   )"
 | "normalize state = state"
 
-fun step :: "'a state \<Rightarrow> 'a state" where
+
+instantiation state ::(type) step
+begin
+
+fun step_state :: "'a state \<Rightarrow> 'a state" where
   "step (Idle current idle) = Idle current idle"
 | "step (Copy current aux new moved) = (
     case current of Current _ _ _ remained \<Rightarrow>
@@ -35,6 +39,9 @@ fun step :: "'a state \<Rightarrow> 'a state" where
         else Copy current aux new moved
       )
   )"
+
+instance..
+end
 
 fun push :: "'a \<Rightarrow> 'a state \<Rightarrow> 'a state" where
   "push x (Idle current (idle.Idle stack stackSize)) = 
@@ -84,17 +91,29 @@ begin
 (* Use size for emptiness? *)
 fun size_state :: "'a state \<Rightarrow> nat" where
   "size (Idle current idle) = min (size current) (size idle)"
-| "size (Copy current _ _ _) = min (size current) (Current.size_new current)"
+| "size (Copy current _ _ _) = min (size current) (size_new current)"
 
 instance..
 end
 
-fun size_new :: "'a state \<Rightarrow> nat" where
-  "size_new (Idle current _) = Current.size_new current"
-| "size_new (Copy current _ _ _) = Current.size_new current"
+instantiation state::(type) size_new
+begin
 
-fun remaining_steps :: "'a state \<Rightarrow> nat" where
+fun size_new_state :: "'a state \<Rightarrow> nat" where
+  "size_new (Idle current _) = size_new current"
+| "size_new (Copy current _ _ _) = size_new current"
+
+instance..
+end
+
+instantiation state::(type) remaining_steps
+begin
+
+fun remaining_steps_state :: "'a state \<Rightarrow> nat" where
   "remaining_steps (Idle _ _) = 0"
 | "remaining_steps (Copy (Current _ _ _ remained) aux new moved) = remained - moved"
+
+instance..
+end
 
 end

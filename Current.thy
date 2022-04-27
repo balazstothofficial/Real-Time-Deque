@@ -48,7 +48,13 @@ fun size_current :: "'a current \<Rightarrow> nat" where
 instance..
 end
 
-fun size_new :: "'a current \<Rightarrow> nat" where
+instantiation current::(type) size_new
+begin
+
+fun size_new_current :: "'a current \<Rightarrow> nat" where
   "size_new (Current _ added _ remained) = added + remained"
+
+instance..
+end
 
 end

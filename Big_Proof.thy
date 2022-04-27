@@ -4,12 +4,12 @@ begin
 
 (* TODO: *)
 lemma step_list: "invar big \<Longrightarrow> list (step big) = list big"
-  apply(induction big rule: step.induct)
+  apply(induction big rule: step_state.induct)
     apply(auto simp: step_list split: current.splits)
   by (metis Suc_neq_Zero bot_nat_0.extremum_uniqueI list_empty first_pop list.size(3) reverseN.simps(3) Stack_Proof.size_list_length)
 
 lemma step_list_current: "invar big \<Longrightarrow> list_current (step big) = list_current big"
-  apply(induction big rule: step.induct)
+  apply(induction big rule: step_state.induct)
   by(auto simp: step_list_current split: current.splits)
 
 lemma push: "list (push x big) = x # list big"
@@ -84,8 +84,8 @@ lemma pop_2_size: "0 < size big \<Longrightarrow> invar big \<Longrightarrow> po
   by force
 
 (* TODO: *)
-lemma invar_step: "invar big \<Longrightarrow> invar (step big)" 
-proof(induction big rule: step.induct)
+lemma invar_step: "invar (big :: 'a state) \<Longrightarrow> invar (step big)" 
+proof(induction big rule: step_state.induct)
   case (1 state)
   then show ?case 
     by(auto simp: invar_step)
@@ -212,8 +212,8 @@ lemma list_current_size: "\<lbrakk>0 < size big; list_current big = []; invar bi
     apply (simp add: Stack_Proof.size_list_length)
   using list_current_size by blast
 
-lemma step_size: "invar big \<Longrightarrow> size big = size (step big)"
-  apply(induction big rule: step.induct)
+lemma step_size: "invar (big :: 'a state) \<Longrightarrow> size big = size (step big)"
+  apply(induction big rule: step_state.induct)
   by(auto simp: step_size split: current.splits)
 
 (* TODO: *)
@@ -223,12 +223,12 @@ lemma size_empty: "invar (big :: 'a state) \<Longrightarrow> size big = 0 \<Long
    apply (metis Stack_Proof.size_empty add.commute add_diff_cancel_right' bot_nat_0.extremum min_def zero_diff)
   by (metis add_gr_0 length_greater_0_conv less_numeral_extra(3) min_less_iff_conj)
 
-lemma remaining_steps_step: "\<lbrakk>invar big; remaining_steps big > 0\<rbrakk>
+lemma remaining_steps_step: "\<lbrakk>invar (big :: 'a state); remaining_steps big > 0\<rbrakk>
    \<Longrightarrow> remaining_steps big = Suc (remaining_steps (step big))"
-  apply(induction big rule: step.induct)
+  apply(induction big rule: step_state.induct)
   by(auto simp: remaining_steps_step split: current.splits)
 
-lemma remaining_steps_step_0: "\<lbrakk>invar big; remaining_steps big = 0\<rbrakk> 
+lemma remaining_steps_step_0: "\<lbrakk>invar (big :: 'a state); remaining_steps big = 0\<rbrakk> 
   \<Longrightarrow> remaining_steps (step big) = 0"
   apply(induction big)
   by(auto simp: remaining_steps_step_0 split: current.splits)
@@ -312,7 +312,7 @@ next
     by(induction current rule: Current.pop.induct) auto
 qed
 
-lemma size_size_new: "\<lbrakk>invar big; 0 < size big\<rbrakk> \<Longrightarrow> 0 < size_new big"
+lemma size_size_new: "\<lbrakk>invar (big :: 'a state); 0 < size big\<rbrakk> \<Longrightarrow> 0 < size_new big"
   by(induction big)(auto simp: size_size_new)
 
 end

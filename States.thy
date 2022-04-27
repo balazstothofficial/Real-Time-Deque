@@ -6,10 +6,16 @@ datatype direction = Left | Right
 
 datatype 'a states = States direction "'a Big.state" "'a Small.state"
 
-fun step :: "'a states \<Rightarrow> 'a states" where
+instantiation states::(type) step
+begin
+
+fun step_states :: "'a states \<Rightarrow> 'a states" where
   "step (States dir (Reverse currentB big auxB 0) (Reverse1 currentS _ auxS)) =
-    States dir (Big.step (Reverse currentB big auxB 0)) (Reverse2 currentS auxS big [] 0)"
-| "step (States dir left right) = States dir (Big.step left) (Small.step right)"
+    States dir (step (Reverse currentB big auxB 0)) (Reverse2 currentS auxS big [] 0)"
+| "step (States dir left right) = States dir (step left) (step right)"
+
+instance..
+end
 
 abbreviation four_steps where
   "four_steps \<equiv> step^^4"
@@ -17,16 +23,22 @@ abbreviation four_steps where
 abbreviation six_steps where
   "six_steps \<equiv> step^^6"
 
-fun remaining_steps :: "'a states \<Rightarrow> nat" where
+instantiation states::(type) remaining_steps
+begin
+
+fun remaining_steps_states :: "'a states \<Rightarrow> nat" where
   "remaining_steps (States _ big small) = max 
-    (Big.remaining_steps big) 
+    (remaining_steps big) 
     (case small of 
-       Small.Common common \<Rightarrow> Common.remaining_steps common
+       Small.Common common \<Rightarrow> remaining_steps common
      | Reverse2 (Current _ _ _ remaining) _ big _ count \<Rightarrow> (remaining - (count + size big)) + size big + 1
      | Reverse1 (Current _ _ _ remaining) _ _ \<Rightarrow>
          case big of
            Reverse currentB big auxB count \<Rightarrow> size big + (remaining + count - size big) + 2
     )"
+
+instance..
+end
 
 fun lists :: "'a states \<Rightarrow> 'a list * 'a list" where
   "lists (States _ (Reverse currentB big auxB count) (Reverse1 currentS small auxS)) = (
@@ -76,8 +88,8 @@ end
 
 fun size_ok' :: "'a states \<Rightarrow> nat \<Rightarrow> bool" where
   "size_ok' (States _ big small) steps \<longleftrightarrow> 
-      Small.size_new small + steps + 2 \<le> 3 * Big.size_new big
-    \<and> Big.size_new big + steps + 2 \<le> 3 * Small.size_new small
+      size_new small + steps + 2 \<le> 3 * size_new big
+    \<and> size_new big + steps + 2 \<le> 3 * size_new small
     \<and> steps + 1 \<le> 4 * size small
     \<and> steps + 1 \<le> 4 * size big
   "

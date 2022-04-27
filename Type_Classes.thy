@@ -8,7 +8,13 @@ class emptyable =
 class invar =
   fixes invar :: "'a \<Rightarrow> bool"
 
-class list =
-  fixes list :: "'a \<Rightarrow> 'a list"
+class size_new =
+  fixes size_new :: "'a \<Rightarrow> nat"
+
+class step =
+  fixes step :: "'a \<Rightarrow> 'a"
+
+class remaining_steps =
+  fixes remaining_steps :: "'a \<Rightarrow> nat"
 
 end

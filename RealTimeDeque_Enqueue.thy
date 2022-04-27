@@ -239,7 +239,7 @@ next
         apply auto 
         by (metis size_idle.simps Idle_Proof.size_push leftLength)    
 
-      from False have remaining_steps: "6 < States.remaining_steps ?states"
+      from False have remaining_steps: "6 < remaining_steps ?states"
         apply(auto simp: max_def)
         by (smt (z3) add.commute add_2_eq_Suc' diff_add_inverse2 diff_is_0_eq le_less_Suc_eq length_greater_0_conv leftLength mult_Suc Stack_Proof.size_not_empty not_le not_less_eq numeral_3_eq_3 numeral_Bit0 Stack_Proof.size_list_length old_size)
         
@@ -250,14 +250,14 @@ next
         apply (smt (verit, best) popN_drop Suc_leI diff_add_inverse diff_add_inverse2 diff_diff_left helper4 le_eq_less_or_eq left_not_empty length_drop mult_Suc numeral_3_eq_3 plus_1_eq_Suc reverseN_reverseN Stack_Proof.size_list_length old_size)
         by (metis invar_idle.simps Idle_Proof.invar_push add_Suc_right diff_add_inverse Stack_Proof.size_list_length)
 
-      with remaining_steps have "5 < States.remaining_steps (step ?states)"
+      with remaining_steps have "5 < remaining_steps (step ?states)"
         using remaining_steps_decline_3[of ?states 5] by auto
 
-      with invar have "4 < States.remaining_steps ((step ^^ 2) ?states)"
+      with invar have "4 < remaining_steps ((step ^^ 2) ?states)"
         using invar_n_steps invar_step remaining_steps_decline_4[of ?states 4 1]
         by (smt (z3) add.commute add_Suc_right funpow_0 numeral_2_eq_2 numeral_3_eq_3 numeral_Bit0 remaining_steps remaining_steps_decline_4)
 
-      with remaining_steps have remaining_steps_end: "0 < States.remaining_steps (six_steps ?states)"
+      with remaining_steps have remaining_steps_end: "0 < remaining_steps (six_steps ?states)"
         using remaining_steps_decline_4[of ?states 5 5] 
         by (smt (z3) One_nat_def Suc_eq_plus1 add_Suc_right invar numeral_2_eq_2 numeral_3_eq_3 numeral_Bit0 remaining_steps_decline_4)
 
@@ -315,7 +315,7 @@ next
   proof(induction "remaining_steps (States Left big small) > 4")
     case True
     then have states_invar: "invar (States Left big small)" by auto
-    from True have states_rem: "4 \<le> States.remaining_steps (States Left big small)" by auto
+    from True have states_rem: "4 \<le> remaining_steps (States Left big small)" by auto
     from True have states_size_ok: "States.size_ok (States Left big small)" by auto
     
     from True have "remaining_steps ?newStates > 4"
@@ -379,71 +379,71 @@ next
       using False
       by (metis stepped)
 
-    with stepped invar_four_steps have "Big.size_new big = Big.size_new steppedBig"
+    with stepped invar_four_steps have "size_new big = size_new steppedBig"
       using invar
       by (metis step_n_size_new_big)
 
     have small_sizes_1: "size ?newSmall = Suc (size small)"
       by (meson "6.prems" invar_deque.simps(6) invar_states.simps(1) funpow_0 step_n_push_size_small)
 
-    with stepped invar_four_steps have small_sizes: "Small.size_new ?newSmall = Small.size_new steppedSmall"
+    with stepped invar_four_steps have small_sizes: "size_new ?newSmall = size_new steppedSmall"
       using invar
       by (metis step_n_size_new_small)
 
-    then have "0 < Small.size_new small"
+    then have "0 < size_new small"
       using "6.prems" invar_deque.simps(6) size_ok.simps(1) invar_states.simps(1) size_ok_size_new_small by blast
 
-    then have "0 < Small.size_new ?newSmall"
+    then have "0 < size_new ?newSmall"
       using \<open>size (Small.push x small) = Suc (size small)\<close> invar Small_Proof.size_size_new by fastforce
 
-    then have "0 < Small.size_new steppedSmall"
-      by (simp add: \<open>Small.size_new (Small.push x small) = Small.size_new steppedSmall\<close>)
+    then have "0 < size_new steppedSmall"
+      by (simp add: \<open>size_new (Small.push x small) = size_new steppedSmall\<close>)
 
-    then have "0 < Big.size_new big"
+    then have "0 < size_new big"
       using "6.prems" invar_deque.simps(6) size_ok.simps(1) invar_states.simps(1) size_ok_size_new_big by blast
 
-    then have big_not_empty: "0 < Big.size_new steppedBig"
-      by (simp add: \<open>Big.size_new big = Big.size_new steppedBig\<close>)
+    then have big_not_empty: "0 < size_new steppedBig"
+      by (simp add: \<open>size_new big = size_new steppedBig\<close>)
 
-    have small_size: "size smallIdle = Small.size_new steppedSmall"
+    have small_size: "size smallIdle = size_new steppedSmall"
       using idle states_invar by auto
 
-    have big_size: "size bigIdle = Big.size_new steppedBig"
+    have big_size: "size bigIdle = size_new steppedBig"
       using idle states_invar by auto
 
-    have wind2: "Small.size_new small \<le> 3 * Big.size_new big - 1"
+    have wind2: "size_new small \<le> 3 * size_new big - 1"
       using start_size_ok
       by auto
 
-    have "Suc (Small.size_new small) = Small.size_new ?newSmall"
+    have "Suc (size_new small) = size_new ?newSmall"
       by (metis "6.prems" invar_deque.simps(6) funpow_0 step_n_push_size_new_small)
 
-    with wind2 have "Small.size_new ?newSmall \<le> 3 * Big.size_new big"
-      using \<open>0 < Big.size_new big\<close> by linarith
+    with wind2 have "size_new ?newSmall \<le> 3 * size_new big"
+      using \<open>0 < size_new big\<close> by linarith
 
-    then have "Small.size_new steppedSmall \<le> 3 * Big.size_new big"  
+    then have "size_new steppedSmall \<le> 3 * size_new big"  
       by (simp add: small_sizes)
 
-    then have T: "Small.size_new steppedSmall \<le> 3 * Big.size_new steppedBig"  
-      using \<open>Big.size_new big = Big.size_new steppedBig\<close> by presburger
+    then have T: "size_new steppedSmall \<le> 3 * size_new steppedBig"  
+      using \<open>size_new big = size_new steppedBig\<close> by presburger
 
-    have "Big.size_new big \<le> 3 * Small.size_new small"
+    have "size_new big \<le> 3 * size_new small"
       using start_size_ok small_sizes_1
       by auto
 
-    then have "Big.size_new big \<le> 3 * Small.size_new ?newSmall"
+    then have "size_new big \<le> 3 * size_new ?newSmall"
       using small_sizes_1
       by (metis (no_types, opaque_lifting) "6.prems" invar_deque.simps(6) dual_order.trans funpow_0 le_add2 mult_le_mono2 plus_1_eq_Suc step_n_push_size_new_small)
 
-    then have "Big.size_new big \<le> 3 * Small.size_new steppedSmall"
+    then have "size_new big \<le> 3 * size_new steppedSmall"
       by (simp add: small_sizes)
 
-    then have "Big.size_new steppedBig \<le> 3 * Small.size_new steppedSmall"
-      by (simp add: \<open>Big.size_new big = Big.size_new steppedBig\<close>)
+    then have "size_new steppedBig \<le> 3 * size_new steppedSmall"
+      by (simp add: \<open>size_new big = size_new steppedBig\<close>)
     
     with idle states_invar T have "invar (Idle smallIdle bigIdle)"
       apply auto
-      apply (metis Common.size_new.simps(1) is_empty_idle.elims(2) size_idle.simps Small.size_new.simps(1) \<open>0 < Small.size_new (Small.push x small)\<close> \<open>Small.size_new (Small.push x small) = Small.size_new steppedSmall\<close> list.size(3) Stack_Proof.size_list_length Stack_Proof.list_not_empty verit_comp_simplify1(1))
+      apply (metis Common.size_new_state.simps(1) is_empty_idle.elims(2) size_idle.simps size_new_state.simps(1) \<open>0 < size_new (Small.push x small)\<close> \<open>size_new (Small.push x small) = size_new steppedSmall\<close> list.size(3) Stack_Proof.size_list_length Stack_Proof.list_not_empty verit_comp_simplify1(1))
       using big_not_empty Idle_Proof.not_empty by auto
      
      with False have "invar(case States Left steppedBig steppedSmall of 
@@ -476,8 +476,8 @@ next
   proof(induction "remaining_steps (States Right big small) > 4")
     case True
     then have states_invar: "invar (States Right big small)" by auto
-    from True have states_rem: "4 \<le> States.remaining_steps (States Right big small)" by auto
-    from True have states_size_ok: "States.size_ok (States Right big small)" by auto
+    from True have states_rem: "4 \<le> remaining_steps (States Right big small)" by auto
+    from True have states_size_ok: "size_ok (States Right big small)" by auto
     
     from True have "remaining_steps ?newStates > 4"
       by (metis remaining_steps_push_big states_invar)
@@ -537,71 +537,71 @@ next
     then have states_invar: "invar (States Right steppedBig steppedSmall)"
       by (metis False(3) stepped)
       
-    with stepped invar_four_steps have "Small.size_new small = Small.size_new steppedSmall"
+    with stepped invar_four_steps have "size_new small = size_new steppedSmall"
       by (metis invar step_n_size_new_small)
 
     have big_sizes_1: "size ?newBig = Suc (size big)"
       using "7.prems" Big_Proof.size_push by fastforce
 
-    with stepped invar_four_steps have big_sizes: "Big.size_new ?newBig = Big.size_new steppedBig"
+    with stepped invar_four_steps have big_sizes: "size_new ?newBig = size_new steppedBig"
       by (metis invar step_n_size_new_big)
 
-    then have "0 < Big.size_new big"
+    then have "0 < size_new big"
      using "7.prems" invar_deque.simps(6) size_ok.simps(1) size_ok_size_new_big
      by fastforce
 
-    then have "0 < Big.size_new ?newBig"
+    then have "0 < size_new ?newBig"
       using \<open>size (Big.push x big) = Suc (size big)\<close> invar Big_Proof.size_size_new by fastforce
 
-    then have "0 < Big.size_new steppedBig"
-      by (simp add: \<open>Big.size_new (Big.push x big) = Big.size_new steppedBig\<close>)
+    then have "0 < size_new steppedBig"
+      by (simp add: \<open>size_new (Big.push x big) = size_new steppedBig\<close>)
 
-    then have "0 < Small.size_new small"
+    then have "0 < size_new small"
       using "7.prems" invar_deque.simps size_ok.simps size_ok_size_new_small
       by fastforce
 
-    then have small_not_empty: "0 < Small.size_new steppedSmall"
-      by (simp add: \<open>Small.size_new small = Small.size_new steppedSmall\<close>)
+    then have small_not_empty: "0 < size_new steppedSmall"
+      by (simp add: \<open>size_new small = size_new steppedSmall\<close>)
 
-    have big_size: "size bigIdle = Big.size_new steppedBig"
+    have big_size: "size bigIdle = size_new steppedBig"
       using idle states_invar by auto
 
-    have small_size: "size smallIdle = Small.size_new steppedSmall"
+    have small_size: "size smallIdle = size_new steppedSmall"
       using idle states_invar by auto
 
-    have size_ok_2: "Big.size_new big \<le> 3 * Small.size_new small - 1"
+    have size_ok_2: "size_new big \<le> 3 * size_new small - 1"
       using start_size_ok
       by auto
 
-    have "Suc (Big.size_new big) = Big.size_new ?newBig"
+    have "Suc (size_new big) = size_new ?newBig"
       using "7.prems" Big_Proof.size_new_push by fastforce
 
-    with size_ok_2 have "Big.size_new ?newBig \<le> 3 * Small.size_new small"
-      using \<open>0 < Small.size_new small\<close> by linarith
+    with size_ok_2 have "size_new ?newBig \<le> 3 * size_new small"
+      using \<open>0 < size_new small\<close> by linarith
 
-    then have "Big.size_new steppedBig \<le> 3 * Small.size_new small"  
+    then have "size_new steppedBig \<le> 3 * size_new small"  
       by (simp add: big_sizes)
 
-    then have T: "Big.size_new steppedBig \<le> 3 * Small.size_new steppedSmall"  
-      using \<open>Small.size_new small = Small.size_new steppedSmall\<close> by presburger
+    then have T: "size_new steppedBig \<le> 3 * size_new steppedSmall"  
+      using \<open>size_new small = size_new steppedSmall\<close> by presburger
 
-    have "Small.size_new small \<le> 3 * Big.size_new big"
+    have "size_new small \<le> 3 * size_new big"
       using start_size_ok big_sizes_1
       by auto
 
-    then have "Small.size_new small \<le> 3 * Big.size_new ?newBig"
+    then have "size_new small \<le> 3 * size_new ?newBig"
       using big_sizes_1
-      using \<open>Suc (Big.size_new big) = Big.size_new (Big.push x big)\<close> by linarith
+      using \<open>Suc (size_new big) = size_new (Big.push x big)\<close> by linarith
 
-    then have "Small.size_new small \<le> 3 * Big.size_new steppedBig"
+    then have "size_new small \<le> 3 * size_new steppedBig"
       by (simp add: big_sizes)
 
-    then have "Small.size_new steppedSmall \<le> 3 * Big.size_new steppedBig"
-      by (simp add: \<open>Small.size_new small = Small.size_new steppedSmall\<close>)
+    then have "size_new steppedSmall \<le> 3 * size_new steppedBig"
+      by (simp add: \<open>size_new small = size_new steppedSmall\<close>)
     
     with idle states_invar T have "invar (Idle bigIdle smallIdle)"
       apply auto
-      apply (metis is_empty_idle.elims(2) size_idle.simps Stack_Proof.size_empty Suc_neq_Zero \<open>Suc (Big.size_new big) = Big.size_new (Big.push x big)\<close> big_size big_sizes)
+      apply (metis is_empty_idle.elims(2) size_idle.simps Stack_Proof.size_empty Suc_neq_Zero \<open>Suc (size_new big) = size_new (Big.push x big)\<close> big_size big_sizes)
       using small_not_empty Idle_Proof.not_empty by auto
      
      with False  have "invar (case States Right steppedBig steppedSmall of 

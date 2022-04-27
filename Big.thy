@@ -17,11 +17,17 @@ fun list_current :: "'a state \<Rightarrow> 'a list" where
   "list_current (Common common) = Common.list_current common"
 | "list_current (Reverse current _ _ _) = Current.list current"
 
-fun step :: "'a state \<Rightarrow> 'a state" where
-  "step (Common state) = Common (Common.step state)"
+instantiation state ::(type) step
+begin
+
+fun step_state :: "'a state \<Rightarrow> 'a state" where
+  "step (Common state) = Common (step state)"
 | "step (Reverse current _ aux 0) = Common (normalize (Copy current aux [] 0))"
 | "step (Reverse current big aux count) = 
      Reverse current (Stack.pop big) ((Stack.first big)#aux) (count - 1)"
+
+instance..
+end
 
 fun push :: "'a \<Rightarrow> 'a state \<Rightarrow> 'a state" where
   "push x (Common state) = Common (Common.push x state)"
@@ -67,18 +73,29 @@ begin
 
 fun size_state :: "'a state \<Rightarrow> nat" where
   "size (Common state) = size state"
-| "size (Reverse current _ _ _) = min (size current) (Current.size_new current)"
+| "size (Reverse current _ _ _) = min (size current) (size_new current)"
 
 instance..
 end
 
-fun size_new :: "'a state \<Rightarrow> nat" where
-  "size_new (Common state) = Common.size_new state"
-| "size_new (Reverse current _ _ _) = Current.size_new current"
+instantiation state ::(type) size_new
+begin
 
-fun remaining_steps :: "'a state \<Rightarrow> nat" where
-  "remaining_steps (Common state) = Common.remaining_steps state"
+fun size_new_state :: "'a state \<Rightarrow> nat" where
+  "size_new (Common state) = size_new state"
+| "size_new (Reverse current _ _ _) = size_new current"
+
+instance..
+end
+
+instantiation state ::(type) remaining_steps
+begin
+
+fun remaining_steps_state :: "'a state \<Rightarrow> nat" where
+  "remaining_steps (Common state) = remaining_steps state"
 | "remaining_steps (Reverse (Current _ _ _ remaining) _ _ count) = count + remaining + 1"
 
+instance..
+end
 
 end

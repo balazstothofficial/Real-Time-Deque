@@ -3,7 +3,7 @@ theory Common_Proof
 begin
 
 lemma step_list: "invar common \<Longrightarrow> list (step common) = list common"
-proof(induction common rule: step.induct)
+proof(induction common rule: step_state.induct)
   case (1 idle)
   then show ?case by auto
 next
@@ -49,7 +49,7 @@ next
     by auto
 qed
 
-lemma invar_step: "invar common \<Longrightarrow> invar (step common)" 
+lemma invar_step: "invar (common :: 'a state) \<Longrightarrow> invar (step common)" 
 proof(induction "common" rule: invar_state.induct)
   case (1 idle)
   then show ?case
@@ -124,7 +124,7 @@ proof(induction common arbitrary: x rule: pop.induct)
   from 1 current have prop_2: "invar current'"
     by(auto simp: invar_size_pop eq_snd_iff split: prod.splits)
 
-  from 1 current idle have prop_3: "Current.size_new current' = size idle'"
+  from 1 current idle have prop_3: "size_new current' = size idle'"
     using Idle_Proof.size_pop[of idle x idle'] size_new_pop[of current]
     by(auto simp: size_not_empty)
 
@@ -343,8 +343,8 @@ next
     by(auto simp: min_def size_empty size_new_empty split: if_splits)
 qed
   
-lemma step_size: "invar x \<Longrightarrow> size x = size (step x)"
-proof(induction x rule: step.induct)
+lemma step_size: "invar (x :: 'a state) \<Longrightarrow> size x = size (step x)"
+proof(induction x rule: step_state.induct)
   case (1 current idle)
   then show ?case by auto
 next
@@ -353,8 +353,8 @@ next
     by(auto simp: min_def split: current.splits)
 qed
 
-lemma step_size_new: "invar x \<Longrightarrow> size_new x = size_new (step x)"
-proof(induction x rule: step.induct)
+lemma step_size_new: "invar (x :: 'a state) \<Longrightarrow> size_new x = size_new (step x)"
+proof(induction x rule: step_state.induct)
   case (1 current idle)
   then show ?case by auto
 next
@@ -362,12 +362,12 @@ next
   then show ?case by(auto split: current.splits)
 qed
 
-lemma remaining_steps_step: "\<lbrakk>invar common; remaining_steps common > 0\<rbrakk>
+lemma remaining_steps_step: "\<lbrakk>invar (common :: 'a state); remaining_steps common > 0\<rbrakk>
    \<Longrightarrow> remaining_steps common = Suc (remaining_steps (step common))"
   apply(induction common)
   by(auto split: current.splits)
 
-lemma remaining_steps_step_0: "\<lbrakk>invar common; remaining_steps common = 0\<rbrakk>
+lemma remaining_steps_step_0: "\<lbrakk>invar (common :: 'a state); remaining_steps common = 0\<rbrakk>
    \<Longrightarrow> remaining_steps (step common) = 0"
   apply(induction common)
   by(auto split: current.splits)
@@ -466,7 +466,7 @@ next
   qed
 qed
 
-lemma size_size_new: "\<lbrakk>invar common; 0 < size common\<rbrakk> \<Longrightarrow> 0 < size_new common"
+lemma size_size_new: "\<lbrakk>invar (common :: 'a state); 0 < size common\<rbrakk> \<Longrightarrow> 0 < size_new common"
   by(induction common) auto
 
 end

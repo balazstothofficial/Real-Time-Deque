@@ -17,8 +17,11 @@ fun list_current :: "'a state \<Rightarrow> 'a list" where
 | "list_current (Reverse2 current _ _ _ _) = Current.list current"
 | "list_current (Reverse1 current _ _) = Current.list current"
 
-fun step :: "'a state \<Rightarrow> 'a state" where
-  "step (Common state) = Common (Common.step state)"
+instantiation state::(type) step
+begin
+
+fun step_state :: "'a state \<Rightarrow> 'a state" where
+  "step (Common state) = Common (step state)"
 | "step (Reverse1 current small auxS) = (
     if is_empty small 
     then Reverse1 current small auxS 
@@ -29,6 +32,9 @@ fun step :: "'a state \<Rightarrow> 'a state" where
     then Common (normalize (Copy current auxS newS count))
     else Reverse2 current auxS (Stack.pop big) ((Stack.first big)#newS) (count + 1)
   )"
+
+instance..
+end
 
 fun push :: "'a \<Rightarrow> 'a state \<Rightarrow> 'a state" where
   "push x (Common state) = Common (Common.push x state)"
@@ -87,17 +93,22 @@ begin
 
 fun size_state :: "'a state \<Rightarrow> nat" where
   "size (Common state) = size state"
-| "size (Reverse2 current _ _ _ _) = min (size current) (Current.size_new current)"
-| "size (Reverse1 current _ _) = min (size current) (Current.size_new current)"
+| "size (Reverse2 current _ _ _ _) = min (size current) (size_new current)"
+| "size (Reverse1 current _ _) = min (size current) (size_new current)"
 
 instance..
 end
 
+instantiation state::(type) size_new
+begin
 
-fun size_new :: "'a state \<Rightarrow> nat" where
-  "size_new (Common state) = Common.size_new state"
-| "size_new (Reverse2 current _ _ _ _) = Current.size_new current"
-| "size_new (Reverse1 current _ _) = Current.size_new current"
+fun size_new_state :: "'a state \<Rightarrow> nat" where
+  "size_new (Common state) = size_new state"
+| "size_new (Reverse2 current _ _ _ _) = size_new current"
+| "size_new (Reverse1 current _ _) = size_new current"
+
+instance..
+end
 
 (* Just for proof: (Still needed?)*)
 fun length :: "'a state \<Rightarrow> nat" where

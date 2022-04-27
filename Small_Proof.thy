@@ -3,7 +3,7 @@ theory Small_Proof
 begin
 
 lemma step_list_current: "invar small \<Longrightarrow> list_current (step small) = list_current small"
-  apply(induction small rule: step.induct)
+  apply(induction small rule: step_state.induct)
   by(auto simp: step_list_current split: current.splits)
 
 lemma step_list_common: "small = Common common \<Longrightarrow> invar small \<Longrightarrow> list (step small) = list small"
@@ -21,8 +21,8 @@ lemma step_list_reverse2: "small = (Reverse2 current aux big new count) \<Longri
   by (metis add_diff_cancel_left' first_pop pop_list_length rev.simps(2) Stack_Proof.size_list_length)
 
 (* TODO: *)
-lemma invar_step: "invar small \<Longrightarrow> invar (step small)" 
-proof(induction small rule: step.induct)
+lemma invar_step: "invar (small :: 'a state) \<Longrightarrow> invar (step small)" 
+proof(induction small rule: step_state.induct)
   case (1 state)
   then show ?case 
     by(auto simp: invar_step)
@@ -231,8 +231,8 @@ lemma list_current_size: "\<lbrakk>0 < size small; list_current small = []; inva
   apply (simp add: Stack_Proof.size_list_length)
   using list_current_size by blast
 
-lemma step_size: "invar small \<Longrightarrow> size small = size (step small)"
-  apply(induction small rule: step.induct)
+lemma step_size: "invar (small :: 'a state) \<Longrightarrow> size small = size (step small)"
+  apply(induction small rule: step_state.induct)
   by(auto simp: step_size split: current.splits)
 
 lemma size_empty: "invar (small :: 'a state) \<Longrightarrow> size small = 0 \<Longrightarrow> is_empty small"
@@ -303,7 +303,7 @@ next
     by(induction current rule: Current.pop.induct) auto
 qed
 
-lemma size_size_new: "\<lbrakk>invar small; 0 < size small\<rbrakk> \<Longrightarrow> 0 < size_new small"
+lemma size_size_new: "\<lbrakk>invar (small :: 'a state); 0 < size small\<rbrakk> \<Longrightarrow> 0 < size_new small"
   by(induction small)(auto simp: size_size_new)
 
 end

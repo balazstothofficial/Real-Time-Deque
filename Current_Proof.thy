@@ -47,7 +47,7 @@ lemma size_empty: "invar (current :: 'a current) \<Longrightarrow> size current 
   apply(induction current)
   by(auto simp: size_empty)
 
-lemma size_new_empty: "invar current \<Longrightarrow> size_new current = 0 \<Longrightarrow> is_empty current"
+lemma size_new_empty: "invar (current :: 'a current) \<Longrightarrow> size_new current = 0 \<Longrightarrow> is_empty current"
   apply(induction current)
   by(auto simp: size_empty)
 
