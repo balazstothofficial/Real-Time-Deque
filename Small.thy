@@ -10,7 +10,7 @@ datatype (plugins del: size) 'a state =
 fun list :: "'a state \<Rightarrow> 'a list" where
   "list (Common common) = Common.list common"
 | "list (Reverse2 (Current extra _ _ remained) aux big new count) =
-  extra @ reverseN (remained - (count + Stack.size big)) aux (rev (Stack.list big) @ new)"
+  extra @ reverseN (remained - (count + size big)) aux (rev (Stack.list big) @ new)"
 
 fun list_current :: "'a state \<Rightarrow> 'a list" where
   "list_current (Common common) = Common.list_current common"
@@ -20,12 +20,12 @@ fun list_current :: "'a state \<Rightarrow> 'a list" where
 fun step :: "'a state \<Rightarrow> 'a state" where
   "step (Common state) = Common (Common.step state)"
 | "step (Reverse1 current small auxS) = (
-    if Stack.is_empty small 
+    if is_empty small 
     then Reverse1 current small auxS 
     else Reverse1 current (Stack.pop small) ((Stack.first small)#auxS)
   )"
 | "step (Reverse2 current auxS big newS count) = (
-    if Stack.is_empty big
+    if is_empty big
     then Common (normalize (Copy current auxS newS count))
     else Reverse2 current auxS (Stack.pop big) ((Stack.first big)#newS) (count + 1)
   )"
@@ -49,10 +49,10 @@ fun pop :: "'a state \<Rightarrow> 'a * 'a state" where
 instantiation state::(type) emptyable
 begin
 
-fun is_empty :: "'a state \<Rightarrow> bool" where
-  "is_empty (Common state) = Common.is_empty state"
-| "is_empty (Reverse1 current _ _) = Current.is_empty current"
-| "is_empty (Reverse2 current _ _ _ _) = Current.is_empty current"
+fun is_empty_state :: "'a state \<Rightarrow> bool" where
+  "is_empty (Common state) = is_empty state"
+| "is_empty (Reverse1 current _ _) = is_empty current"
+| "is_empty (Reverse2 current _ _ _ _) = is_empty current"
 
 instance..
 end
@@ -60,23 +60,23 @@ end
 instantiation state::(type) invar
 begin
 
-fun invar :: "'a state \<Rightarrow> bool" where
-  "invar (Common state) = Common.invar state"
+fun invar_state :: "'a state \<Rightarrow> bool" where
+  "invar (Common state) = invar state"
 | "invar (Reverse2 current auxS big newS count) = (
    case current of Current _ _ old remained \<Rightarrow>
-      remained = count + Stack.size big + Stack.size old
-    \<and> remained \<ge> Stack.size old
+      remained = count + size big + size old
+    \<and> remained \<ge> size old
     \<and> count = List.length newS
-    \<and> Current.invar current
-    \<and> List.length auxS \<ge> Stack.size old
-    \<and> Stack.list old = rev (take (Stack.size old) auxS)
+    \<and> invar current
+    \<and> List.length auxS \<ge> size old
+    \<and> Stack.list old = rev (take (size old) auxS)
   )"
 | "invar (Reverse1 current small auxS) = (
    case current of Current _ _ old remained \<Rightarrow>
-      Current.invar current
-    \<and> remained \<ge> Stack.size old
-    \<and> Stack.size small + List.length auxS \<ge> Stack.size old
-    \<and> Stack.list old = rev (take (Stack.size old) (rev (Stack.list small) @ auxS))
+      invar current
+    \<and> remained \<ge> size old
+    \<and> size small + List.length auxS \<ge> size old
+    \<and> Stack.list old = rev (take (size old) (rev (Stack.list small) @ auxS))
   )"
 
 instance..
@@ -85,10 +85,10 @@ end
 instantiation state::(type) size
 begin
 
-fun size :: "'a state \<Rightarrow> nat" where
-  "size (Common state) = Common.size state"
-| "size (Reverse2 current _ _ _ _) = min (Current.size current) (Current.size_new current)"
-| "size (Reverse1 current _ _) = min (Current.size current) (Current.size_new current)"
+fun size_state :: "'a state \<Rightarrow> nat" where
+  "size (Common state) = size state"
+| "size (Reverse2 current _ _ _ _) = min (size current) (Current.size_new current)"
+| "size (Reverse1 current _ _) = min (size current) (Current.size_new current)"
 
 instance..
 end

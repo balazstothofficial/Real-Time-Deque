@@ -34,11 +34,11 @@ fun pop :: "'a state \<Rightarrow> 'a * 'a state" where
 instantiation state ::(type) emptyable
 begin
 
-fun is_empty :: "'a state \<Rightarrow> bool" where
-  "is_empty (Common state) = Common.is_empty state"
+fun is_empty_state :: "'a state \<Rightarrow> bool" where
+  "is_empty (Common state) = is_empty state"
 | "is_empty (Reverse current _ _ count) = (
     case current of Current extra added old remained \<Rightarrow> 
-      Current.is_empty current \<or> remained \<le> count
+      is_empty current \<or> remained \<le> count
 )"
 
 instance..
@@ -47,15 +47,15 @@ end
 instantiation state ::(type) invar
 begin
 
-fun invar :: "'a state \<Rightarrow> bool" where
-  "invar (Common state) \<longleftrightarrow> Common.invar state"
+fun invar_state :: "'a state \<Rightarrow> bool" where
+  "invar (Common state) \<longleftrightarrow> invar state"
 | "invar (Reverse current big aux count) \<longleftrightarrow> (
    case current of Current extra added old remained \<Rightarrow>
-      Current.invar current
+      invar current
     \<and> List.length aux \<ge> remained - count
     
-    \<and> count \<le> Stack.size big
-    \<and> Stack.list old = rev (take (Stack.size old) ((rev (Stack.list big)) @ aux))
+    \<and> count \<le> size big
+    \<and> Stack.list old = rev (take (size old) ((rev (Stack.list big)) @ aux))
     \<and> take remained (Stack.list old) = rev (take remained (reverseN count (Stack.list big) aux))
 )"
 
@@ -65,9 +65,9 @@ end
 instantiation state ::(type) size
 begin
 
-fun size :: "'a state \<Rightarrow> nat" where
-  "size (Common state) = Common.size state"
-| "size (Reverse current _ _ _) = min (Current.size current) (Current.size_new current)"
+fun size_state :: "'a state \<Rightarrow> nat" where
+  "size (Common state) = size state"
+| "size (Reverse current _ _ _) = min (size current) (Current.size_new current)"
 
 instance..
 end

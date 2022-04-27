@@ -43,7 +43,7 @@ lemma push_not_empty: "\<lbrakk>\<not> is_empty current; is_empty (push x curren
   by(induction x current rule: push.induct) auto
 
 (* TODO: not optimal with only one direction (Is it really needed?) *)
-lemma size_empty: "invar current \<Longrightarrow> size current = 0 \<Longrightarrow> is_empty current"
+lemma size_empty: "invar (current :: 'a current) \<Longrightarrow> size current = 0 \<Longrightarrow> is_empty current"
   apply(induction current)
   by(auto simp: size_empty)
 

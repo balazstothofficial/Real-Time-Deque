@@ -22,10 +22,10 @@ fun remaining_steps :: "'a states \<Rightarrow> nat" where
     (Big.remaining_steps big) 
     (case small of 
        Small.Common common \<Rightarrow> Common.remaining_steps common
-     | Reverse2 (Current _ _ _ remaining) _ big _ count \<Rightarrow> (remaining - (count + Stack.size big)) + Stack.size big + 1
+     | Reverse2 (Current _ _ _ remaining) _ big _ count \<Rightarrow> (remaining - (count + size big)) + size big + 1
      | Reverse1 (Current _ _ _ remaining) _ _ \<Rightarrow>
          case big of
-           Reverse currentB big auxB count \<Rightarrow> Stack.size big + (remaining + count - Stack.size big) + 2
+           Reverse currentB big auxB count \<Rightarrow> size big + (remaining + count - size big) + 2
     )"
 
 fun lists :: "'a states \<Rightarrow> 'a list * 'a list" where
@@ -58,14 +58,14 @@ fun listL :: "'a states \<Rightarrow> 'a list" where
 instantiation states::(type) invar
 begin
 
-fun invar :: "'a states \<Rightarrow> bool" where
+fun invar_states :: "'a states \<Rightarrow> bool" where
   "invar (States dir big small)  \<longleftrightarrow> (
-     Big.invar big 
-   \<and> Small.invar small
+     invar big 
+   \<and> invar small
    \<and> list_small_first (States dir big small) = list_current_small_first (States dir big small)
    \<and> (case (big, small) of 
         (Reverse _ big _ count, Reverse1 (Current _ _ old remained) small _) \<Rightarrow> 
-          Stack.size big - count = remained - Stack.size old \<and> count \<ge> Stack.size small
+          size big - count = remained - size old \<and> count \<ge> size small
       | (_, Reverse1 _ _ _) \<Rightarrow> False
       | (Reverse _ _ _ _, _) \<Rightarrow> False
       | _ \<Rightarrow> True
@@ -78,8 +78,8 @@ fun size_ok' :: "'a states \<Rightarrow> nat \<Rightarrow> bool" where
   "size_ok' (States _ big small) steps \<longleftrightarrow> 
       Small.size_new small + steps + 2 \<le> 3 * Big.size_new big
     \<and> Big.size_new big + steps + 2 \<le> 3 * Small.size_new small
-    \<and> steps + 1 \<le> 4 * Small.size small
-    \<and> steps + 1 \<le> 4 * Big.size big
+    \<and> steps + 1 \<le> 4 * size small
+    \<and> steps + 1 \<le> 4 * size big
   "
 
 fun size_ok :: "'a states \<Rightarrow> bool" where
@@ -88,8 +88,8 @@ fun size_ok :: "'a states \<Rightarrow> bool" where
 instantiation states::(type) emptyable
 begin
 
-fun is_empty :: "'a states \<Rightarrow> bool" where
-  "is_empty (States _ big small) \<longleftrightarrow> Big.is_empty big \<or> Small.is_empty small"
+fun is_empty_states :: "'a states \<Rightarrow> bool" where
+  "is_empty (States _ big small) \<longleftrightarrow> is_empty big \<or> is_empty small"
 
 instance..
 end

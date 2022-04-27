@@ -49,9 +49,9 @@ fun pop :: "'a state \<Rightarrow> 'a * 'a state" where
 instantiation state ::(type) emptyable
 begin
 
-fun is_empty :: "'a state \<Rightarrow> bool" where
-  "is_empty (Idle current idle)  \<longleftrightarrow> Current.is_empty current \<or> Idle.is_empty idle"
-| "is_empty (Copy current _ _ _) \<longleftrightarrow> Current.is_empty current"
+fun is_empty_state :: "'a state \<Rightarrow> bool" where
+  "is_empty (Idle current idle)  \<longleftrightarrow> is_empty current \<or> is_empty idle"
+| "is_empty (Copy current _ _ _) \<longleftrightarrow> is_empty current"
 
 instance..
 end
@@ -59,20 +59,20 @@ end
 instantiation state::(type) invar
 begin
 
-fun invar :: "'a state \<Rightarrow> bool" where
+fun invar_state :: "'a state \<Rightarrow> bool" where
   "invar (Idle current idle) \<longleftrightarrow>
-      Idle.invar idle 
-    \<and> Current.invar current 
+      invar idle 
+    \<and> invar current 
     \<and> size_new current = size idle
     \<and> take (size idle) (Current.list current) = 
-      take (Current.size current) (Idle.list idle)"
+      take (size current) (Idle.list idle)"
 | "invar (Copy current aux new moved) \<longleftrightarrow> (
     case current of Current _ _ old remained \<Rightarrow>
       moved < remained
     \<and> moved = length new
     \<and> remained \<le> length aux + moved
-    \<and> Current.invar current
-    \<and> take remained (Stack.list old) = take (Stack.size old) (reverseN (remained - moved) aux new)
+    \<and> invar current
+    \<and> take remained (Stack.list old) = take (size old) (reverseN (remained - moved) aux new)
  )"
 
 instance..
@@ -82,9 +82,9 @@ instantiation state::(type) size
 begin
 
 (* Use size for emptiness? *)
-fun size :: "'a state \<Rightarrow> nat" where
-  "size (Idle current idle) = min (Current.size current) (Idle.size idle)"
-| "size (Copy current _ _ _) = min (Current.size current) (Current.size_new current)"
+fun size_state :: "'a state \<Rightarrow> nat" where
+  "size (Idle current idle) = min (size current) (size idle)"
+| "size (Copy current _ _ _) = min (size current) (Current.size_new current)"
 
 instance..
 end

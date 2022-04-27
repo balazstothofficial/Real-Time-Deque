@@ -2,11 +2,11 @@ theory RealTimeDeque_Dequeue
   imports Deque RealTimeDeque States_Proof
 begin
 
-lemma idle_pop_list: "\<lbrakk>Idle.pop left = (x, idle.Idle left' leftLength'); Idle.invar left\<rbrakk>
+lemma idle_pop_list: "\<lbrakk>Idle.pop left = (x, idle.Idle left' leftLength'); invar left\<rbrakk>
    \<Longrightarrow>  Stack.list left' = tl (Idle.list left)"
   apply(induction left rule: Idle.pop.induct)
   apply auto
-  by (metis Stack.is_empty.elims(2) Stack.pop.simps(1) Stack_Proof.pop_list list_empty list.sel(2))
+  by (metis is_empty_stack.elims(2) Stack.pop.simps(1) Stack_Proof.pop_list list_empty list.sel(2))
 
 lemma list_deqL': "\<lbrakk>invar deque; listL deque \<noteq> []; deqL' deque = (x', deque')\<rbrakk>
    \<Longrightarrow> x' # listL deque' = listL deque"
@@ -38,24 +38,24 @@ next
       case True
       let ?states = "
        States Left
-          (Reverse (Current [] 0 right (Stack.size right - Suc leftLength')) right [] (Stack.size right - Suc leftLength'))
+          (Reverse (Current [] 0 right (size right - Suc leftLength')) right [] (size right - Suc leftLength'))
           (Reverse1 (Current [] 0 left' (Suc (2 * leftLength'))) left' [])
             "
 
-      from True have invariant: "States.invar ?states"
+      from True have invariant: "invar ?states"
         apply(auto simp: Let_def Stack_Proof.size_list_length)
         apply (metis reverseN_reverseN reverseN_take append_Nil2)
-        apply (metis Idle.invar.simps Idle_Proof.invar_pop eq_imp_le le_SucI mult_2 Stack_Proof.size_list_length trans_le_add2)
+        apply (metis invar_idle.simps Idle_Proof.invar_pop eq_imp_le le_SucI mult_2 Stack_Proof.size_list_length trans_le_add2)
         apply(auto simp: reverseN_take)
         subgoal 
           apply(auto simp: popN_drop popN_size)
-          by (smt (z3) Idle.invar.simps Idle_Proof.invar_pop add_Suc_right add_le_imp_le_diff append_take_drop_id le_refl length_rev mult_2 mult_Suc not_less_eq_eq numeral_2_eq_2 numeral_3_eq_3 rev_append rev_rev_ident Stack_Proof.size_list_length take_all_iff trans_le_add2)
-        apply (metis Idle.invar.simps Idle_Proof.invar_pop Suc_diff_le diff_add_inverse le_add1 mult_2 Stack_Proof.size_list_length)
-        apply (metis Idle.invar.simps Idle_Proof.invar_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 Stack_Proof.size_list_length trans_le_add2)
-        apply (metis Idle.invar.simps Idle_Proof.invar_pop le_SucI le_add1 mult_2 Stack_Proof.size_list_length)
-        apply (metis Idle_Proof.pop_list List.list.simps(3) \<open>\<lbrakk>Suc 0 \<le> leftLength'; \<not> List.length (Stack.list right) \<le> 3 * leftLength'; Idle.pop left = (x', idle.Idle left' leftLength'); Idle.invar left; x = x'; deque' = Transforming (six_steps (States direction.Left (Reverse (Current [] 0 right (List.length (Stack.list right) - Suc leftLength')) right [] (List.length (Stack.list right) - Suc leftLength')) (Reverse1 (Current [] 0 left' (Suc (2 * leftLength'))) left' []))); rightLength = List.length (Stack.list right); \<not> Idle.is_empty left; \<not> Stack.is_empty right; Idle.size left \<le> 3 * List.length (Stack.list right); List.length (Stack.list right) \<le> 3 * Idle.size left; Idle.list left \<noteq> []\<rbrakk> \<Longrightarrow> rev (take (Suc (2 * leftLength') - List.length (Stack.list ((Stack.pop ^^ (List.length (Stack.list right) - Suc leftLength')) right))) (rev (take (List.length (Stack.list right) - Suc leftLength') (Stack.list left')))) @ rev (Stack.list ((Stack.pop ^^ (List.length (Stack.list right) - Suc leftLength')) right)) @ rev (take (List.length (Stack.list right) - Suc leftLength') (Stack.list right)) = Stack.list left' @ rev (Stack.list right)\<close>)
-          apply (metis Idle.invar.simps Idle_Proof.invar_pop Suc_diff_le add_diff_cancel_right' le_add2 mult_2 Stack_Proof.size_list_length)
-        by (metis Idle.invar.simps Idle_Proof.invar_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 Stack_Proof.size_list_length trans_le_add2)
+          by (smt (z3) invar_idle.simps Idle_Proof.invar_pop add_Suc_right add_le_imp_le_diff append_take_drop_id le_refl length_rev mult_2 mult_Suc not_less_eq_eq numeral_2_eq_2 numeral_3_eq_3 rev_append rev_rev_ident Stack_Proof.size_list_length take_all_iff trans_le_add2)
+        apply (metis invar_idle.simps Idle_Proof.invar_pop Suc_diff_le diff_add_inverse le_add1 mult_2 Stack_Proof.size_list_length)
+        apply (metis invar_idle.simps Idle_Proof.invar_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 Stack_Proof.size_list_length trans_le_add2)
+        apply (metis invar_idle.simps Idle_Proof.invar_pop le_SucI le_add1 mult_2 Stack_Proof.size_list_length)
+        apply (metis Idle_Proof.pop_list List.list.simps(3) \<open>\<lbrakk>Suc 0 \<le> leftLength'; \<not> List.length (Stack.list right) \<le> 3 * leftLength'; Idle.pop left = (x', idle.Idle left' leftLength'); invar left; x = x'; deque' = Transforming (six_steps (States direction.Left (Reverse (Current [] 0 right (List.length (Stack.list right) - Suc leftLength')) right [] (List.length (Stack.list right) - Suc leftLength')) (Reverse1 (Current [] 0 left' (Suc (2 * leftLength'))) left' []))); rightLength = List.length (Stack.list right); \<not> is_empty left; \<not> is_empty right; size left \<le> 3 * List.length (Stack.list right); List.length (Stack.list right) \<le> 3 * size left; Idle.list left \<noteq> []\<rbrakk> \<Longrightarrow> rev (take (Suc (2 * leftLength') - List.length (Stack.list ((Stack.pop ^^ (List.length (Stack.list right) - Suc leftLength')) right))) (rev (take (List.length (Stack.list right) - Suc leftLength') (Stack.list left')))) @ rev (Stack.list ((Stack.pop ^^ (List.length (Stack.list right) - Suc leftLength')) right)) @ rev (take (List.length (Stack.list right) - Suc leftLength') (Stack.list right)) = Stack.list left' @ rev (Stack.list right)\<close>)
+          apply (metis invar_idle.simps Idle_Proof.invar_pop Suc_diff_le add_diff_cancel_right' le_add2 mult_2 Stack_Proof.size_list_length)
+        by (metis invar_idle.simps Idle_Proof.invar_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 Stack_Proof.size_list_length trans_le_add2)
 
       with True have "States.listL ?states = tl (Idle.list left) @ rev (Stack.list right)"
         by(auto simp: idle_pop_list)
@@ -76,15 +76,15 @@ next
       with False show ?case 
         apply(induction right1 right2 rule: small_deque.induct)
         apply(auto simp: Idle_Proof.invar_pop Idle_Proof.size_pop)
-        apply (metis Idle.invar.simps Idle.list.simps Idle_Proof.invar_pop Suc_leI gr_zeroI length_0_conv pop_list_2 size_list_length)
-        apply (metis (mono_tags, lifting) Idle.invar.simps Idle.list.simps Idle_Proof.invar_pop Idle_Proof.pop_list le_zero_eq length_0_conv not_less_eq_eq Stack_Proof.size_list_length)
-        apply (metis (mono_tags, lifting) False.hyps Idle.invar.simps Idle.list.simps Idle_Proof.invar_pop Idle_Proof.pop_list One_nat_def le_zero_eq length_0_conv not_less_eq_eq Stack_Proof.size_list_length)
-        apply (metis (mono_tags, lifting) False.hyps Idle.invar.simps Idle.list.simps Idle_Proof.invar_pop Idle_Proof.pop_list One_nat_def le_zero_eq length_0_conv not_less_eq_eq Stack_Proof.size_list_length)
-        apply (metis (mono_tags, lifting) False.hyps Idle.invar.simps Idle.list.simps Idle_Proof.invar_pop Idle_Proof.pop_list One_nat_def le_zero_eq length_0_conv not_less_eq_eq Stack_Proof.size_list_length)
-        apply (metis (mono_tags, lifting) False.hyps Idle.invar.simps Idle.list.simps Idle_Proof.invar_pop Idle_Proof.pop_list One_nat_def le_zero_eq length_0_conv not_less_eq_eq Stack_Proof.size_list_length)
-        apply (metis (mono_tags, lifting) False.hyps Idle.invar.simps Idle.list.simps Idle_Proof.invar_pop Idle_Proof.pop_list One_nat_def le_zero_eq length_0_conv not_less_eq_eq Stack_Proof.size_list_length)
-        apply (metis (mono_tags, lifting) False.hyps Idle.invar.simps Idle.list.simps Idle_Proof.invar_pop Idle_Proof.pop_list One_nat_def le_zero_eq length_0_conv not_less_eq_eq Stack_Proof.size_list_length)
-        apply (metis (mono_tags, lifting) False.hyps Idle.invar.simps Idle.list.simps Idle_Proof.invar_pop Idle_Proof.pop_list One_nat_def le_zero_eq length_0_conv not_less_eq_eq Stack_Proof.size_list_length)
+        apply (metis invar_idle.simps Idle.list.simps Idle_Proof.invar_pop Suc_leI gr_zeroI length_0_conv pop_list_2 size_list_length)
+        apply (metis (mono_tags, lifting) invar_idle.simps Idle.list.simps Idle_Proof.invar_pop Idle_Proof.pop_list le_zero_eq length_0_conv not_less_eq_eq Stack_Proof.size_list_length)
+        apply (metis (mono_tags, lifting) False.hyps invar_idle.simps Idle.list.simps Idle_Proof.invar_pop Idle_Proof.pop_list One_nat_def le_zero_eq length_0_conv not_less_eq_eq Stack_Proof.size_list_length)
+        apply (metis (mono_tags, lifting) False.hyps invar_idle.simps Idle.list.simps Idle_Proof.invar_pop Idle_Proof.pop_list One_nat_def le_zero_eq length_0_conv not_less_eq_eq Stack_Proof.size_list_length)
+        apply (metis (mono_tags, lifting) False.hyps invar_idle.simps Idle.list.simps Idle_Proof.invar_pop Idle_Proof.pop_list One_nat_def le_zero_eq length_0_conv not_less_eq_eq Stack_Proof.size_list_length)
+        apply (metis (mono_tags, lifting) False.hyps invar_idle.simps Idle.list.simps Idle_Proof.invar_pop Idle_Proof.pop_list One_nat_def le_zero_eq length_0_conv not_less_eq_eq Stack_Proof.size_list_length)
+        apply (metis (mono_tags, lifting) False.hyps invar_idle.simps Idle.list.simps Idle_Proof.invar_pop Idle_Proof.pop_list One_nat_def le_zero_eq length_0_conv not_less_eq_eq Stack_Proof.size_list_length)
+        apply (metis (mono_tags, lifting) False.hyps invar_idle.simps Idle.list.simps Idle_Proof.invar_pop Idle_Proof.pop_list One_nat_def le_zero_eq length_0_conv not_less_eq_eq Stack_Proof.size_list_length)
+        apply (metis (mono_tags, lifting) False.hyps invar_idle.simps Idle.list.simps Idle_Proof.invar_pop Idle_Proof.pop_list One_nat_def le_zero_eq length_0_conv not_less_eq_eq Stack_Proof.size_list_length)
         using Idle_Proof.invar_pop Idle_Proof.size_pop by fastforce+
     qed
   qed    
@@ -92,13 +92,13 @@ next
 next
   case (5 big small)
 
-  then have start_invar: "States.invar (States Left big small)"
+  then have start_invar: "invar (States Left big small)"
     by auto
 
-  from 5 have small_invar: "Small.invar small"
+  from 5 have small_invar: "invar small"
     by auto
 
-  from 5 have smallSize: "0 < Small.size small"
+  from 5 have smallSize: "0 < size small"
     by auto
 
   with 5(3) obtain small' where pop: "Small.pop small = (x', small')"
@@ -107,7 +107,7 @@ next
   let ?newStates = "States Left big small'"
   let ?steppedStates = "four_steps ?newStates"
 
-  have invar: "States.invar ?newStates"
+  have invar: "invar ?newStates"
     using pop start_invar smallSize invar_pop_small_size
     by metis
 
@@ -118,7 +118,7 @@ next
     using invar smallSize Small_Proof.pop_list_current[of small x' small'] 5(1)
     by auto      
 
-  from invar have n_steps: "States.invar ?steppedStates"
+  from invar have n_steps: "invar ?steppedStates"
     using invar_n_steps by blast
 
   then have 1: "x' # States.listL ?steppedStates = Small.list_current small @ rev (Big.list_current big)"
@@ -142,13 +142,13 @@ next
   with 5 show ?case by auto
 next
   case (6 big small)
-  then have start_invar: "States.invar (States Right big small)"
+  then have start_invar: "invar (States Right big small)"
     by auto
 
-  from 6 have big_invar: "Big.invar big"
+  from 6 have big_invar: "invar big"
     by auto
 
-  from 6 have bigSize: "0 < Big.size big"
+  from 6 have bigSize: "0 < size big"
     by auto
 
   with 6(3) obtain big' where pop: "Big.pop big = (x', big')"
@@ -157,7 +157,7 @@ next
   let ?newStates = "States Right big' small"
   let ?steppedStates = "four_steps ?newStates"
 
-  have invar: "States.invar ?newStates"
+  have invar: "invar ?newStates"
     using pop start_invar bigSize invar_pop_big_size
     by metis
 
@@ -169,7 +169,7 @@ next
     apply(auto split: prod.splits)
     by (metis append_Cons rev_append rev_rev_ident)
  
-  from invar have four_steps: "States.invar ?steppedStates"
+  from invar have four_steps: "invar ?steppedStates"
     using invar_n_steps by blast
 
   then have 1: "x' # States.listL ?steppedStates = Big.list_current big @ rev (Small.list_current small)"
@@ -206,14 +206,14 @@ lemma list_firstL:
   using list_deqL' apply(auto split: prod.splits)
   by (smt (z3) list.sel(1) list_deqL')
 
-lemma remaining_steps_not_idle: "States.invar states \<Longrightarrow> remaining_steps states > 0 \<longleftrightarrow> (
+lemma remaining_steps_not_idle: "invar states \<Longrightarrow> remaining_steps states > 0 \<longleftrightarrow> (
     case states of 
       States _ (Big.Common (Common.Idle _ _)) (Small.Common (Common.Idle _ _))  \<Rightarrow> False 
     | _ \<Rightarrow> True) "
   apply(induction states)
   by(auto split: Big.state.splits Small.state.splits Common.state.splits current.splits)
 
-lemma remaining_steps_idle: "States.invar (States dir big small)
+lemma remaining_steps_idle: "invar (States dir big small)
   \<Longrightarrow> remaining_steps (States dir big small) = 0 \<longleftrightarrow> (
     case (States dir big small) of 
        States _ (Big.Common (Common.Idle _ _)) (Small.Common (Common.Idle _ _))  \<Rightarrow> True 
@@ -240,13 +240,13 @@ next
     proof(induction left')
       case (Idle iLeft iLeftLength)
       then show ?case 
-      proof(induction "Stack.size right \<le> 3 * iLeftLength")
+      proof(induction "size right \<le> 3 * iLeftLength")
         case True
         then show ?case 
           apply(auto split: prod.splits)
-             apply (meson Idle.invar.simps Idle_Proof.invar_pop)
-          apply (metis Idle.invar.simps Idle_Proof.invar_pop bot_nat_0.extremum length_0_conv mult_zero_right Stack_Proof.list_not_empty Stack_Proof.size_list_length verit_la_disequality)
-           apply (metis Idle.size.simps Idle_Proof.size_pop Suc_leD)
+             apply (meson invar_idle.simps Idle_Proof.invar_pop)
+          apply (metis invar_idle.simps Idle_Proof.invar_pop bot_nat_0.extremum length_0_conv mult_zero_right Stack_Proof.list_not_empty Stack_Proof.size_list_length verit_la_disequality)
+           apply (metis size_idle.simps Idle_Proof.size_pop Suc_leD)
           using Idle_Proof.invar_pop by fastforce
       next  
         case False
@@ -254,19 +254,19 @@ next
         proof(induction "1 \<le> iLeftLength")
           case True
           let ?states = "States Left 
-              (Reverse (Current [] 0 right (Stack.size right - Suc iLeftLength)) right [] (Stack.size right - Suc iLeftLength))
+              (Reverse (Current [] 0 right (size right - Suc iLeftLength)) right [] (size right - Suc iLeftLength))
               (Reverse1 (Current [] 0 iLeft (Suc (2 * iLeftLength))) iLeft [])
             "
 
-          from True have invar: "States.invar ?states"
+          from True have invar: "invar ?states"
             apply(auto simp: reverseN_take Stack_Proof.size_list_length)
-               apply (metis Idle.invar.simps Idle_Proof.invar_pop le_SucI le_add2 mult_2 Stack_Proof.size_list_length)
+               apply (metis invar_idle.simps Idle_Proof.invar_pop le_SucI le_add2 mult_2 Stack_Proof.size_list_length)
             subgoal apply(auto simp: popN_size popN_drop)
-              by (smt (z3) Idle.invar.simps Idle_Proof.invar_pop add_Suc_right add_le_imp_le_diff append_take_drop_id le_refl length_rev mult_2 mult_Suc not_less_eq_eq numeral_2_eq_2 numeral_3_eq_3 rev_append rev_rev_ident Stack_Proof.size_list_length take_all_iff trans_le_add2)
-            apply (metis Idle.invar.simps Idle_Proof.invar_pop Suc_diff_le diff_add_inverse diff_le_self mult_2 Stack_Proof.size_list_length)
-            by (metis Idle.invar.simps Idle_Proof.invar_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 Stack_Proof.size_list_length trans_le_add2)
+              by (smt (z3) invar_idle.simps Idle_Proof.invar_pop add_Suc_right add_le_imp_le_diff append_take_drop_id le_refl length_rev mult_2 mult_Suc not_less_eq_eq numeral_2_eq_2 numeral_3_eq_3 rev_append rev_rev_ident Stack_Proof.size_list_length take_all_iff trans_le_add2)
+            apply (metis invar_idle.simps Idle_Proof.invar_pop Suc_diff_le diff_add_inverse diff_le_self mult_2 Stack_Proof.size_list_length)
+            by (metis invar_idle.simps Idle_Proof.invar_pop add_Suc_right add_le_imp_le_diff less_Suc_eq_le mult_2 mult_Suc not_le_imp_less numeral_2_eq_2 numeral_3_eq_3 Stack_Proof.size_list_length trans_le_add2)
 
-          then have invar_six: "States.invar (six_steps ?states)"
+          then have invar_six: "invar (six_steps ?states)"
             using invar_n_steps by blast
 
           from True have remaining_steps: "6 < remaining_steps ?states"
@@ -283,14 +283,14 @@ next
             using remaining_steps_decline_4[of ?states 5 5] 
             by (smt (z3) One_nat_def Suc_eq_plus1 add_Suc_right invar numeral_2_eq_2 numeral_3_eq_3 numeral_Bit0 remaining_steps_decline_4)
           
-          from True have idleLength: "Stack.size iLeft = iLeftLength"
+          from True have idleLength: "size iLeft = iLeftLength"
             apply auto
-            by (metis Idle.invar.simps Idle_Proof.invar_pop)
+            by (metis invar_idle.simps Idle_Proof.invar_pop)
 
           from True have size_ok': "size_ok' ?states (remaining_steps ?states - 6)"
             apply(auto simp: max_def idleLength)
-            apply (smt (z3) Idle.invar.simps Idle.size.simps Idle_Proof.invar_pop Idle_Proof.size_pop Suc_eq_plus1 diff_add_inverse2 diff_commute diff_diff_left diff_is_0_eq mult.commute mult_2_right mult_Suc_right numeral_2_eq_2 numeral_3_eq_3)
-            by (smt (z3) Idle.size.simps Idle_Proof.size_pop add_2_eq_Suc diff_Suc_diff_eq1 diff_add_inverse diff_commute diff_diff_left diff_is_0_eq le_add1 idleLength mult_2 mult_Suc mult_Suc_right numeral_2_eq_2 numeral_3_eq_3)
+            apply (smt (z3) invar_idle.simps size_idle.simps Idle_Proof.invar_pop Idle_Proof.size_pop Suc_eq_plus1 diff_add_inverse2 diff_commute diff_diff_left diff_is_0_eq mult.commute mult_2_right mult_Suc_right numeral_2_eq_2 numeral_3_eq_3)
+            by (smt (z3) size_idle.simps Idle_Proof.size_pop add_2_eq_Suc diff_Suc_diff_eq1 diff_add_inverse diff_commute diff_diff_left diff_is_0_eq le_add1 idleLength mult_2 mult_Suc mult_Suc_right numeral_2_eq_2 numeral_3_eq_3)
   
           then have size_ok: "size_ok (six_steps ?states)"
             using size_ok_steps invar remaining_steps size_ok.elims(3) by blast
@@ -304,9 +304,9 @@ next
           then  have 0: "iLeftLength = 0"
             by auto
 
-          with False have "Idle.size left = 1"
+          with False have "size left = 1"
             apply auto
-            by (metis Idle.invar.simps Idle.size.simps Idle_Proof.invar_pop Idle_Proof.size_pop)
+            by (metis invar_idle.simps size_idle.simps Idle_Proof.invar_pop Idle_Proof.size_pop)
 
           with False have "rightLength < 4"
             by auto
@@ -331,12 +331,12 @@ next
   let ?steppedStates = "four_steps ?newStates"
 
   have start_size_ok: "size_ok (States Left big small)"
-    using "5.prems" RealTimeDeque.invar.simps(6) by blast
+    using "5.prems" invar_deque.simps(6) by blast
 
-  from 5 have invar: "States.invar ?newStates"
-    by (meson RealTimeDeque.invar.simps(6) invar_pop_small_size popped size_ok_size_small)
+  from 5 have invar: "invar ?newStates"
+    by (meson invar_deque.simps(6) invar_pop_small_size popped size_ok_size_small)
 
-  then have invar_four_steps: "States.invar (four_steps ?newStates)"
+  then have invar_four_steps: "invar (four_steps ?newStates)"
     using invar_n_steps by blast
 
   have last_steps:  "False = (4 < remaining_steps (States Left big newSmall)) \<Longrightarrow> 
@@ -351,13 +351,13 @@ next
       using invar remaining_steps_decline_5[of ?newStates 4]
       by auto
 
-    from 5 have small_not_empty: "0 < Small.size small" 
+    from 5 have small_not_empty: "0 < size small" 
       by auto
 
-    from 5 have states_invar: "States.invar (States Left big small)" 
+    from 5 have states_invar: "invar (States Left big small)" 
       by auto
 
-    from 5 have states_size_ok: "States.size_ok (States Left big small)" 
+    from 5 have states_size_ok: "size_ok (States Left big small)" 
       by auto
 
     obtain steppedSmall steppedBig where stepped: "?steppedStates = States Left steppedBig steppedSmall"
@@ -375,7 +375,7 @@ next
       "
       by(auto split: Small.state.splits Big.state.splits Common.state.splits)
 
-    then have states_invar: "States.invar (States Left steppedBig steppedSmall)"
+    then have states_invar: "invar (States Left steppedBig steppedSmall)"
       using 5
       by (metis invar_four_steps stepped)
      
@@ -387,7 +387,7 @@ next
 
     have size_new_small: "Suc (Small.size_new newSmall) = Small.size_new small"
       using small_not_empty states_invar popped 
-      by (metis "5.prems"(1) RealTimeDeque.invar.simps(6) Small_Proof.size_new_pop States.invar.simps size_ok_size_new_small)
+      by (metis "5.prems"(1) invar_deque.simps(6) Small_Proof.size_new_pop invar_states.simps size_ok_size_new_small)
 
     with stepped invar_four_steps 
     have size_new_stepped_small: "Small.size_new newSmall = Small.size_new steppedSmall"
@@ -395,7 +395,7 @@ next
       by (simp add: step_n_size_new_small)
 
     have previous_steps: "0 < remaining_steps (States Left big small)"
-      using "5.prems"(1) invar.simps(6) by blast 
+      using "5.prems"(1) invar_deque.simps(6) by blast 
 
     with start_size_ok size_ok_size_new_big states_size_ok
     have "1 < Small.size_new small"
@@ -409,15 +409,15 @@ next
       using size_new_stepped_small by auto
 
     then have "0 < Big.size_new big"
-      using "5.prems" RealTimeDeque.invar.simps(6) States.size_ok.simps(1) States.invar.simps(1) size_ok_size_new_big by blast
+      using "5.prems" invar_deque.simps(6) States.size_ok.simps(1) invar_states.simps(1) size_ok_size_new_big by blast
 
     then have big_not_empty: "0 < Big.size_new steppedBig"
       by (simp add: size_new_big)
 
-    have small_size: "Idle.size smallIdle = Small.size_new steppedSmall"
+    have small_size: "size smallIdle = Small.size_new steppedSmall"
       using idle states_invar by auto
 
-    have big_size: "Idle.size bigIdle = Big.size_new steppedBig"
+    have big_size: "size bigIdle = Big.size_new steppedBig"
       using idle states_invar by auto
 
     have "Small.size_new small \<le> 3 * Big.size_new big" 
@@ -429,7 +429,7 @@ next
     then have stepped_size_ok: "Small.size_new steppedSmall \<le> 3 * Big.size_new steppedBig"  
       using size_new_big size_new_stepped_small by presburger
 
-    have not_empty_smallIdle: "0 < Idle.size smallIdle"
+    have not_empty_smallIdle: "0 < size smallIdle"
       using small_size small_not_empty by auto
 
     have "4 * Big.size_new big + (States.remaining_steps (States Left big small)) \<le> 12 * Small.size_new small - (3 * States.remaining_steps (States Left big small)) - 8"
@@ -492,10 +492,10 @@ next
   with 5 show ?case
   proof(induction "remaining_steps (States Left big small) > 4")
     case True
-    then have states_invar: "States.invar (States Left big small)" by auto
+    then have states_invar: "invar (States Left big small)" by auto
     from True have states_rem: "4 \<le> States.remaining_steps  (States Left big small)" by auto
     from True have states_window: "States.size_ok  (States Left big small)" by auto
-    from True have "0 < Small.size small" by auto
+    from True have "0 < size small" by auto
 
 
     from 5 show ?case 
@@ -510,7 +510,7 @@ next
 
       from True have size_ok: "size_ok ?steppedStates"
         using step_4_pop_small_size_ok[of Left big small x] states_invar states_rem states_window 
-        using \<open>0 < Small.size small\<close> order_less_imp_le popped by blast
+        using \<open>0 < size small\<close> order_less_imp_le popped by blast
 
       have "case ?steppedStates of
         States Left  (Big.state.Common (state.Idle _ _)) (Small.state.Common (state.Idle _ _)) \<Rightarrow> False
@@ -532,7 +532,7 @@ next
           (Small.Common (Common.Idle _ small)) 
           \<Rightarrow> Idle small big
      | _ \<Rightarrow> Transforming ?steppedStates)"
-        by (smt (z3) RealTimeDeque.invar.simps(6) invar_four_steps remaining_steps size_ok)
+        by (smt (z3) invar_deque.simps(6) invar_four_steps remaining_steps size_ok)
 
       then have "invar
           (case 
@@ -559,7 +559,7 @@ next
     case False
 
     then have "remaining_steps ?newStates \<le> 4"
-      by (metis (no_types, lifting) invar.simps(6)  dual_order.trans not_le_imp_less remaining_steps_pop_small size_ok_size_small popped)
+      by (metis (no_types, lifting) invar_deque.simps(6)  dual_order.trans not_le_imp_less remaining_steps_pop_small size_ok_size_small popped)
 
     then show ?case
       using last_steps
@@ -574,12 +574,12 @@ next
   let ?steppedStates = "four_steps ?newStates"
 
   have start_size_ok: "size_ok (States Right big small)"
-    using "6.prems" invar.simps(6) by blast
+    using "6.prems" invar_deque.simps(6) by blast
 
-  from 6 have invar: "States.invar ?newStates"
-    by (meson invar.simps(6) invar_pop_big_size popped size_ok_size_big)
+  from 6 have invar: "invar ?newStates"
+    by (meson invar_deque.simps(6) invar_pop_big_size popped size_ok_size_big)
 
-  then have invar_four_steps: "States.invar (four_steps ?newStates)"
+  then have invar_four_steps: "invar (four_steps ?newStates)"
     using invar_n_steps by blast
 
   have last_steps:  "False = (4 < remaining_steps (States Right newBig small)) \<Longrightarrow> 
@@ -594,13 +594,13 @@ next
       using invar remaining_steps_decline_5[of ?newStates 4]
       by auto
 
-    from 6 have big_not_empty: "0 < Big.size big" 
+    from 6 have big_not_empty: "0 < size big" 
       by auto
 
-    from 6 have states_invar: "States.invar (States Right big small)" 
+    from 6 have states_invar: "invar (States Right big small)" 
       by auto
 
-    from 6 have states_size_ok: "States.size_ok (States Right big small)" 
+    from 6 have states_size_ok: "size_ok (States Right big small)" 
       by auto
 
     obtain steppedBig steppedSmall where stepped: "?steppedStates = States Right steppedBig steppedSmall"
@@ -615,7 +615,7 @@ next
       States Right (Big.state.Common (state.Idle bI bigIdle)) (Small.state.Common (state.Idle sI smallIdle))"
       by(auto split: Small.state.splits Common.state.splits Big.state.splits)
 
-    then have states_invar: "States.invar (States Right steppedBig steppedSmall)"
+    then have states_invar: "invar (States Right steppedBig steppedSmall)"
       using 6 stepped 
       by (metis invar_four_steps)
 
@@ -625,7 +625,7 @@ next
 
     have size_new_big: "Suc (Big.size_new newBig) = Big.size_new big"
       using big_not_empty funpow_0 step_n_pop_size_new_big states_invar popped
-      by (metis "6.prems"(1) invar.simps(6))
+      by (metis "6.prems"(1) invar_deque.simps(6))
 
     with stepped invar_four_steps
     have size_new_steppedL: "Big.size_new newBig = Big.size_new steppedBig"
@@ -633,7 +633,7 @@ next
       by (simp add: step_n_size_new_big)
 
     have previous_steps: "0 < remaining_steps (States Right big small)"
-      using "6.prems"(1) invar.simps(6) by blast 
+      using "6.prems"(1) invar_deque.simps(6) by blast 
 
     with start_size_ok size_ok_size_new_big states_size_ok
     have "1 < Big.size_new big"
@@ -652,10 +652,10 @@ next
     then have small_not_empty: "0 < Small.size_new steppedSmall"
       by (simp add: size_new_small)
 
-    have big_size: "Idle.size bigIdle = Big.size_new steppedBig"
+    have big_size: "size bigIdle = Big.size_new steppedBig"
       using idle states_invar by auto
 
-    have small_size: "Idle.size smallIdle = Small.size_new steppedSmall"
+    have small_size: "size smallIdle = Small.size_new steppedSmall"
       using idle states_invar by auto
 
     have "Big.size_new big \<le> 3 * Small.size_new small" 
@@ -667,7 +667,7 @@ next
     then have stepped_size_ok: "Big.size_new steppedBig \<le> 3 * Small.size_new steppedSmall"  
       using size_new_small size_new_steppedL by presburger
 
-    have not_empty_idleL: "0 < Idle.size bigIdle"
+    have not_empty_idleL: "0 < size bigIdle"
       using big_size big_not_empty by auto
 
     have "4 * Small.size_new small + (States.remaining_steps (States Right big small)) \<le> 12 * Big.size_new big - (3 * States.remaining_steps (States Right big small)) - 8"
@@ -723,9 +723,9 @@ next
   from 6 invar_four_steps show ?case
   proof(induction "remaining_steps (States Right big small) > 4")
     case True
-    then have states_invar: "States.invar (States Right big small)" by auto
+    then have states_invar: "invar (States Right big small)" by auto
     from True have states_size_ok: "States.size_ok (States Right big small)" by auto
-    from True have "0 < Big.size big" by auto
+    from True have "0 < size big" by auto
 
     show ?case 
     proof(induction "remaining_steps ?newStates > 4")
@@ -738,7 +738,7 @@ next
 
     from True have size_ok: "size_ok ?steppedStates"
       using step_4_pop_big_size_ok[of Right big small x] states_invar states_size_ok
-      using \<open>0 < Big.size big\<close> order_le_less popped by blast
+      using \<open>0 < size big\<close> order_le_less popped by blast
 
     have "case ?steppedStates of
       States Right (Big.state.Common (state.Idle _ _)) (Small.state.Common (state.Idle _ _)) \<Rightarrow> False
@@ -759,7 +759,7 @@ next
         (Big.Common (Common.Idle _ big)) 
         (Small.Common (Common.Idle _ small)) \<Rightarrow> Idle big small
    | _ \<Rightarrow> Transforming ?steppedStates)"
-      by (smt (z3) invar.simps invar_four_steps remaining_steps size_ok)
+      by (smt (z3) invar_deque.simps invar_four_steps remaining_steps size_ok)
 
     then have "invar
         (case 
@@ -781,7 +781,7 @@ next
     case False
    
     then have "remaining_steps ?newStates \<le> 4"
-      by (metis (no_types, lifting) RealTimeDeque.invar.simps(6) dual_order.trans not_le_imp_less remaining_steps_pop_big size_ok_size_big popped)
+      by (metis (no_types, lifting) invar_deque.simps(6) dual_order.trans not_le_imp_less remaining_steps_pop_big size_ok_size_big popped)
 
     then show ?case
       using last_steps by auto

@@ -5,11 +5,11 @@ begin
 lemma list_rev: "as @ rev bs = cs @ rev ds \<Longrightarrow> bs @ rev as  = ds @ rev cs"
   by (metis rev_append rev_rev_ident)
 
-lemma swap_lists_left: "States.invar (States Left big small) \<Longrightarrow> 
+lemma swap_lists_left: "invar (States Left big small) \<Longrightarrow> 
     States.listL (States Left big small) = rev (States.listL (States Right big small))"
   by(auto split: prod.splits Big.state.splits Small.state.splits)
 
-lemma swap_lists_right: "States.invar (States Right big small) \<Longrightarrow> 
+lemma swap_lists_right: "invar (States Right big small) \<Longrightarrow> 
     States.listL (States Right big small) = rev (States.listL (States Left big small))"
   by(auto split: prod.splits Big.state.splits Small.state.splits)
 
@@ -34,15 +34,15 @@ lemma invar_swap: "invar q \<Longrightarrow> invar (swap q)"
   apply(induction q rule: swap.induct)
   by(auto simp: lists_same split: prod.splits)
 
-lemma size_list_stack: "Stack.list stack = [] \<Longrightarrow> Suc x \<le> 4 * Stack.size stack \<Longrightarrow> False"
+lemma size_list_stack: "Stack.list stack = [] \<Longrightarrow> Suc x \<le> 4 * size stack \<Longrightarrow> False"
   apply(induction stack rule: Stack.list.induct)
   by auto
 
-lemma size_list_idle: "Idle.list idle = [] \<Longrightarrow> Suc x \<le> 4 * Idle.size idle \<Longrightarrow> False"
+lemma size_list_idle: "Idle.list idle = [] \<Longrightarrow> Suc x \<le> 4 * size idle \<Longrightarrow> False"
   apply(induction idle arbitrary: x rule: Idle.list.induct)
   using size_list_stack by auto
 
-lemma size_list_common: "Common.invar common \<Longrightarrow> Suc x \<le> 4 * Common.size common \<Longrightarrow> Common.list common = [] \<Longrightarrow> False"
+lemma size_list_common: "invar common \<Longrightarrow> Suc x \<le> 4 * size common \<Longrightarrow> Common.list common = [] \<Longrightarrow> False"
 proof(induction common arbitrary: x)
   case (Copy x1 x2 x3 x4)
   then show ?case 
@@ -51,7 +51,7 @@ proof(induction common arbitrary: x)
     then have a: "Stack.list x3a = []"
       by auto
 
-    from Current have b: "Suc x \<le> 4 * Stack.size x3a"
+    from Current have b: "Suc x \<le> 4 * size x3a"
       by auto
 
     from a b size_list_stack show ?case 
@@ -59,10 +59,10 @@ proof(induction common arbitrary: x)
   qed
 next
   case (Idle x1 x2)
-  then have a: "0 < Idle.size x2"
+  then have a: "0 < size x2"
     by auto
 
-  from Idle have  b: "Suc x \<le> 4 * Idle.size x2"
+  from Idle have  b: "Suc x \<le> 4 * size x2"
     by auto
 
   from Idle have c: "Idle.list x2 = []"

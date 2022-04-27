@@ -50,7 +50,7 @@ next
 qed
 
 lemma invar_step: "invar common \<Longrightarrow> invar (step common)" 
-proof(induction "common" rule: invar.induct)
+proof(induction "common" rule: invar_state.induct)
   case (1 idle)
   then show ?case
     by auto
@@ -68,7 +68,7 @@ next
       then show ?case
       proof(induction "remained \<le> Suc (length new)")
         case True
-        then have "take (Suc (length new)) (Stack.list old) = take (Stack.size old) (hd aux # new)"
+        then have "take (Suc (length new)) (Stack.list old) = take (size old) (hd aux # new)"
           apply(induction "(remained - length new)" aux new rule: reverseN.induct)
           by(auto simp: le_Suc_eq)
          
@@ -118,18 +118,18 @@ proof(induction common arbitrary: x rule: pop.induct)
   obtain current' where current: "drop_first current = current'"
     by auto
 
-  from 1 idle have prop_1: "Idle.invar idle'"
+  from 1 idle have prop_1: "invar idle'"
     by(auto simp: size_not_empty Idle_Proof.invar_pop)
 
-  from 1 current have prop_2: "Current.invar current'"
+  from 1 current have prop_2: "invar current'"
     by(auto simp: invar_size_pop eq_snd_iff split: prod.splits)
 
-  from 1 current idle have prop_3: "Current.size_new current' = Idle.size idle'"
+  from 1 current idle have prop_3: "Current.size_new current' = size idle'"
     using Idle_Proof.size_pop[of idle x idle'] size_new_pop[of current]
     by(auto simp: size_not_empty)
 
-  from 1 current idle have prop_4: "take (Idle.size idle') (Current.list current') = 
-      take (Current.size current') (Idle.list idle')"
+  from 1 current idle have prop_4: "take (size idle') (Current.list current') = 
+      take (size current') (Idle.list idle')"
     using Idle_Proof.size_pop[of idle x idle'] 
           size_not_empty[of idle] 
           size_pop[of current] 
@@ -213,7 +213,7 @@ next
         then have aux_not_empty: "aux \<noteq> []"
           by auto
 
-        from True have old_not_empty: "\<not>Stack.is_empty old"
+        from True have old_not_empty: "\<not> is_empty old"
           apply auto
           using Stack_Proof.size_not_empty by blast
         
@@ -237,21 +237,18 @@ next
         then have a: "take (remained - length new) aux \<noteq> []"
           by auto
 
-        from False have b: "\<not>Stack.is_empty old"
+        from False have b: "\<not> is_empty old"
           apply auto
           using Stack_Proof.size_not_empty by blast
 
-     
-
-
         from False have "take 1 (Stack.list old) = take 1 (rev (take (remained - length new) aux))"
           apply(auto simp: reverseN_take)
-          apply(induction "0 < Stack.size old \<and> 0 < remained")
+          apply(induction "0 < size old \<and> 0 < remained")
           using take_1[of 
                 remained 
-                "Stack.size old" 
+                "size old" 
                 "Stack.list old" 
-                "(rev (take (remained - length new) aux)) @ take (Stack.size old + length new - remained) new"
+                "(rev (take (remained - length new) aux)) @ take (size old + length new - remained) new"
               ]
           by auto
           
@@ -269,7 +266,6 @@ next
     then show ?case by auto
   qed
 qed
-
 
 (* TODO: *)
 lemma pop_list_current: "invar common \<Longrightarrow> 0 < size common \<Longrightarrow> pop common = (x, common')
@@ -304,43 +300,43 @@ next
 qed
   
 lemma list_current_size: "\<lbrakk>0 < size common; list_current common = []; invar common\<rbrakk> \<Longrightarrow> False"
-proof(induction common rule: invar.induct)
+proof(induction common rule: invar_state.induct)
   case (1 current idle)
   then show ?case
     using list_size by auto
 next
   case (2 current aux new moved)
-  then have "Current.invar current" 
+  then have "invar current" 
             "Current.list current = []"  
-            "0 < Current.size current" 
+            "0 < size current" 
     by(auto split: current.splits)
  
   then show ?case using list_size by auto
 qed
 
 lemma list_size: "\<lbrakk>0 < size common; list common = []; invar common\<rbrakk> \<Longrightarrow> False"
-proof(induction common rule: invar.induct)
+proof(induction common rule: invar_state.induct)
   case (1 current idle)
   then show ?case
     using list_size by auto
 next
   case (2 current aux new moved)
-  then have "Current.invar current" 
+  then have "invar current" 
             "Current.list current = []"  
-            "0 < Current.size current" 
+            "0 < size current" 
     by(auto split: current.splits)
  
   then show ?case using list_size by auto
 qed
 
-lemma size_empty: "invar common \<Longrightarrow> size common = 0 \<Longrightarrow> is_empty common"
-proof(induction common rule: is_empty.induct)
+lemma size_empty: "invar (common :: 'a state) \<Longrightarrow> size common = 0 \<Longrightarrow> is_empty common"
+proof(induction common rule: is_empty_state.induct)
   case (1 current idle)
   then show ?case 
     by(auto simp: min_def size_empty size_new_empty split: if_splits)
 next
   case (2 current)
-  then have "Current.invar current" 
+  then have "invar current" 
     by(auto split: current.splits)
 
   with 2 show ?case 

@@ -30,15 +30,15 @@ lemma invar_pop: "\<lbrakk>\<not> is_empty idle; invar idle; pop idle = (x, idle
   apply(induction idle arbitrary: x rule: pop.induct)
   by(auto simp: Stack_Proof.size_pop)
 
-lemma not_empty: "\<lbrakk>is_empty idle; 0 < size idle\<rbrakk> \<Longrightarrow> False" 
+lemma not_empty: "\<lbrakk>is_empty (idle :: 'a idle); 0 < size idle\<rbrakk> \<Longrightarrow> False" 
   apply(induction idle)
   by (simp add: size_not_empty) 
 
-lemma size_empty: "is_empty idle \<longleftrightarrow> size idle = 0"
+lemma size_empty: "is_empty (idle :: 'a idle) \<longleftrightarrow> size idle = 0"
   apply(induction idle)
   by(auto simp: size_empty)
 
-lemma size_not_empty: "\<not>is_empty idle \<longleftrightarrow> 0 < size idle"
+lemma size_not_empty: "\<not>is_empty (idle :: 'a idle) \<longleftrightarrow> 0 < size idle"
   apply(induction idle)
   by(auto simp: size_not_empty)
 

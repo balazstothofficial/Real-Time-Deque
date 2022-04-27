@@ -16,9 +16,9 @@ definition empty where
 instantiation deque::(type) emptyable
 begin
 
-fun is_empty :: "'a deque \<Rightarrow> bool" where
-  "is_empty Empty = True"
-| "is_empty _ = False"
+fun is_empty_deque :: "'a deque \<Rightarrow> bool" where
+  "is_empty_deque Empty = True"
+| "is_empty_deque _ = False"
 
 instance..
 end
@@ -173,21 +173,21 @@ abbreviation listR :: "'a deque \<Rightarrow> 'a list" where
 instantiation deque::(type) invar
 begin
 
-fun invar :: "'a deque \<Rightarrow> bool" where
+fun invar_deque :: "'a deque \<Rightarrow> bool" where
   "invar Empty = True"
 | "invar (One _) = True"
 | "invar (Two _ _) = True"
 | "invar (Three _ _ _) = True"
 | "invar (Idle left right) \<longleftrightarrow>
-   Idle.invar left  \<and>
-   Idle.invar right \<and>
-   \<not> Idle.is_empty left  \<and> 
-   \<not> Idle.is_empty right \<and>
-   3 * Idle.size right \<ge> Idle.size left \<and>
-   3 * Idle.size left \<ge> Idle.size right
+   invar left  \<and>
+   invar right \<and>
+   \<not> is_empty left  \<and> 
+   \<not> is_empty right \<and>
+   3 * size right \<ge> size left \<and>
+   3 * size left \<ge> size right
   "
 | "invar (Transforming states) \<longleftrightarrow> 
-   States.invar states \<and>
+   invar states \<and>
    size_ok states \<and>
    0 < remaining_steps states
   "

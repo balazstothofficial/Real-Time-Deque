@@ -12,10 +12,10 @@ lemma first_list: "\<not> is_empty stack \<Longrightarrow> first stack = hd (lis
   by(induction stack rule: first.induct) auto
 
 lemma list_empty: "list stack = [] \<longleftrightarrow> is_empty stack"
-  by(induction stack rule: is_empty.induct) auto
+  by(induction stack rule: is_empty_stack.induct) auto
 
 lemma list_not_empty: "list stack  \<noteq> [] \<longleftrightarrow> \<not> is_empty stack"
-  by(induction stack rule: is_empty.induct) auto
+  by(induction stack rule: is_empty_stack.induct) auto
 
 lemma size_push: "size (push x stack) = Suc (size stack)"
   by(induction stack arbitrary: x) auto
@@ -23,13 +23,13 @@ lemma size_push: "size (push x stack) = Suc (size stack)"
 lemma size_pop: "size (pop stack) = size stack - Suc 0"
   by(induction stack rule: pop.induct) auto
 
-lemma size_empty: "size stack = 0 \<longleftrightarrow> is_empty stack"
-  by(induction stack rule: is_empty.induct) auto
+lemma size_empty: "size (stack :: 'a stack) = 0 \<longleftrightarrow> is_empty stack"
+  by(induction stack rule: is_empty_stack.induct) auto
 
-lemma size_not_empty: "size stack > 0 \<longleftrightarrow> \<not> is_empty stack"
-  by(induction stack rule: is_empty.induct) auto
+lemma size_not_empty: "size (stack :: 'a stack) > 0 \<longleftrightarrow> \<not> is_empty stack"
+  by(induction stack rule: is_empty_stack.induct) auto
 
-lemma size_list_length: "Stack.size stack = List.length (list stack)"
+lemma size_list_length: "size stack = List.length (list stack)"
   by(induction stack) auto
 
 lemma first_pop: "\<not> is_empty stack \<Longrightarrow> first stack # list (pop stack) = list stack"

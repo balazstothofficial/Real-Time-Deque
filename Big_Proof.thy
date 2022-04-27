@@ -133,20 +133,19 @@ next
 
 
     from 1 have b: "
-     tl (rev (take (Stack.size old - length (Stack.list big)) aux) @ rev (take (Stack.size old) (rev (Stack.list big)))) =
-         rev (take (Stack.size (Stack.pop old) - length (Stack.list big)) aux) @ rev (take (Stack.size (Stack.pop old)) (rev (Stack.list big)))"
-    proof(induction "Stack.size old < length (Stack.list big)")
+     tl (rev (take (size old - length (Stack.list big)) aux) @ rev (take (size old) (rev (Stack.list big)))) =
+         rev (take (size (Stack.pop old) - length (Stack.list big)) aux) @ rev (take (size (Stack.pop old)) (rev (Stack.list big)))"
+    proof(induction "size old < length (Stack.list big)")
       case True
       then show ?case 
         apply(auto simp: reverseN_take)
         by (smt (z3) One_nat_def Stack_Proof.size_empty Stack_Proof.size_pop Suc_diff_eq_diff_pred Suc_diff_le bot_nat_0.not_eq_extremum diff_is_0_eq drop_Suc length_rev less_imp_le nat_le_linear not_less_eq_eq rev_is_Nil_conv rev_take self_append_conv2 take_eq_Nil tl_drop)
     next
       case False
-     
-        
+
 
       from False show ?case
-      proof(induction "Stack.size (Stack.pop old) < length (Stack.list big)")
+      proof(induction "size (Stack.pop old) < length (Stack.list big)")
         case True
         then show ?case
           apply auto
@@ -218,7 +217,7 @@ lemma step_size: "invar big \<Longrightarrow> size big = size (step big)"
   by(auto simp: step_size split: current.splits)
 
 (* TODO: *)
-lemma size_empty: "invar big \<Longrightarrow> size big = 0 \<Longrightarrow> is_empty big"
+lemma size_empty: "invar (big :: 'a state) \<Longrightarrow> size big = 0 \<Longrightarrow> is_empty big"
   apply(induction big)
    apply(auto simp: size_empty Current_Proof.size_empty split: current.splits)
    apply (metis Stack_Proof.size_empty add.commute add_diff_cancel_right' bot_nat_0.extremum min_def zero_diff)

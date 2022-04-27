@@ -38,7 +38,7 @@ next
     then show ?case 
     proof(induction current)
       case (Current extra added old remained)
-      then have not_empty: "\<not>Stack.is_empty small"
+      then have not_empty: "\<not> is_empty small"
         apply auto
         by (metis list.distinct(1) list_empty)
 
@@ -51,21 +51,21 @@ next
 
       have b: "\<lbrakk>
       x = Stack.list small \<Longrightarrow>
-     Stack.size old \<le> Suc (Stack.size (Stack.pop small) + List.length aux) \<and>
-     rev (take (Stack.size old - List.length (Stack.list small)) aux) @ Stack.list small =
-     rev (take (Stack.size old - List.length (Stack.list (Stack.pop small))) (Stack.first small # aux)) @
-     rev (take (Stack.size old) (rev (Stack.list (Stack.pop small))));
+     size old \<le> Suc (size (Stack.pop small) + List.length aux) \<and>
+     rev (take (size old - List.length (Stack.list small)) aux) @ Stack.list small =
+     rev (take (size old - List.length (Stack.list (Stack.pop small))) (Stack.first small # aux)) @
+     rev (take (size old) (rev (Stack.list (Stack.pop small))));
 
      a # x = Stack.list small; 
      added = List.length extra; 
-     Stack.size old \<le> remained; 
-     Stack.size old \<le> Stack.size small + List.length aux;
-     Stack.list old = rev (take (Stack.size old - List.length (Stack.list small)) aux) @ Stack.list small;
-     \<not> List.length aux \<le> Stack.size old - List.length (Stack.list small); 
+     size old \<le> remained; 
+     size old \<le> size small + List.length aux;
+     Stack.list old = rev (take (size old - List.length (Stack.list small)) aux) @ Stack.list small;
+     \<not> List.length aux \<le> size old - List.length (Stack.list small); 
      aux \<noteq> []; 
-      List.length (Stack.list small) \<le> Stack.size old
-    \<rbrakk>  \<Longrightarrow>  rev (take (Stack.size old - (List.length (Stack.list small) - Suc 0)) (Stack.first small # aux)) = 
-            rev (take (Stack.size old - List.length (Stack.list small)) aux) @ [Stack.first small]"
+      List.length (Stack.list small) \<le> size old
+    \<rbrakk>  \<Longrightarrow>  rev (take (size old - (List.length (Stack.list small) - Suc 0)) (Stack.first small # aux)) = 
+            rev (take (size old - List.length (Stack.list small)) aux) @ [Stack.first small]"
         by (metis One_nat_def Suc_diff_eq_diff_pred Suc_diff_le length_greater_0_conv list.distinct(1) rev.simps(2) take_Suc_Cons)
 
        
@@ -107,15 +107,15 @@ lemma invar_push: "invar small \<Longrightarrow> invar (push x small)"
 
 (* TODO: *)
 lemma invar_pop_2_helper: "\<lbrakk>
-  0 < Stack.size old; 
-  Stack.size old \<le> Stack.size small + List.length auxS;
+  0 < size old; 
+  size old \<le> size small + List.length auxS;
   Stack.list old = 
-    rev (take (Stack.size old - List.length (Stack.list small)) auxS) @ 
-    rev (take (Stack.size old) (rev (Stack.list small)))
+    rev (take (size old - List.length (Stack.list small)) auxS) @ 
+    rev (take (size old) (rev (Stack.list small)))
 \<rbrakk> \<Longrightarrow> Stack.list (Stack.pop old) =
-        rev (take (Stack.size (Stack.pop old) - List.length (Stack.list small)) auxS) @
-        rev (take (Stack.size (Stack.pop old)) (rev (Stack.list small)))"
-proof(induction "Stack.size old \<le> Stack.size small")
+        rev (take (size (Stack.pop old) - List.length (Stack.list small)) auxS) @
+        rev (take (size (Stack.pop old)) (rev (Stack.list small)))"
+proof(induction "size old \<le> size small")
   case True
   then show ?case 
     apply auto
@@ -128,7 +128,7 @@ next
 qed
 
 lemma invar_pop_2: "\<lbrakk>
-  0 < Small.size small; 
+  0 < size small; 
   invar small;
   pop small = (x, small')
 \<rbrakk> \<Longrightarrow> invar small'"
@@ -235,7 +235,7 @@ lemma step_size: "invar small \<Longrightarrow> size small = size (step small)"
   apply(induction small rule: step.induct)
   by(auto simp: step_size split: current.splits)
 
-lemma size_empty: "invar small \<Longrightarrow> size small = 0 \<Longrightarrow> is_empty small"
+lemma size_empty: "invar (small :: 'a state) \<Longrightarrow> size small = 0 \<Longrightarrow> is_empty small"
   apply(induction small)
   by(auto simp: size_empty Current_Proof.size_empty list_empty split: current.splits)
 

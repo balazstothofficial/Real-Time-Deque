@@ -26,9 +26,9 @@ fun list :: "'a stack \<Rightarrow> 'a list" where
 instantiation stack ::(type) emptyable
 begin
 
-fun is_empty where
-  "is_empty (Stack [] []) = True" 
-| "is_empty _             = False"
+fun is_empty_stack where
+  "is_empty_stack (Stack [] []) = True" 
+| "is_empty_stack _             = False"
 
 instance..
 end
@@ -36,7 +36,7 @@ end
 instantiation stack ::(type) size
 begin
 
-fun size :: "'a stack \<Rightarrow> nat" where
+fun size_stack :: "'a stack \<Rightarrow> nat" where
   "size (Stack left right) = length left + length right"
 
 instance..

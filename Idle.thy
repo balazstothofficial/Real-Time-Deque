@@ -16,8 +16,8 @@ fun pop :: "'a idle \<Rightarrow> ('a * 'a idle)" where
 instantiation idle :: (type) size
 begin
 
-fun size :: "'a idle \<Rightarrow> nat" where
-  "size (Idle stack _) = Stack.size stack"
+fun size_idle :: "'a idle \<Rightarrow> nat" where
+  "size (Idle stack _) = size stack"
 
 instance..
 end
@@ -25,8 +25,8 @@ end
 instantiation idle :: (type) emptyable
 begin
 
-fun is_empty :: "'a idle \<Rightarrow> bool" where
-  "is_empty (Idle stack _) \<longleftrightarrow> Stack.is_empty stack"
+fun is_empty_idle :: "'a idle \<Rightarrow> bool" where
+  "is_empty (Idle stack _) \<longleftrightarrow> is_empty stack"
 
 instance..
 end
@@ -34,8 +34,8 @@ end
 instantiation idle ::(type) invar
 begin
 
-fun invar :: "'a idle \<Rightarrow> bool" where
-  "invar (Idle stack stackSize) \<longleftrightarrow> Stack.size stack = stackSize"
+fun invar_idle :: "'a idle \<Rightarrow> bool" where
+  "invar (Idle stack stackSize) \<longleftrightarrow> size stack = stackSize"
 
 instance..
 end

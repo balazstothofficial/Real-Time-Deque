@@ -24,8 +24,8 @@ instantiation current::(type) emptyable
 begin
 
 (* TODO: Actually it should be "added + remained = 0" Maybe directly base it on size? *) 
-fun is_empty :: "'a current \<Rightarrow> bool" where
-  "is_empty (Current extra _ old remained) \<longleftrightarrow> Stack.is_empty old \<and> extra = [] \<or> remained = 0"
+fun is_empty_current :: "'a current \<Rightarrow> bool" where
+  "is_empty (Current extra _ old remained) \<longleftrightarrow> is_empty old \<and> extra = [] \<or> remained = 0"
 
 instance..
 end
@@ -33,7 +33,7 @@ end
 instantiation current::(type) invar
 begin
 
-fun invar :: "'a current \<Rightarrow> bool" where
+fun invar_current :: "'a current \<Rightarrow> bool" where
   "invar (Current extra added _ _) \<longleftrightarrow> length extra = added"
 
 instance..
@@ -42,8 +42,8 @@ end
 instantiation current::(type) size
 begin
 
-fun size :: "'a current \<Rightarrow> nat" where
-  "size (Current _ added old _) = added + Stack.size old"
+fun size_current :: "'a current \<Rightarrow> nat" where
+  "size (Current _ added old _) = added + size old"
 
 instance..
 end
