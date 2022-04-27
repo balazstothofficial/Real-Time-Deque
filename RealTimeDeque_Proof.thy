@@ -1,28 +1,38 @@
 theory RealTimeDeque_Proof
-  imports Deque RealTimeDeque Transforming_Proof RealTimeDeque_Enqueue RealTimeDeque_Dequeue
+  imports Deque RealTimeDeque States_Proof RealTimeDeque_Enqueue RealTimeDeque_Dequeue
 begin
 
 lemma list_rev: "as @ rev bs = cs @ rev ds \<Longrightarrow> bs @ rev as  = ds @ rev cs"
   by (metis rev_append rev_rev_ident)
 
+lemma swap_lists_left: "States.invar (States Left big small) \<Longrightarrow> 
+    States.listL (States Left big small) = rev (States.listL (States Right big small))"
+  by(auto split: prod.splits Big.state.splits Small.state.splits)
+
+lemma swap_lists_right: "States.invar (States Right big small) \<Longrightarrow> 
+    States.listL (States Right big small) = rev (States.listL (States Left big small))"
+  by(auto split: prod.splits Big.state.splits Small.state.splits)
+
 lemma swap_list: "invar q \<Longrightarrow> listR (swap q) = listL q"
   apply(induction q)
   apply auto
-  subgoal for t
-  apply(induction t)
-  apply(auto simp: split: prod.splits)
-  subgoal for big small smallList bigList
-    using list_rev[of bigList smallList "Small.list_current small" "Big.list_current big"]
-    by simp
-  . .
+  subgoal for states
+    apply(induction states)
+    using swap_lists_left swap_lists_right 
+    by (metis (full_types)RealTimeDeque.listL.simps(6) direction.exhaust swap.simps(6) swap.simps(7))
+  done
 
 lemma swap_list': "invar q \<Longrightarrow> listL (swap q) = listR q"
   using swap_list rev_swap
   by blast
 
+lemma lists_same: "lists (States Left big small) = lists (States Right big small)"
+  apply(induction "States Left big small" rule: lists.induct)
+  by auto
+
 lemma invar_swap: "invar q \<Longrightarrow> invar (swap q)"
   apply(induction q rule: swap.induct)
-  by auto
+  by(auto simp: lists_same split: prod.splits)
 
 lemma size_list_stack: "Stack.list stack = [] \<Longrightarrow> Suc x \<le> 4 * Stack.size stack \<Longrightarrow> False"
   apply(induction stack rule: Stack.list.induct)
@@ -81,17 +91,27 @@ next
     apply auto
     by (metis Idle_Proof.pop_list list.discI surj_pair)
 next
-  case (Transforming x)
-  then show ?case 
-    apply(induction x)
-    apply auto
-    using Small_Proof.list_current_size apply force
-    apply(auto simp: max_def split: prod.splits Big.state.splits Small.state.splits if_splits)
-    apply(simp add: size_list_length split!: current.splits)
-    subgoal by(auto split!: current.splits)
-    subgoal by(auto split: current.splits)
-    subgoal by(auto split: current.splits)
-    using size_list_common by auto
+  case (Transforming states)
+
+   have "is_empty (Transforming states) \<longleftrightarrow> listL (Transforming states) = []"
+   proof
+     assume "is_empty (Transforming states)"
+     then show "listL (Transforming states) = []"
+       by auto
+   next
+     assume "listL (Transforming states) = []"
+     with Transforming show "is_empty (Transforming states)"
+       apply auto
+     proof(induction states)
+       case (States dir big small)
+       then show ?case
+         apply(induction dir)
+         apply(auto split: prod.splits)
+         using Big_Proof.list_current_size by force+
+     qed
+   qed
+
+   then show ?case.
 qed
 
 interpretation RealTimeDeque: Deque where

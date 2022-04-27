@@ -6,14 +6,15 @@ lemmas state_splits = idle.splits Common.state.splits Small.state.splits Big.sta
 lemmas invar_steps = Big_Proof.invar_step Common_Proof.invar_step Small_Proof.invar_step
 
 lemma invar_list_big_first: "invar states \<Longrightarrow> list_big_first states = list_current_big_first states"
+  apply(induction states)
   apply(auto split: prod.splits)
   by (metis rev_append rev_rev_ident)
 
 lemma step_lists: "invar states \<Longrightarrow> lists (step states) = lists states"
 proof(induction states rule: lists.induct)
-  case (1 currentB big auxB count currentS small auxS)
+  case (1 dir currentB big auxB count currentS small auxS)
   then show ?case 
-  proof(induction "(Reverse currentB big auxB count, Reverse1 currentS small auxS)" rule: step.induct)
+  proof(induction "(States dir (Reverse currentB big auxB count) (Reverse1 currentS small auxS))" rule: step.induct)
     case 1
     then show ?case 
     proof(induction currentB)
@@ -29,19 +30,19 @@ proof(induction states rule: lists.induct)
       by (metis (no_types, lifting) first_pop funpow_swap1 reverseN.simps(3))
   qed
 next
-  case ("2_1" common small)
+  case ("2_1" dir common small)
   then show ?case 
     using Small_Proof.step_list_reverse2[of small]
     by(auto simp: Common_Proof.step_list split: Small.state.splits)
 next
-  case ("2_2" big current auxS big newS count)
+  case ("2_2" dir big current auxS big newS count)
   then show ?case 
     using 
       Small_Proof.step_list_reverse2[of "Reverse2 current auxS big newS count"]
       Big_Proof.step_list
     by auto
 next
-  case ("2_3" big common)
+  case ("2_3" dir big common)
   then show ?case 
     by(auto simp: Big_Proof.step_list Common_Proof.step_list)
 qed
@@ -69,9 +70,9 @@ next
     by(auto simp: Big_Proof.step_list_current Common_Proof.step_list_current)
 qed
 
-lemma push_big: "lists (big, small) = (big', small')
-   \<Longrightarrow> lists (Big.push x big, small) = (x # big', small')"
-proof(induction "(Big.push x big, small)" rule: lists.induct)
+lemma push_big: "lists (States dir big small) = (big', small')
+   \<Longrightarrow> lists (States dir (Big.push x big) small) = (x # big', small')"
+proof(induction "States dir (Big.push x big) small" rule: lists.induct)
   case (1 currentB big' auxB count currentS small auxS)
   then show ?case
   proof(induction x big rule: Big.push.induct)
@@ -106,10 +107,10 @@ next
 qed
 
 lemma push_small: "
-   invar (big, small) \<Longrightarrow>
-   lists (big, small) = (big', small') \<Longrightarrow> 
-   lists (big, Small.push x small) = (big', x # small')"
-proof(induction "(big, Small.push x small)" rule: lists.induct)
+   invar (States dir big small) \<Longrightarrow>
+   lists (States dir big small) = (big', small') \<Longrightarrow> 
+   lists (States dir big (Small.push x small)) = (big', x # small')"
+proof(induction "States dir big (Small.push x small)" rule: lists.induct)
 case (1 currentB big auxB count currentS small auxS)
   then show ?case
     by(auto split: current.splits Small.state.splits)
@@ -167,25 +168,25 @@ next
 qed
 
 
-lemma smart: "list_small_first (big, small) = list_current_small_first (big, small) \<longleftrightarrow>
-              list_big_first (big, small) = list_current_big_first (big, small)"
+lemma smart: "list_small_first (States dir big small) = list_current_small_first (States dir big small) \<longleftrightarrow>
+              list_big_first (States dir big small) = list_current_big_first (States dir big small)"
   apply(auto split: prod.splits)
   by (metis rev_append rev_rev_ident)+
 
 
 lemma invar_pop_big_size_1: "\<lbrakk>
-  invar (big, small);
+  invar (States dir big small);
   0 < Big.size big;
   Big.pop big = (x, big')\<rbrakk>
  \<Longrightarrow>  Big.invar big'  \<and> Small.invar small"
   by(auto simp: Big_Proof.invar_pop_2)
 
 lemma invar_pop_big_size_2_1_1: "\<lbrakk>
-  invar (big, small);
+  invar (States dir big small);
   0 < Big.size big;
   Big.pop big = (x, big')\<rbrakk>
- \<Longrightarrow> tl (list_big_first (big, small)) = list_big_first (big', small)"
-proof(induction "(big, small)" rule: lists.induct)
+ \<Longrightarrow> tl (list_big_first (States dir big small)) = list_big_first (States dir big' small)"
+proof(induction "States dir big small" rule: lists.induct)
   case (1 currentB big auxB count currentS small auxS)
   then show ?case 
   proof(induction currentB rule: Current.pop.induct)
@@ -228,31 +229,31 @@ next
 qed
 
 lemma invar_pop_big_size_2_1_2: "\<lbrakk>
-  invar (big, small);
+  invar (States dir big small);
   0 < Big.size big;
   Big.pop big = (x, big')\<rbrakk>
- \<Longrightarrow> tl (list_current_big_first (big, small)) = list_current_big_first (big', small)"
+ \<Longrightarrow> tl (list_current_big_first (States dir big small)) = list_current_big_first (States dir big' small)"
   apply(auto split: prod.splits)
   using Big_Proof.list_current_size Big_Proof.pop_list_current
   by (metis list.sel(3) tl_append2)
 
 lemma invar_pop_big_size_2_1: "\<lbrakk>
-  invar (big, small);
+  invar (States dir big small);
    0 < Big.size big;
   Big.pop big = (x, big')\<rbrakk>
- \<Longrightarrow> list_big_first (big', small) = list_current_big_first (big', small)"
+ \<Longrightarrow> list_big_first (States dir big' small) = list_current_big_first (States dir big' small)"
   by (metis invar_list_big_first invar_pop_big_size_2_1_1 invar_pop_big_size_2_1_2)
 
 lemma invar_pop_big_size_2: "\<lbrakk>
-  invar (big, small);
+  invar (States dir big small);
   0 < Big.size big;
   Big.pop big = (x, big')\<rbrakk>
- \<Longrightarrow> list_small_first (big', small) = list_current_small_first (big', small)"
+ \<Longrightarrow> list_small_first (States dir big' small) = list_current_small_first (States dir big' small)"
   by (meson invar_pop_big_size_2_1 smart)
 
 
 lemma invar_pop_big_size_3: "\<lbrakk>
-  invar (big, small);
+  invar (States dir big small);
   0 < Big.size big;
   Big.pop big = (x, big')\<rbrakk>
  \<Longrightarrow> (case (big', small) of 
@@ -268,28 +269,28 @@ lemma invar_pop_big_size_3: "\<lbrakk>
 
 
 lemma invar_pop_big_size: "\<lbrakk>
-  invar (big, small);
+  invar (States dir big small);
   0 < Big.size big;
   Big.pop big = (x, big')\<rbrakk>
- \<Longrightarrow> invar (big', small)"
-  using invar_pop_big_size_1[of big small x big']  
-        invar_pop_big_size_2[of big small x big']
-        invar_pop_big_size_3[of big small x big']
+ \<Longrightarrow> invar (States dir big' small)"
+  using invar_pop_big_size_1[of dir big small x big']  
+        invar_pop_big_size_2[of dir big small x big']
+        invar_pop_big_size_3[of dir big small x big']
   by auto
 
 lemma invar_pop_small_size_1: "\<lbrakk>
-  invar (big, small);
+  invar (States dir big small);
   0 < Small.size small;
   Small.pop small = (x, small')\<rbrakk>
  \<Longrightarrow>  Big.invar big  \<and> Small.invar small'"
   by(auto simp: Small_Proof.invar_pop_2)
 
 lemma invar_pop_small_size_2_1: "\<lbrakk>
-  invar (big, small);
+  invar (States dir big small);
    0 < Small.size small;
   Small.pop small = (x, small')\<rbrakk>
- \<Longrightarrow> tl (list_small_first (big, small)) = list_small_first (big, small')"
-proof(induction "(big, small)" rule: lists.induct)
+ \<Longrightarrow> tl (list_small_first (States dir big small)) = list_small_first (States dir big small')"
+proof(induction "States dir big small" rule: lists.induct)
   case (1 currentB big auxB count currentS small auxS)
   then show ?case 
   proof(induction currentS rule: Current.pop.induct)
@@ -406,23 +407,23 @@ next
 qed
 
 lemma invar_pop_small_size_2_2: "\<lbrakk>
-  invar (big, small);
+  invar (States dir big small);
   0 < Small.size small;
   Small.pop small = (x, small')\<rbrakk>
- \<Longrightarrow> tl (list_current_small_first (big, small)) = list_current_small_first (big, small')"
+ \<Longrightarrow> tl (list_current_small_first (States dir big small)) = list_current_small_first (States dir big small')"
   apply(auto simp: pop_list_current  split: prod.splits)
   using Small_Proof.list_current_size tl_append2
   by (metis (no_types, lifting) Small_Proof.pop_list_current list.sel(3))
 
 lemma invar_pop_small_size_2: "\<lbrakk>
-  invar (big, small);
+  invar (States dir big small);
   0 < Small.size small;
   Small.pop small = (x, small')\<rbrakk>
- \<Longrightarrow> list_small_first (big, small') = list_current_small_first (big, small')"
+ \<Longrightarrow> list_small_first (States dir big small') = list_current_small_first (States dir big small')"
   using invar_pop_small_size_2_1 invar_pop_small_size_2_2 by fastforce
 
 lemma invar_pop_small_size_3: "\<lbrakk>
-  invar (big, small);
+  invar (States dir big small);
   0 < Small.size small;
   Small.pop small = (x, small')\<rbrakk>
  \<Longrightarrow> (case (big, small') of 
@@ -455,16 +456,16 @@ next
 qed
   
 lemma invar_pop_small_size: "\<lbrakk>
-  invar (big, small);
+  invar (States dir big small);
    0 < Small.size small;
   Small.pop small = (x, small')\<rbrakk>
-   \<Longrightarrow> invar (big, small')"
-  using invar_pop_small_size_1[of big small x small']  
-        invar_pop_small_size_2[of big small x small']
-        invar_pop_small_size_3[of big small x small']
+   \<Longrightarrow> invar (States dir big small')"
+  using invar_pop_small_size_1[of dir big small x small']  
+        invar_pop_small_size_2[of dir big small x small']
+        invar_pop_small_size_3[of dir big small x small']
   by fastforce  
 
-lemma invar_push_big: "invar (big, small) \<Longrightarrow> invar (Big.push x big, small)"
+lemma invar_push_big: "invar (States dir big small) \<Longrightarrow> invar (States dir (Big.push x big) small)"
 proof(induction x big arbitrary: small rule: Big.push.induct)
   case (1 x state)
   then show ?case
@@ -493,7 +494,8 @@ next
   qed
 qed
 
-lemma invar_push_small: "invar (big, small) \<Longrightarrow> invar (big, Small.push x small)"
+lemma invar_push_small: "invar (States dir big small)
+   \<Longrightarrow> invar (States dir big (Small.push x small))"
 proof(induction x small arbitrary: big rule: Small.push.induct)
   case (1 x state)
   then show ?case 
@@ -533,7 +535,7 @@ next
   qed
 qed
 
-lemma invar_step_1: "invar states \<Longrightarrow> step states = (big, small) \<Longrightarrow> Big.invar big \<and> Small.invar small"
+lemma invar_step_1: "invar states \<Longrightarrow> step states = (States dir big small) \<Longrightarrow> Big.invar big \<and> Small.invar small"
 proof(induction states rule: step.induct)
   case (1 currentB big auxB currentS uu auxS)
   then show ?case apply(auto simp: reverseN_drop split: current.splits if_splits)
@@ -543,27 +545,28 @@ proof(induction states rule: step.induct)
 next
   case ("2_1" v va vb vd right)
   then show ?case using Big_Proof.invar_step  Small_Proof.invar_step
-    by (metis (no_types, lifting) Pair_inject States.invar.elims(2) States.step.simps(2) case_prodD)
+    by (metis States.invar.simps States.step.simps(2) states.inject)
 next
   case ("2_2" v right)
   then show ?case by(auto simp: Common_Proof.invar_step Small_Proof.invar_step)
 next
   case ("2_3" left v va vb vc vd)
-  then show ?case using Common_Proof.invar_step Big_Proof.invar_step  Small_Proof.invar_step
-    by (smt (z3) States.invar.elims(2) States.step.simps(4) case_prod_conv)
+  then show ?case using Big_Proof.invar_step  Small_Proof.invar_step
+    by (metis (no_types, lifting) States.invar.simps States.step.simps(4) states.inject)
 next
   case ("2_4" left v)
   then show ?case by(auto simp: Common_Proof.invar_step Big_Proof.invar_step)
 qed
 
 lemma invar_step_2: "invar states \<Longrightarrow> list_small_first (step states) = list_current_small_first (step states)"
-  using step_lists_current step_lists by fastforce
+  using step_lists_current step_lists  States.invar.elims(2)
+  by fastforce
 
 lemma invar_step_3: "invar states \<Longrightarrow>(case step states of 
-        (Reverse _ big _ count, Reverse1 (Current _ _ old remained) small _) \<Rightarrow> 
+        (States _ (Reverse _ big _ count) (Reverse1 (Current _ _ old remained) small _)) \<Rightarrow> 
           Stack.size big - count = remained - Stack.size old \<and> count \<ge> Stack.size small
-      | (_, Reverse1 _ _ _) \<Rightarrow> False
-      | (Reverse _ _ _ _, _) \<Rightarrow> False
+      | (States _ _  (Reverse1 _ _ _)) \<Rightarrow> False
+      | (States _ (Reverse _ _ _ _) _) \<Rightarrow> False
       | _ \<Rightarrow> True
       )"
 proof(induction states rule: step.induct)
@@ -591,7 +594,7 @@ qed
 (* TODO: *)
 lemma invar_step: "invar states \<Longrightarrow> invar (step states)"
   using invar_step_1 invar_step_2 invar_step_3
-  by (smt (z3) States.invar.elims(3) case_prodI2)
+  using States.invar.elims(3) by fastforce
 
 lemma size_ok'_Suc: "size_ok' states (Suc steps) \<Longrightarrow> size_ok' states steps"
   apply(induction states steps rule: size_ok'.induct)
@@ -621,7 +624,7 @@ case (1 currentB big auxB currentS uu auxS)
   then show ?case 
     by(auto simp: max_def split: Big.state.splits Small.state.splits current.splits)
 next
-case ("2_1" v va vb vd right)
+case ("2_1" d v va vb vd right)
   then show ?case 
   proof(induction right)
     case (Reverse1 x1 x2 x3a)
@@ -710,10 +713,11 @@ next
     by (smt (verit, ccfv_SIG) Suc_le_mono add_Suc_right funpow_simps_right(2) le_zero_eq neq0_conv o_apply zero_less_Suc)
 qed
 
-lemma step_size_new_small: "invar (big, small)
-  \<Longrightarrow> step (big, small) = (big', small')  
+(* TODO: dir or dir'? *)
+lemma step_size_new_small: "invar (States dir big small)
+  \<Longrightarrow> step (States dir big small) = (States dir' big' small')
   \<Longrightarrow> Small.size_new small = Small.size_new small'"
-proof(induction "(big, small)" rule: step.induct)
+proof(induction "States dir big small" rule: step.induct)
   case (1 currentB big auxB currentS uu auxS)
   then show ?case by auto
 next
@@ -730,10 +734,10 @@ next
   then show ?case by(auto simp: step_size_new)
 qed
 
-lemma step_size_new_big: "invar (big, small)
-  \<Longrightarrow> step (big, small) = (big', small')  
+lemma step_size_new_big: "invar (States dir big small)
+  \<Longrightarrow> step (States dir big small) = (States dir' big' small')  
   \<Longrightarrow> Big.size_new big = Big.size_new big'"
-proof(induction "(big, small)" rule: step.induct)
+proof(induction "States dir big small" rule: step.induct)
   case (1 currentB big auxB currentS uu auxS)
   then show ?case by(auto split: current.splits)
 next
@@ -750,10 +754,10 @@ next
   then show ?case by(auto simp: step_size_new split: Big.state.splits)
 qed
 
-lemma step_size_small: "invar (big, small)
-  \<Longrightarrow> step (big, small) = (big', small')  
+lemma step_size_small: "invar (States dir big small)
+  \<Longrightarrow> step (States dir big small) = (States dir' big' small')  
   \<Longrightarrow> Small.size small = Small.size small'"
-proof(induction "(big, small)" rule: step.induct)
+proof(induction "States dir big small" rule: step.induct)
   case (1 currentB big auxB currentS uu auxS)
   then show ?case by auto
 next
@@ -770,10 +774,10 @@ next
   then show ?case by(auto simp: Common_Proof.step_size)
 qed
 
-lemma step_size_big: "invar (big, small)
-  \<Longrightarrow> step (big, small) = (big', small')  
+lemma step_size_big: "invar (States dir big small)
+  \<Longrightarrow> step (States dir big small) = States dir' big' small'  
   \<Longrightarrow> Big.size big = Big.size big'"
-proof(induction "(big, small)" rule: step.induct)
+proof(induction "States dir big small" rule: step.induct)
   case (1 currentB big auxB currentS uu auxS)
   then show ?case by(auto split: current.splits)
 next
@@ -790,121 +794,125 @@ next
   then show ?case by(auto simp: Common_Proof.step_size split: Big.state.splits)
 qed
 
-lemma step_size_ok_1: "invar (big, small) \<Longrightarrow> step (big, small) = (big', small')
-  \<Longrightarrow> Big.size_new big + remaining_steps (big, small) + 2 \<le> 3 * Small.size_new small
-  \<Longrightarrow> Big.size_new big' + remaining_steps (big', small') + 2 \<le> 3 * Small.size_new small'"
+lemma step_size_ok_1: "invar (States dir big small)
+  \<Longrightarrow> step (States dir big small) = (States dir' big' small')
+  \<Longrightarrow> Big.size_new big + remaining_steps (States dir big small) + 2 \<le> 3 * Small.size_new small
+  \<Longrightarrow> Big.size_new big' + remaining_steps (States dir' big' small') + 2 \<le> 3 * Small.size_new small'"
   using remaining_steps_decline step_size_new_small step_size_new_big
-  by fastforce
+  by (smt (verit, ccfv_SIG) add.commute le_trans nat_add_left_cancel_le)
 
-lemma step_size_ok_2: "invar (big, small) \<Longrightarrow> step (big, small) = (big', small')
-  \<Longrightarrow> Small.size_new small + remaining_steps (big, small) + 2 \<le> 3 * Big.size_new big
-  \<Longrightarrow> Small.size_new small' + remaining_steps (big', small') + 2 \<le> 3 * Big.size_new big'"
+lemma step_size_ok_2: "invar (States dir big small)
+  \<Longrightarrow> step (States dir big small) = (States dir' big' small')
+  \<Longrightarrow> Small.size_new small + remaining_steps (States dir big small) + 2 \<le> 3 * Big.size_new big
+  \<Longrightarrow> Small.size_new small' + remaining_steps (States dir' big' small') + 2 \<le> 3 * Big.size_new big'"
   using remaining_steps_decline step_size_new_small step_size_new_big
-  by fastforce
+  by (smt (verit, best) add_le_mono le_refl le_trans)
 
-lemma step_size_ok_3: "invar (big, small) \<Longrightarrow> step (big, small) = (big', small')
-  \<Longrightarrow> remaining_steps (big, small) + 1 \<le> 4 * Small.size small
-  \<Longrightarrow> remaining_steps (big', small') + 1 \<le> 4 * Small.size small'"
-using remaining_steps_decline step_size_small
-  by fastforce
+lemma step_size_ok_3: "invar (States dir big small)
+   \<Longrightarrow> step (States dir big small) = (States dir' big' small')
+  \<Longrightarrow> remaining_steps (States dir big small) + 1 \<le> 4 * Small.size small
+  \<Longrightarrow> remaining_steps (States dir' big' small') + 1 \<le> 4 * Small.size small'"
+  using remaining_steps_decline step_size_small
+  by (metis Suc_eq_plus1 Suc_le_mono le_trans)
 
-lemma step_size_ok_4: "invar (big, small) \<Longrightarrow> step (big, small) = (big', small')
-  \<Longrightarrow> remaining_steps (big, small) + 1 \<le> 4 * Big.size big
-  \<Longrightarrow> remaining_steps (big', small') + 1 \<le> 4 * Big.size big'"
-using remaining_steps_decline step_size_big
-  by fastforce
+lemma step_size_ok_4: "invar (States dir big small)
+   \<Longrightarrow> step (States dir big small) = (States dir' big' small')
+  \<Longrightarrow> remaining_steps (States dir big small) + 1 \<le> 4 * Big.size big
+  \<Longrightarrow> remaining_steps (States dir' big' small') + 1 \<le> 4 * Big.size big'"
+  using remaining_steps_decline step_size_big
+  by (metis add_mono_thms_linordered_semiring(3) order.trans)
 
 lemma step_size_ok: "invar states \<Longrightarrow> size_ok states \<Longrightarrow> size_ok (step states)"
   using step_size_ok_1 step_size_ok_2 step_size_ok_3 step_size_ok_4
-  by (smt (z3) size_ok'.elims(1) size_ok.elims(1))
-
+  by (smt (verit) States.invar.elims(1) size_ok'.elims(3) size_ok'.simps size_ok.simps)
+ 
 lemma remaining_steps_4: "invar states \<Longrightarrow> remaining_steps states = steps \<Longrightarrow> steps \<ge> 4 
   \<Longrightarrow> remaining_steps ((step ^^ 4) states) = steps - 4"
   by (metis diff_add_inverse2 step_remaining_steps)
 
-lemma step_push_size_new_small: "invar (big, small) 
-          \<Longrightarrow> step (big, Small.push x small) = (big', small')
+lemma step_push_size_new_small: "invar (States dir big small) 
+          \<Longrightarrow> step (States dir big (Small.push x small)) = (States dir' big' small')
           \<Longrightarrow> Small.size_new small' = Suc (Small.size_new small)"
   using 
-    invar_push_small[of big small x]
-    step_size_new_small[of big "Small.push x small" big' small']
+    invar_push_small[of dir big small x]
+    step_size_new_small[of dir big "Small.push x small" dir' big' small']
     size_new_push[of small x]
   by simp
 
-lemma step_push_size_small: "invar (big, small) 
-          \<Longrightarrow> step (big, Small.push x small) = (big', small')
+lemma step_push_size_small: "invar (States dir big small)
+          \<Longrightarrow> step (States dir big (Small.push x small)) = (States dir' big' small')
           \<Longrightarrow> Small.size small' = Suc (Small.size small)"
   using 
-    invar_push_small[of big small x]
-    step_size_small[of big "Small.push x small" big' small']
+    invar_push_small[of dir big small x]
+    step_size_small[of dir big "Small.push x small" dir' big' small']
     size_push[of small x]
   by simp
 
-lemma step_push_size_new_big: "invar (big, small) 
-          \<Longrightarrow> step (Big.push x big, small) = (big', small')
+lemma step_push_size_new_big: "invar (States dir big small)
+          \<Longrightarrow> step (States dir (Big.push x big) small) = States dir' big' small'
           \<Longrightarrow> Big.size_new big' = Suc (Big.size_new big)"
   using 
-    invar_push_big[of big small x] 
-    step_size_new_big[of "Big.push x big" small big' small']
+    invar_push_big[of dir big small x] 
+    step_size_new_big[of dir "Big.push x big" small dir' big' small']
     Big_Proof.size_new_push[of big x]
   by auto
 
-lemma step_pop_size_big: "invar (big, small) 
+lemma step_pop_size_big: "invar (States dir big small)
           \<Longrightarrow> 0 < Big.size big 
           \<Longrightarrow> Big.pop big = (x, bigP) 
-          \<Longrightarrow> step (bigP, small) = (big', small')
+          \<Longrightarrow> step (States dir bigP small) = States dir' big' small'
           \<Longrightarrow> Big.size big = Suc (Big.size big')"
   using 
-    invar_pop_big_size[of big small x bigP] 
-    step_size_big[of bigP small big' small']  
+    invar_pop_big_size[of dir big small x bigP] 
+    step_size_big[of dir bigP small dir' big' small']  
     Big_Proof.size_pop[of big]
   by auto
 
-lemma step_pop_size_new_big: "invar (big, small) 
+lemma step_pop_size_new_big: "invar (States dir big small)
           \<Longrightarrow> 0 < Big.size big 
           \<Longrightarrow> Big.pop big = (x, bigP) 
-          \<Longrightarrow> step (bigP, small) = (big', small')
+          \<Longrightarrow> step (States dir bigP small) = States dir' big' small'
           \<Longrightarrow> Big.size_new big = Suc (Big.size_new big')"
   using 
-    invar_pop_big_size[of big small x bigP] 
+    invar_pop_big_size[of dir big small x bigP] 
     Big_Proof.size_size_new[of big]
-    step_size_new_big[of bigP small big' small']  
+    step_size_new_big[of dir bigP small dir' big' small']  
     Big_Proof.size_new_pop[of big]
   by auto
 
-lemma step_push_size_big: "invar (big, small) 
-          \<Longrightarrow> step (Big.push x big, small) = (big', small')
+lemma step_push_size_big: "invar (States dir big small) 
+          \<Longrightarrow> step (States dir (Big.push x big) small) = States dir' big' small'
           \<Longrightarrow> Big.size big' = Suc (Big.size big)"
   using 
-    invar_push_big[of big small x]
+    invar_push_big[of dir big small x]
     Big_Proof.size_push[of big]
-    step_size_big[of "Big.push x big" small big' small']
+    step_size_big[of dir "Big.push x big" small dir' big' small']
   by auto
 
-lemma step_n_size_small: "invar (big, small) 
-          \<Longrightarrow> (step ^^ n) (big, small) = (big', small')
+lemma step_n_size_small: "invar (States dir big small) 
+          \<Longrightarrow> (step ^^ n) (States dir big small) = (States dir' big' small')
           \<Longrightarrow> Small.size small' =  Small.size small"
-proof(induction n arbitrary: big small big' small')
+proof(induction n arbitrary: dir big small dir' big' small')
   case 0
   then show ?case by auto
 next
   case (Suc n)
-  then have invar1: "invar (step (big, small))"
+  then have invar1: "invar (step (States dir big small))"
     using invar_step 
     by blast
 
-  then obtain big1 small1 where step: "step (big, small) = (big1, small1)"
-    by auto
+  then obtain dir1 big1 small1 where step: "step (States dir big small) = States dir1 big1 small1"
+    using states.exhaust by blast
 
   with step_size_small invar1 have "Small.size small = Small.size small1"
     by (metis Suc.prems(1))
 
 
-  then have n_steps: "(step ^^ n) (big1, small1) = (big', small')"
+  then have n_steps: "(step ^^ n) (States dir1 big1 small1) = States dir' big' small'"
     using Suc 
-    by (metis \<open>States.step (big, small) = (big1, small1)\<close> funpow_simps_right(2) o_apply)
+    by (metis step funpow_simps_right(2) o_apply)
 
-  have invar2: "invar (big1, small1)" using step invar1 by auto
+  have invar2: "invar (States dir1 big1 small1)" using step invar1 by auto
 
   from Suc n_steps invar2 have "Small.size small' = Small.size small1"
     by auto
@@ -914,30 +922,30 @@ next
     using \<open>Small.size small = Small.size small1\<close> by presburger
 qed
 
-lemma step_n_size_big: "invar (big, small) 
-          \<Longrightarrow> (step ^^ n) (big, small) = (big', small')
+lemma step_n_size_big: "invar (States dir big small)
+          \<Longrightarrow> (step ^^ n) (States dir big small) = (States dir' big' small')
           \<Longrightarrow> Big.size big' = Big.size big"
-proof(induction n arbitrary: big small big' small')
+proof(induction n arbitrary: dir big small dir' big' small')
   case 0
   then show ?case by auto
 next
   case (Suc n)
-  then have invar1: "invar (step (big, small))"
+  then have invar1: "invar (step (States dir big small))"
     using invar_step 
     by blast
 
-  then obtain big1 small1 where step: "step (big, small) = (big1, small1)"
-    by auto
+  then obtain dir1 big1 small1 where step: "step (States dir big small) = States dir1 big1 small1"
+    using states.exhaust by blast
 
   with invar1 have "Big.size big = Big.size big1"
     by (metis Suc.prems(1) step_size_big)
 
 
-  then have n_steps: "(step ^^ n) (big1, small1) = (big', small')"
+  then have n_steps: "(step ^^ n) (States dir1 big1 small1) = (States dir' big' small')"
     using Suc 
-    by (metis \<open>States.step (big, small) = (big1, small1)\<close> funpow_simps_right(2) o_apply)
+    by (metis step funpow_simps_right(2) o_apply)
 
-  have invar2: "invar (big1, small1)" using step invar1 by auto
+  have invar2: "invar (States dir1 big1 small1)" using step invar1 by auto
 
   from Suc n_steps invar2 have "Big.size big' = Big.size big1"
     by auto
@@ -947,29 +955,29 @@ next
     using \<open>Big.size big = Big.size big1\<close> by presburger
 qed
 
-lemma step_n_size_new_small: "invar (big, small) 
-          \<Longrightarrow> (step ^^ n) (big, small) = (big', small')
+lemma step_n_size_new_small: "invar (States dir big small)
+          \<Longrightarrow> (step ^^ n) (States dir big small) = (States dir' big' small')
           \<Longrightarrow> Small.size_new small' =  Small.size_new small"
-proof(induction n arbitrary: big small big' small')
+proof(induction n arbitrary: dir big small dir' big' small')
   case 0
   then show ?case by auto
 next
   case (Suc n)
-  then have invar1: "invar (step (big, small))"
+  then have invar1: "invar (step (States dir big small))"
     using invar_step 
     by blast
 
-  then obtain big1 small1 where step: "step (big, small) = (big1, small1)"
-    by auto
+  then obtain dir1 big1 small1 where step: "step (States dir big small) = States dir1 big1 small1"
+    using states.exhaust by blast
 
   with step_size_new_small invar1 have "Small.size_new small = Small.size_new small1"
     by (metis Suc.prems(1))
 
-  then have n_steps: "(step ^^ n) (big1, small1) = (big', small')"
+  then have n_steps: "(step ^^ n) (States dir1 big1 small1) = States dir' big' small'"
     using Suc 
-    by (metis \<open>States.step (big, small) = (big1, small1)\<close> funpow_simps_right(2) o_apply)
+    by (metis step funpow_simps_right(2) o_apply)
 
-  have invar2: "invar (big1, small1)" using step invar1 by auto
+  have invar2: "invar (States dir1 big1 small1)" using step invar1 by auto
 
   from Suc n_steps invar2 have "Small.size_new small' = Small.size_new small1"
     by auto
@@ -979,30 +987,29 @@ next
     using \<open>Small.size_new small = Small.size_new small1\<close> by presburger
 qed
 
-lemma step_n_size_new_big: "invar (big, small) 
-          \<Longrightarrow> (step ^^ n) (big, small) = (big', small')
+lemma step_n_size_new_big: "invar (States dir big small)
+          \<Longrightarrow> (step ^^ n)  (States dir big small) =  (States dir' big' small')
           \<Longrightarrow> Big.size_new big' =  Big.size_new big"
-proof(induction n arbitrary: big small big' small')
+proof(induction n arbitrary: dir big small dir' big' small')
   case 0
   then show ?case by auto
 next
   case (Suc n)
-  then have invar1: "invar (step (big, small))"
+  then have invar1: "invar (step (States dir big small))"
     using invar_step 
     by blast
 
-  then obtain big1 small1 where step: "step (big, small) = (big1, small1)"
-    by auto
+  then obtain dir1 big1 small1 where step: "step (States dir big small) = States dir1 big1 small1"
+    using states.exhaust by blast
 
   with step_size_new_big invar1 have "Big.size_new big = Big.size_new big1"
     by (metis Suc.prems(1))
 
-
-  then have n_steps: "(step ^^ n) (big1, small1) = (big', small')"
+  then have n_steps: "(step ^^ n) (States dir1 big1 small1) = (States dir' big' small')"
     using Suc 
-    by (metis \<open>States.step (big, small) = (big1, small1)\<close> funpow_simps_right(2) o_apply)
+    by (metis step funpow_simps_right(2) o_apply)
 
-  have invar2: "invar (big1, small1)" using step invar1 by auto
+  have invar2: "invar (States dir1 big1 small1)" using step invar1 by auto
 
   from Suc n_steps invar2 have "Big.size_new big' = Big.size_new big1"
     by auto
@@ -1011,56 +1018,56 @@ next
     using \<open>Big.size_new big = Big.size_new big1\<close> by presburger
 qed
 
-lemma step_n_push_size_small: "invar (big, small) 
-          \<Longrightarrow> (step ^^ n) (big, Small.push x small) = (big', small')
+lemma step_n_push_size_small: "invar (States dir big small) 
+          \<Longrightarrow> (step ^^ n) (States dir big (Small.push x small)) = States dir' big' small'
           \<Longrightarrow> Small.size small' = Suc (Small.size small)"
-  by (metis invar_push_small old.prod.exhaust step_push_size_small step_n_size_small step_size_small)
+  by (metis Small_Proof.size_push States.invar.simps invar_push_small step_n_size_small)
 
-lemma step_n_push_size_new_small: "invar (big, small) 
-          \<Longrightarrow> (step ^^ n) (big, Small.push x small) = (big', small')
+lemma step_n_push_size_new_small: "invar (States dir big small)  
+          \<Longrightarrow> (step ^^ n) (States dir big (Small.push x small)) = States dir' big' small'
           \<Longrightarrow> Small.size_new small' = Suc (Small.size_new small)"
-  by (metis invar_push_small old.prod.exhaust step_push_size_new_small step_n_size_new_small step_size_new_small)
+  by (metis Small_Proof.size_new_push States.invar.simps invar_push_small step_n_size_new_small)
 
-lemma step_n_push_size_big: "invar (big, small) 
-          \<Longrightarrow> (step ^^ n) (Big.push x big, small) = (big', small')
+lemma step_n_push_size_big: "invar (States dir big small)  
+          \<Longrightarrow> (step ^^ n) (States dir (Big.push x big) small) = States dir' big' small'
           \<Longrightarrow> Big.size big' = Suc (Big.size big)"
-  by (metis invar_push_big old.prod.exhaust step_push_size_big step_n_size_big step_size_big)
+  by (metis Big_Proof.size_push States.invar.simps invar_push_big step_n_size_big)
 
-lemma step_n_push_size_new_big: "invar (big, small) 
-          \<Longrightarrow> (step ^^ n) (Big.push x big, small) = (big', small')
+lemma step_n_push_size_new_big: "invar (States dir big small) 
+          \<Longrightarrow> (step ^^ n) (States dir (Big.push x big) small) = States dir' big' small'
           \<Longrightarrow> Big.size_new big' = Suc (Big.size_new big)"
-  by (metis invar_push_big old.prod.exhaust step_push_size_new_big step_n_size_new_big step_size_new_big)
+  by (metis Big_Proof.size_new_push States.invar.simps invar_push_big step_n_size_new_big)
 
-lemma step_n_pop_size_small: "invar (big, small) 
+lemma step_n_pop_size_small: "invar (States dir big small)  
           \<Longrightarrow> 0 < Small.size small 
           \<Longrightarrow> Small.pop small = (x, smallP) 
-          \<Longrightarrow> (step ^^ n) (big, smallP) = (big', small')
+          \<Longrightarrow> (step ^^ n) (States dir big smallP) = States dir' big' small'
           \<Longrightarrow> Small.size small = Suc (Small.size small')"
   using invar_pop_small_size size_pop step_n_size_small by fastforce
 
-lemma step_n_pop_size_new_small: "invar (big, small) 
+lemma step_n_pop_size_new_small: "invar (States dir big small) 
           \<Longrightarrow> 0 < Small.size small 
           \<Longrightarrow> Small.pop small = (x, smallP) 
-          \<Longrightarrow> (step ^^ n) (big, smallP) = (big', small')
+          \<Longrightarrow> (step ^^ n) (States dir big smallP) = States dir' big' small'
           \<Longrightarrow> Small.size_new small = Suc (Small.size_new small')"
   using invar_pop_small_size size_new_pop step_n_size_new_small size_size_new by fastforce
 
-lemma step_n_pop_size_big: "invar (big, small) 
+lemma step_n_pop_size_big: "invar (States dir big small)
           \<Longrightarrow> 0 < Big.size big 
           \<Longrightarrow> Big.pop big = (x, bigP) 
-          \<Longrightarrow> (step ^^ n) (bigP, small) = (big', small')
+          \<Longrightarrow> (step ^^ n) (States dir bigP small) = States dir' big' small'
           \<Longrightarrow> Big.size big = Suc (Big.size big')"
   using invar_pop_big_size Big_Proof.size_pop step_n_size_big by fastforce
 
-lemma step_n_pop_size_new_big: "invar (big, small) 
+lemma step_n_pop_size_new_big: "invar (States dir big small)
           \<Longrightarrow> 0 < Big.size big 
           \<Longrightarrow> Big.pop big = (x, bigP) 
-          \<Longrightarrow> (step ^^ n) (bigP, small) = (big', small')
+          \<Longrightarrow> (step ^^ n) (States dir bigP small) = States dir' big' small'
           \<Longrightarrow> Big.size_new big = Suc (Big.size_new big')"
   by (metis (no_types, opaque_lifting) States.remaining_steps.cases invar_pop_big_size step_pop_size_new_big step_size_new_big step_n_size_new_big)
 
-lemma remaining_steps_push_small: "invar (big, small)
-       \<Longrightarrow> remaining_steps (big, small) = remaining_steps (big, Small.push x small)"
+lemma remaining_steps_push_small: "invar (States dir big small)
+       \<Longrightarrow> remaining_steps (States dir big small) = remaining_steps (States dir big (Small.push x small))"
 proof(induction x small rule: Small.push.induct)
   case (1 x state)
   then show ?case 
@@ -1083,10 +1090,10 @@ next
 qed    
 
 lemma remaining_steps_pop_small: "
-          invar (big, small)
+          invar (States dir big small)
      \<Longrightarrow> 0 < Small.size small 
      \<Longrightarrow> Small.pop small = (x, smallP) 
-     \<Longrightarrow> remaining_steps (big, small) \<ge> remaining_steps (big, smallP)"
+     \<Longrightarrow> remaining_steps (States dir big small) \<ge> remaining_steps (States dir big smallP)"
 proof(induction small rule: Small.pop.induct)
   case (1 state)
   then show ?case apply(auto simp: max_def Common_Proof.remaining_steps_pop split: prod.splits)
@@ -1115,10 +1122,10 @@ next
 qed
 
 lemma remaining_steps_pop_big: "
-      invar (big, small)
+      invar (States dir big small)
        \<Longrightarrow> 0 < Big.size big 
        \<Longrightarrow> Big.pop big = (x, bigP) 
-       \<Longrightarrow> remaining_steps (big, small) \<ge> remaining_steps (bigP, small)"
+       \<Longrightarrow> remaining_steps (States dir big small) \<ge> remaining_steps (States dir bigP small)"
 proof(induction big rule: Big.pop.induct)
   case (1 state)
   then show ?case 
@@ -1159,8 +1166,8 @@ next
   qed
 qed
 
-lemma remaining_steps_push_big: "invar (big, small)
-       \<Longrightarrow> remaining_steps (big, small) = remaining_steps (Big.push x big, small)"
+lemma remaining_steps_push_big: "invar (States dir big small)
+       \<Longrightarrow> remaining_steps (States dir big small) = remaining_steps (States dir (Big.push x big) small)"
 proof(induction x big rule: Big.push.induct)
   case (1 x state)
   then show ?case 
@@ -1177,118 +1184,120 @@ next
   qed
 qed
 
-lemma step_4_remaining_steps_pop_small: "invar (big, small)
+lemma step_4_remaining_steps_pop_small: "invar (States dir big small)
       \<Longrightarrow> 0 < Small.size small 
       \<Longrightarrow> Small.pop small = (x, smallP) 
-       \<Longrightarrow> remaining_steps (big, smallP) \<ge> 4
-       \<Longrightarrow> ((step ^^ 4) (big, smallP)) = (big', small')
-       \<Longrightarrow> remaining_steps (big', small') \<le> remaining_steps (big, small) - 4"
-  by (metis diff_le_mono invar_pop_small_size remaining_steps_4 remaining_steps_pop_small)
+       \<Longrightarrow> remaining_steps (States dir big smallP) \<ge> 4
+       \<Longrightarrow> (step ^^ 4) (States dir big smallP) = States dir' big' small'
+       \<Longrightarrow> remaining_steps (States dir' big' small') \<le> remaining_steps (States dir big smallP) - 4"
+  by (metis eq_imp_le invar_pop_small_size remaining_steps_4)
 
-lemma step_4_remaining_steps_push_big: "invar (big, small)
-       \<Longrightarrow> remaining_steps (big, small) \<ge> 4
-       \<Longrightarrow> ((step ^^ 4) (Big.push x big, small)) = (big', small')
-       \<Longrightarrow> remaining_steps (big', small') = remaining_steps (big, small) - 4"
+lemma step_4_remaining_steps_push_big: "invar (States dir big small)
+       \<Longrightarrow> remaining_steps (States dir big small) \<ge> 4
+       \<Longrightarrow> ((step ^^ 4) (States dir (Big.push x big) small)) = States dir' big' small'
+       \<Longrightarrow> remaining_steps (States dir' big' small') = remaining_steps (States dir big small) - 4"
   by (metis invar_push_big remaining_steps_4 remaining_steps_push_big)
 
-lemma step_4_remaining_steps_push_small: "invar (big, small)
-       \<Longrightarrow> remaining_steps (big, small) \<ge> 4
-       \<Longrightarrow> ((step ^^ 4) (big, Small.push x small)) = (big', small')
-       \<Longrightarrow> remaining_steps (big', small') = remaining_steps (big, small) - 4"
+lemma step_4_remaining_steps_push_small: "invar (States dir big small)
+       \<Longrightarrow> remaining_steps (States dir big small) \<ge> 4
+       \<Longrightarrow> (step ^^ 4) (States dir big (Small.push x small)) = States dir' big' small'
+       \<Longrightarrow> remaining_steps (States dir' big' small') = remaining_steps (States dir big small) - 4"
   by (metis invar_push_small remaining_steps_4 remaining_steps_push_small)
 
-lemma step_4_remaining_steps_pop_big: "invar (big, small)
+lemma step_4_remaining_steps_pop_big: "invar (States dir big small)
        \<Longrightarrow> 0 < Big.size big 
        \<Longrightarrow> Big.pop big = (x, bigP) 
-       \<Longrightarrow> remaining_steps (bigP, small) \<ge> 4
-       \<Longrightarrow> ((step ^^ 4) (bigP, small)) = (big', small')
-       \<Longrightarrow> remaining_steps (big', small') \<le> remaining_steps (big, small) - 4"
+       \<Longrightarrow> remaining_steps (States dir bigP small) \<ge> 4
+       \<Longrightarrow> (step ^^ 4) (States dir bigP small) = States dir' big' small'
+       \<Longrightarrow> remaining_steps (States dir' big' small') \<le> remaining_steps (States dir big small) - 4"
   by (metis add_le_imp_le_diff invar_pop_big_size remaining_steps_pop_big step_remaining_steps)
 
 lemma step_4_pop_small_size_ok': "
             0 < Small.size small 
-       \<Longrightarrow> remaining_steps (big, small) \<ge> 4
-       \<Longrightarrow> remaining_steps (big, small) + 1 \<le> 4 * Small.size small
-       \<Longrightarrow> (remaining_steps (big, small) - 4) + 1 \<le> 4 * (Small.size small - 1)"
+       \<Longrightarrow> remaining_steps (States dir big small) \<ge> 4
+       \<Longrightarrow> remaining_steps (States dir big small) + 1 \<le> 4 * Small.size small
+       \<Longrightarrow> (remaining_steps (States dir big small) - 4) + 1 \<le> 4 * (Small.size small - 1)"
   by linarith
 
-lemma step_4_pop_small_size_ok_1: "invar (big, small)
+lemma step_4_pop_small_size_ok_1: "invar (States dir big small)
        \<Longrightarrow> 0 < Small.size small 
        \<Longrightarrow> Small.pop small = (x, smallP)
-       \<Longrightarrow> remaining_steps (big, smallP) \<ge> 4
-       \<Longrightarrow> ((step ^^ 4) (big, smallP)) = (big', small')
-       \<Longrightarrow> remaining_steps (big, small) + 1 \<le> 4 * Small.size small
-       \<Longrightarrow> remaining_steps (big', small') + 1 \<le> 4 * Small.size small'"
-  using step_4_pop_small_size_ok' remaining_steps_4 step_n_pop_size_small remaining_steps_pop_small
-  by (smt (verit, ccfv_SIG) Suc_diff_1 Suc_inject add_le_cancel_right order_trans step_4_remaining_steps_pop_small)
-
-lemma step_4_pop_big_size_ok_1: "invar (big, small)
+       \<Longrightarrow> remaining_steps (States dir big smallP) \<ge> 4
+       \<Longrightarrow> (step ^^ 4) (States dir big smallP) = States dir' big' small'
+       \<Longrightarrow> remaining_steps (States dir big small) + 1 \<le> 4 * Small.size small
+       \<Longrightarrow> remaining_steps (States dir' big' small') + 1 \<le> 4 * Small.size small'"
+  by (smt (verit, ccfv_SIG) add.left_commute add.right_neutral add_le_cancel_left distrib_left_numeral dual_order.trans invar_pop_small_size le_add_diff_inverse2 mult.right_neutral plus_1_eq_Suc remaining_steps_4 remaining_steps_pop_small step_n_pop_size_small)
+  
+lemma step_4_pop_big_size_ok_1: "invar (States dir big small)
        \<Longrightarrow> 0 < Big.size big 
        \<Longrightarrow> Big.pop big = (x, bigP) 
-       \<Longrightarrow> remaining_steps (bigP, small) \<ge> 4
-       \<Longrightarrow> ((step ^^ 4) (bigP, small)) = (big', small')
-       \<Longrightarrow> remaining_steps (big, small) + 1 \<le> 4 * Small.size small
-       \<Longrightarrow> remaining_steps (big', small') + 1 \<le> 4 * Small.size small'"
-  by (metis (no_types, lifting) add_leD1 add_mono_thms_linordered_semiring(3) invar_pop_big_size order.trans step_n_size_small remaining_steps_pop_big step_remaining_steps)
+       \<Longrightarrow> remaining_steps (States dir bigP small) \<ge> 4
+       \<Longrightarrow> ((step ^^ 4) (States dir bigP small)) = States dir' big' small'
+       \<Longrightarrow> remaining_steps (States dir big small) + 1 \<le> 4 * Small.size small
+       \<Longrightarrow> remaining_steps (States dir' big' small') + 1 \<le> 4 * Small.size small'"
+  by (smt (verit, ccfv_SIG) add_leE add_le_cancel_right invar_pop_big_size order_trans remaining_steps_pop_big step_n_size_small step_remaining_steps)
 
-lemma step_4_pop_small_size_ok_2: "invar (big, small)
+lemma step_4_pop_small_size_ok_2: "invar (States dir big small)
        \<Longrightarrow> 0 < Small.size small 
        \<Longrightarrow> Small.pop small = (x, smallP)
-       \<Longrightarrow> remaining_steps (big, smallP) \<ge> 4
-       \<Longrightarrow> ((step ^^ 4) (big, smallP)) = (big', small')
-       \<Longrightarrow> remaining_steps (big, small) + 1 \<le> 4 * Big.size big
-       \<Longrightarrow> remaining_steps (big', small') + 1 \<le> 4 * Big.size big'"
+       \<Longrightarrow> remaining_steps (States dir big smallP) \<ge> 4
+       \<Longrightarrow> ((step ^^ 4) (States dir big smallP)) = States dir' big' small'
+       \<Longrightarrow> remaining_steps (States dir big small) + 1 \<le> 4 * Big.size big
+       \<Longrightarrow> remaining_steps (States dir' big' small') + 1 \<le> 4 * Big.size big'"
   by (smt (z3) add.commute add_leE invar_pop_small_size le_add_diff_inverse2 nat_add_left_cancel_le remaining_steps_4 step_n_size_big remaining_steps_pop_small)
 
 lemma step_4_pop_big_size_ok_2: 
   assumes
-    "invar (big, small)"
+    "invar (States dir big small)"
     "0 < Big.size big"
     "Big.pop big = (x, bigP)"
-    "remaining_steps (bigP, small) \<ge> 4"
-    "((step ^^ 4) (bigP, small)) = (big', small')"
-    "remaining_steps (big, small) + 1 \<le> 4 * Big.size big"
+    "remaining_steps (States dir bigP small) \<ge> 4"
+    "((step ^^ 4) (States dir bigP small)) =  States dir' big' small'"
+    "remaining_steps (States dir big small) + 1 \<le> 4 * Big.size big"
   shows
-    "remaining_steps (big', small') + 1 \<le> 4 * Big.size big'"
+    "remaining_steps (States dir' big' small') + 1 \<le> 4 * Big.size big'"
 proof -
-  from assms have "remaining_steps (bigP, small) + 1 \<le> 4 * Big.size big"
+  from assms have "remaining_steps  (States dir bigP small) + 1 \<le> 4 * Big.size big"
     by (meson add_le_cancel_right order.trans remaining_steps_pop_big)
 
   with assms show ?thesis
     by (smt (z3) Suc_diff_le Suc_eq_plus1 add_mult_distrib2 diff_diff_add diff_is_0_eq invar_pop_big_size mult_numeral_1_right numerals(1) plus_1_eq_Suc remaining_steps_4 step_n_pop_size_big)
 qed
 
-lemma step_4_pop_small_size_ok_3: "invar (big, small)
-       \<Longrightarrow> 0 < Small.size small 
-       \<Longrightarrow> Small.pop small = (x, smallP)
-       \<Longrightarrow> remaining_steps (big, smallP) \<ge> 4
-       \<Longrightarrow> ((step ^^ 4) (big, smallP)) = (big', small')
-       \<Longrightarrow>  Small.size_new small + remaining_steps (big, small) + 2 \<le> 3 * Big.size_new big
-       \<Longrightarrow>  Small.size_new small' + remaining_steps (big', small') + 2 \<le> 3 * Big.size_new big'"
-  by (smt (verit, best) add_le_mono diff_Suc_1 diff_le_self dual_order.eq_iff invar_pop_small_size nat_less_le order.trans remaining_steps_4 step_n_size_new_big step_n_pop_size_new_small remaining_steps_pop_small)
+lemma step_4_pop_small_size_ok_3: 
+  assumes
+    "invar (States dir big small)"
+    "0 < Small.size small"
+    "Small.pop small = (x, smallP)"
+    "remaining_steps (States dir big smallP) \<ge> 4"
+    "((step ^^ 4) (States dir big smallP)) = States dir' big' small'"
+    "Small.size_new small + remaining_steps (States dir big small) + 2 \<le> 3 * Big.size_new big" 
+  shows
+    "Small.size_new small' + remaining_steps (States dir' big' small') + 2 \<le> 3 * Big.size_new big'"
+  by (smt (verit, best) add_leD2 add_mono_thms_linordered_semiring(1) add_mono_thms_linordered_semiring(3) assms(1) assms(2) assms(3) assms(4) assms(5) assms(6) invar_pop_small_size le_add2 le_add_diff_inverse order_trans plus_1_eq_Suc remaining_steps_4 remaining_steps_pop_small step_n_pop_size_new_small step_n_size_new_big)
 
 lemma step_4_pop_big_size_ok_3': "
             0 < Big.size big 
-       \<Longrightarrow> remaining_steps (big, small) \<ge> 4
-       \<Longrightarrow>  Small.size_new small + remaining_steps (big, small) + 2 \<le> 3 * Big.size_new big
-       \<Longrightarrow> Small.size_new small + (remaining_steps (big, small) - 4) + 2 \<le> 3 * (Big.size_new big - 1)"
+       \<Longrightarrow> remaining_steps (States dir big small) \<ge> 4
+       \<Longrightarrow> Small.size_new small + remaining_steps (States dir big small) + 2 \<le> 3 * Big.size_new big
+       \<Longrightarrow> Small.size_new small + (remaining_steps (States dir big small) - 4) + 2 \<le> 3 * (Big.size_new big - 1)"
   by linarith
 
 lemma step_4_pop_big_size_ok_3: 
     assumes
-      "invar (big, small)"
+      "invar (States dir big small)"
       "0 < Big.size big" 
       "Big.pop big = (x, bigP) "
-      "remaining_steps (bigP, small) \<ge> 4"
-      "((step ^^ 4) (bigP, small)) = (big', small')"
-      "Small.size_new small + remaining_steps (big, small) + 2 \<le> 3 * Big.size_new big"
+      "remaining_steps (States dir bigP small) \<ge> 4"
+      "((step ^^ 4) (States dir bigP small)) = (States dir' big' small')"
+      "Small.size_new small + remaining_steps (States dir big small) + 2 \<le> 3 * Big.size_new big"
     shows
-      "Small.size_new small' + remaining_steps (big', small') + 2 \<le> 3 * Big.size_new big'"
+      "Small.size_new small' + remaining_steps (States dir' big' small') + 2 \<le> 3 * Big.size_new big'"
 proof-
-  from assms have "Small.size_new small + (remaining_steps (big, small) - 4) + 2 \<le> 3 * (Big.size_new big - 1)"
+  from assms have "Small.size_new small + (remaining_steps (States dir big small) - 4) + 2 \<le> 3 * (Big.size_new big - 1)"
     by (meson dual_order.trans remaining_steps_pop_big step_4_pop_big_size_ok_3')
 
-  then have  "Small.size_new small + remaining_steps (big', small') + 2 \<le> 3 * (Big.size_new big - 1)"
+  then have  "Small.size_new small + remaining_steps (States dir' big' small') + 2 \<le> 3 * (Big.size_new big - 1)"
     by (smt (verit, ccfv_SIG) add_le_mono assms(1) assms(2) assms(3) assms(4) assms(5) dual_order.trans le_antisym less_or_eq_imp_le nat_less_le step_4_remaining_steps_pop_big)
 
   with assms show ?thesis 
@@ -1297,27 +1306,27 @@ qed
 
 lemma step_4_pop_small_size_ok_4': "
             0 < Small.size small 
-       \<Longrightarrow> remaining_steps (big, small) \<ge> 4
-       \<Longrightarrow> Big.size_new big + remaining_steps (big, small) + 2 \<le> 3 * Small.size_new small
-       \<Longrightarrow> Big.size_new big + (remaining_steps (big, small) - 4) + 2 \<le> 3 * (Small.size_new small - 1)"
+       \<Longrightarrow> remaining_steps (States dir big small) \<ge> 4
+       \<Longrightarrow> Big.size_new big + remaining_steps (States dir big small) + 2 \<le> 3 * Small.size_new small
+       \<Longrightarrow> Big.size_new big + (remaining_steps (States dir big small) - 4) + 2 \<le> 3 * (Small.size_new small - 1)"
   by linarith
 
 lemma step_4_pop_small_size_ok_4:
     assumes
-      "invar (big, small)"
+      "invar (States dir big small)"
       "0 < Small.size small"
       "Small.pop small = (x, smallP)"
-      "remaining_steps (big, smallP) \<ge> 4"
-      "((step ^^ 4) (big, smallP)) = (big', small')"
-      "Big.size_new big + remaining_steps (big, small) + 2 \<le> 3 * Small.size_new small"
+      "remaining_steps (States dir big smallP) \<ge> 4"
+      "((step ^^ 4) (States dir big smallP)) = (States dir' big' small')"
+      "Big.size_new big + remaining_steps (States dir big small) + 2 \<le> 3 * Small.size_new small"
     shows
-       "Big.size_new big' + remaining_steps (big', small') + 2 \<le> 3 * Small.size_new small'"
+       "Big.size_new big' + remaining_steps (States dir' big' small') + 2 \<le> 3 * Small.size_new small'"
 proof-
-  from assms step_4_pop_small_size_ok_4' have  "Big.size_new big + (remaining_steps (big, small) - 4) + 2 \<le> 3 * (Small.size_new small - 1)"
+  from assms step_4_pop_small_size_ok_4' have  "Big.size_new big + (remaining_steps (States dir big small) - 4) + 2 \<le> 3 * (Small.size_new small - 1)"
     by (smt (verit, best) add_leE le_add_diff_inverse remaining_steps_pop_small)
 
-  with assms have "Big.size_new big + remaining_steps (big', small') + 2 \<le> 3 * (Small.size_new small - 1)"
-    by (meson add_le_mono le_refl order_trans step_4_remaining_steps_pop_small)
+  with assms have "Big.size_new big + remaining_steps (States dir' big' small') + 2 \<le> 3 * (Small.size_new small - 1)"
+    by (smt (verit, best) add_le_cancel_left add_mono_thms_linordered_semiring(3) diff_le_mono invar_pop_small_size order_trans remaining_steps_4 remaining_steps_pop_small)
 
   with assms show ?thesis 
     by (metis diff_Suc_1 invar_pop_small_size step_n_size_new_big step_n_pop_size_new_small)
@@ -1325,159 +1334,158 @@ qed
 
 lemma step_4_pop_big_size_ok_4': "
            0 < Big.size big 
-       \<Longrightarrow> remaining_steps (big, small) \<ge> 4
-       \<Longrightarrow>  Big.size_new big + remaining_steps (big, small) + 2 \<le> 3 * Small.size_new small
-       \<Longrightarrow>  (Big.size_new big - 1) + (remaining_steps (big, small) - 4) + 2 \<le> 3 * Small.size_new small"
+       \<Longrightarrow> remaining_steps (States dir big small) \<ge> 4
+       \<Longrightarrow>  Big.size_new big + remaining_steps (States dir big small) + 2 \<le> 3 * Small.size_new small
+       \<Longrightarrow>  (Big.size_new big - 1) + (remaining_steps (States dir big small) - 4) + 2 \<le> 3 * Small.size_new small"
   by linarith
 
 lemma step_4_pop_big_size_ok_4: 
   assumes
-    "invar (big, small)"
+    "invar (States dir big small)"
     "0 < Big.size big "
     "Big.pop big = (x, bigP)"
-    "remaining_steps (bigP, small) \<ge> 4"
-    "((step ^^ 4) (bigP, small)) = (big', small')"
-    "Big.size_new big + remaining_steps (big, small) + 2 \<le> 3 * Small.size_new small"
+    "remaining_steps (States dir bigP small) \<ge> 4"
+    "((step ^^ 4) (States dir bigP small)) = (States dir' big' small')"
+    "Big.size_new big + remaining_steps (States dir big small) + 2 \<le> 3 * Small.size_new small"
   shows
-    "Big.size_new big' + remaining_steps (big', small') + 2 \<le> 3 * Small.size_new small'"
+    "Big.size_new big' + remaining_steps (States dir' big' small') + 2 \<le> 3 * Small.size_new small'"
 proof -
   from assms step_4_pop_big_size_ok_4' 
-  have "(Big.size_new big - 1) + (remaining_steps (big, small) - 4) + 2 \<le> 3 * Small.size_new small"
+  have "(Big.size_new big - 1) + (remaining_steps (States dir big small) - 4) + 2 \<le> 3 * Small.size_new small"
     by linarith
 
-  with assms have  "(Big.size_new big - 1) + remaining_steps (big', small') + 2 \<le> 3 * Small.size_new small"
+  with assms have  "(Big.size_new big - 1) + remaining_steps (States dir' big' small') + 2 \<le> 3 * Small.size_new small"
     by (meson add_le_mono dual_order.eq_iff order_trans step_4_remaining_steps_pop_big)
 
   with assms show ?thesis 
     by (metis diff_Suc_1 invar_pop_big_size step_n_size_new_small step_n_pop_size_new_big)
 qed
 
-lemma step_4_push_small_size_ok_1: "invar (big, small)
-       \<Longrightarrow> remaining_steps (big, small) \<ge> 4
-       \<Longrightarrow> ((step ^^ 4) (big, Small.push x small)) = (big', small')
-       \<Longrightarrow> remaining_steps (big, small) + 1 \<le> 4 * Small.size small
-       \<Longrightarrow> remaining_steps (big', small') + 1 \<le> 4 * Small.size small'"
+lemma step_4_push_small_size_ok_1: "invar (States dir big small)
+       \<Longrightarrow> remaining_steps (States dir big small) \<ge> 4
+       \<Longrightarrow> (step ^^ 4) (States dir big (Small.push x small)) = States dir' big' small'
+       \<Longrightarrow> remaining_steps (States dir big small) + 1 \<le> 4 * Small.size small
+       \<Longrightarrow> remaining_steps (States dir' big' small') + 1 \<le> 4 * Small.size small'"
   by (smt (z3) add.commute add_leD1 add_le_mono le_add1 le_add_diff_inverse2 mult_Suc_right nat_1_add_1 numeral_Bit0 step_n_push_size_small step_4_remaining_steps_push_small)
 
-lemma step_4_push_big_size_ok_1: "invar (big, small)
-       \<Longrightarrow> remaining_steps (big, small) \<ge> 4
-       \<Longrightarrow> ((step ^^ 4) (Big.push x big, small)) = (big', small')
-       \<Longrightarrow> remaining_steps (big, small) + 1 \<le> 4 * Small.size small
-       \<Longrightarrow> remaining_steps (big', small') + 1 \<le> 4 * Small.size small'"
+lemma step_4_push_big_size_ok_1: "invar (States dir big small)
+       \<Longrightarrow> remaining_steps (States dir big small) \<ge> 4
+       \<Longrightarrow> (step ^^ 4) (States dir (Big.push x big) small) = States dir' big' small'
+       \<Longrightarrow> remaining_steps (States dir big small) + 1 \<le> 4 * Small.size small
+       \<Longrightarrow> remaining_steps (States dir' big' small') + 1 \<le> 4 * Small.size small'"
   by (metis (full_types) Suc_diff_le add.commute invar_push_big less_Suc_eq_le less_imp_diff_less plus_1_eq_Suc step_n_size_small step_4_remaining_steps_push_big)
 
-lemma step_4_push_small_size_ok_2: "invar (big, small)
-       \<Longrightarrow> remaining_steps (big, small) \<ge> 4
-       \<Longrightarrow> ((step ^^ 4) (big, Small.push x small)) = (big', small')
-       \<Longrightarrow> remaining_steps (big, small) + 1 \<le> 4 * Big.size big
-       \<Longrightarrow> remaining_steps (big', small') + 1 \<le> 4 * Big.size big'"
+lemma step_4_push_small_size_ok_2: "invar (States dir big small)
+       \<Longrightarrow> remaining_steps (States dir big small) \<ge> 4
+       \<Longrightarrow> (step ^^ 4) (States dir big (Small.push x small)) = States dir' big' small'
+       \<Longrightarrow> remaining_steps (States dir big small) + 1 \<le> 4 * Big.size big
+       \<Longrightarrow> remaining_steps (States dir' big' small') + 1 \<le> 4 * Big.size big'"
   by (metis (full_types) Suc_diff_le add.commute invar_push_small less_Suc_eq_le less_imp_diff_less plus_1_eq_Suc step_n_size_big step_4_remaining_steps_push_small)
 
-lemma step_4_push_big_size_ok_2: "invar (big, small)
-       \<Longrightarrow> remaining_steps (big, small) \<ge> 4
-       \<Longrightarrow> ((step ^^ 4) (Big.push x big, small)) = (big', small')
-       \<Longrightarrow> remaining_steps (big, small) + 1 \<le> 4 * Big.size big
-       \<Longrightarrow> remaining_steps (big', small') + 1 \<le> 4 * Big.size big'"
+lemma step_4_push_big_size_ok_2: "invar (States dir big small)
+       \<Longrightarrow> remaining_steps (States dir big small) \<ge> 4
+       \<Longrightarrow> (step ^^ 4) (States dir (Big.push x big) small) = States dir' big' small'
+       \<Longrightarrow> remaining_steps (States dir big small) + 1 \<le> 4 * Big.size big
+       \<Longrightarrow> remaining_steps (States dir' big' small') + 1 \<le> 4 * Big.size big'"
   by (smt (z3) Suc_diff_le Suc_eq_plus1 less_Suc_eq_le less_imp_diff_less mult.commute mult_Suc step_n_push_size_big step_4_remaining_steps_push_big trans_le_add2)
 
 lemma step_4_push_small_size_ok_3': "
-            remaining_steps (big, small) \<ge> 4
-       \<Longrightarrow> Small.size_new small + remaining_steps (big, small) + 2 \<le> 3 * Big.size_new big
-       \<Longrightarrow> (Suc (Small.size_new small)) + (remaining_steps (big, small) - 4) + 2 \<le> 3 * Big.size_new big"
+            remaining_steps (States dir big small) \<ge> 4
+       \<Longrightarrow> Small.size_new small + remaining_steps (States dir big small) + 2 \<le> 3 * Big.size_new big
+       \<Longrightarrow> (Suc (Small.size_new small)) + (remaining_steps (States dir big small) - 4) + 2 \<le> 3 * Big.size_new big"
   using distrib_left dual_order.trans le_add_diff_inverse2 by force
 
-lemma step_4_push_small_size_ok_3: "invar (big, small)
-       \<Longrightarrow> remaining_steps (big, small) \<ge> 4
-       \<Longrightarrow> ((step ^^ 4) (big, Small.push x small)) = (big', small')
-       \<Longrightarrow>  Small.size_new small + remaining_steps (big, small) + 2 \<le> 3 * Big.size_new big
-       \<Longrightarrow>  Small.size_new small' + remaining_steps (big', small') + 2 \<le> 3 * Big.size_new big'"
+lemma step_4_push_small_size_ok_3: "invar (States dir big small)
+       \<Longrightarrow> remaining_steps (States dir big small) \<ge> 4
+       \<Longrightarrow> (step ^^ 4) (States dir big (Small.push x small)) = (States dir' big' small')
+       \<Longrightarrow>  Small.size_new small + remaining_steps (States dir big small) + 2 \<le> 3 * Big.size_new big
+       \<Longrightarrow>  Small.size_new small' + remaining_steps (States dir' big' small') + 2 \<le> 3 * Big.size_new big'"
   using step_n_size_new_big step_n_push_size_new_small step_4_remaining_steps_push_small
   by (metis invar_push_small step_4_push_small_size_ok_3')
 
 lemma step_4_push_big_size_ok_3': "
-            remaining_steps (big, small) \<ge> 4
-       \<Longrightarrow> Small.size_new small + remaining_steps (big, small) + 2 \<le> 3 * Big.size_new big
-       \<Longrightarrow> Small.size_new small + (remaining_steps (big, small) - 4) + 2 \<le> 3 * (Suc (Big.size_new big))"
+            remaining_steps (States dir big small) \<ge> 4
+       \<Longrightarrow> Small.size_new small + remaining_steps (States dir big small) + 2 \<le> 3 * Big.size_new big
+       \<Longrightarrow> Small.size_new small + (remaining_steps (States dir big small) - 4) + 2 \<le> 3 * (Suc (Big.size_new big))"
   using distrib_left dual_order.trans le_add_diff_inverse2 by force
 
-lemma step_4_push_big_size_ok_3: "invar (big, small)
-       \<Longrightarrow> remaining_steps (big, small) \<ge> 4
-       \<Longrightarrow> ((step ^^ 4) (Big.push x big, small)) = (big', small')
-       \<Longrightarrow>  Small.size_new small + remaining_steps (big, small) + 2 \<le> 3 * Big.size_new big
-       \<Longrightarrow>  Small.size_new small' + remaining_steps (big', small') + 2 \<le> 3 * Big.size_new big'"
+lemma step_4_push_big_size_ok_3: "invar (States dir big small)
+       \<Longrightarrow> remaining_steps (States dir big small) \<ge> 4
+       \<Longrightarrow> ((step ^^ 4) (States dir (Big.push x big) small)) = (States dir' big' small')
+       \<Longrightarrow>  Small.size_new small + remaining_steps (States dir big small) + 2 \<le> 3 * Big.size_new big
+       \<Longrightarrow>  Small.size_new small' + remaining_steps (States dir' big' small') + 2 \<le> 3 * Big.size_new big'"
   by (metis invar_push_big step_n_size_new_small step_n_push_size_new_big step_4_remaining_steps_push_big step_4_push_big_size_ok_3')
 
 lemma step_4_push_small_size_ok_4': "
-            remaining_steps (big, small) \<ge> 4
-       \<Longrightarrow> Big.size_new big + remaining_steps (big, small) + 2 \<le> 3 * Small.size_new small
-       \<Longrightarrow> Big.size_new big + (remaining_steps (big, small) - 4) + 2 \<le> 3 * (Suc (Small.size_new small))"
+            remaining_steps (States dir big small) \<ge> 4
+       \<Longrightarrow> Big.size_new big + remaining_steps (States dir big small) + 2 \<le> 3 * Small.size_new small
+       \<Longrightarrow> Big.size_new big + (remaining_steps (States dir big small) - 4) + 2 \<le> 3 * (Suc (Small.size_new small))"
   using distrib_left dual_order.trans le_add_diff_inverse2 by force
 
-lemma step_4_push_small_size_ok_4: "invar (big, small)
-       \<Longrightarrow> remaining_steps (big, small) \<ge> 4
-       \<Longrightarrow> ((step ^^ 4) (big, Small.push x small)) = (big', small')
-       \<Longrightarrow>  Big.size_new big + remaining_steps (big, small) + 2 \<le> 3 * Small.size_new small
-       \<Longrightarrow>  Big.size_new big' + remaining_steps (big', small') + 2 \<le> 3 * Small.size_new small'"
+lemma step_4_push_small_size_ok_4: "invar (States dir big small)
+       \<Longrightarrow> remaining_steps (States dir big small) \<ge> 4
+       \<Longrightarrow> (step ^^ 4) (States dir big (Small.push x small)) = (States dir' big' small')
+       \<Longrightarrow>  Big.size_new big + remaining_steps (States dir big small) + 2 \<le> 3 * Small.size_new small
+       \<Longrightarrow>  Big.size_new big' + remaining_steps (States dir' big' small') + 2 \<le> 3 * Small.size_new small'"
   by (metis invar_push_small step_n_size_new_big step_n_push_size_new_small step_4_remaining_steps_push_small step_4_push_small_size_ok_4')
 
 lemma step_4_push_big_size_ok_4': "
-            remaining_steps (big, small) \<ge> 4
-       \<Longrightarrow> Big.size_new big + remaining_steps (big, small) + 2 \<le> 3 * Small.size_new small
-       \<Longrightarrow> (Suc (Big.size_new big)) + (remaining_steps (big, small) - 4) + 2 \<le> 3 * Small.size_new small"
+            remaining_steps (States dir big small) \<ge> 4
+       \<Longrightarrow> Big.size_new big + remaining_steps (States dir big small) + 2 \<le> 3 * Small.size_new small
+       \<Longrightarrow> (Suc (Big.size_new big)) + (remaining_steps (States dir big small) - 4) + 2 \<le> 3 * Small.size_new small"
   using distrib_left dual_order.trans le_add_diff_inverse2 by force
 
-lemma step_4_push_big_size_ok_4: "invar (big, small)
-       \<Longrightarrow> remaining_steps (big, small) \<ge> 4
-       \<Longrightarrow> ((step ^^ 4) (Big.push x big, small)) = (big', small')
-       \<Longrightarrow>  Big.size_new big + remaining_steps (big, small) + 2 \<le> 3 * Small.size_new small
-       \<Longrightarrow>  Big.size_new big' + remaining_steps (big', small') + 2 \<le> 3 * Small.size_new small'"
+lemma step_4_push_big_size_ok_4: "invar (States dir big small)
+       \<Longrightarrow> remaining_steps (States dir big small) \<ge> 4
+       \<Longrightarrow> ((step ^^ 4) (States dir (Big.push x big) small)) = (States dir' big' small')
+       \<Longrightarrow>  Big.size_new big + remaining_steps (States dir big small) + 2 \<le> 3 * Small.size_new small
+       \<Longrightarrow>  Big.size_new big' + remaining_steps (States dir' big' small') + 2 \<le> 3 * Small.size_new small'"
   by (metis invar_push_big step_n_size_new_small step_n_push_size_new_big step_4_remaining_steps_push_big step_4_push_big_size_ok_4')
 
-lemma step_4_push_small_size_ok: "invar (big, small)
-       \<Longrightarrow> remaining_steps (big, small) \<ge> 4
-       \<Longrightarrow> size_ok (big, small)
-       \<Longrightarrow> size_ok ((step ^^ 4) (big, Small.push x small))"
+lemma step_4_push_small_size_ok: "invar (States dir big small)
+       \<Longrightarrow> remaining_steps (States dir big small) \<ge> 4
+       \<Longrightarrow> size_ok (States dir big small)
+       \<Longrightarrow> size_ok ((step ^^ 4) (States dir big (Small.push x small)))"
   using step_4_push_small_size_ok_1 step_4_push_small_size_ok_2 step_4_push_small_size_ok_3 step_4_push_small_size_ok_4 
   by (smt (verit) size_ok'.elims(3) size_ok'.simps size_ok.elims(2) size_ok.elims(3))
 
-lemma step_4_push_big_size_ok: "invar (big, small)
-       \<Longrightarrow> remaining_steps (big, small) \<ge> 4
-       \<Longrightarrow> size_ok (big, small)
-       \<Longrightarrow> size_ok ((step ^^ 4) (Big.push x big, small))"
+lemma step_4_push_big_size_ok: "invar (States dir big small)
+       \<Longrightarrow> remaining_steps (States dir big small) \<ge> 4
+       \<Longrightarrow> size_ok (States dir big small)
+       \<Longrightarrow> size_ok ((step ^^ 4) (States dir (Big.push x big) small))"
   using step_4_push_big_size_ok_1 step_4_push_big_size_ok_2 step_4_push_big_size_ok_3 step_4_push_big_size_ok_4
   by (smt (verit) size_ok'.elims(3) size_ok'.simps size_ok.elims(2) size_ok.elims(3))
 
-lemma step_4_pop_small_size_ok: "invar (big, small)
+lemma step_4_pop_small_size_ok: "invar (States dir big small)
        \<Longrightarrow> 0 < Small.size small 
        \<Longrightarrow> Small.pop small = (x, smallP)
-       \<Longrightarrow> remaining_steps (big, smallP) \<ge> 4
-       \<Longrightarrow> size_ok (big, small)
-       \<Longrightarrow> size_ok ((step ^^ 4) (big, smallP))"
-  using step_4_pop_small_size_ok_1 step_4_pop_small_size_ok_2 step_4_pop_small_size_ok_3 step_4_pop_small_size_ok_4 
-  by (smt (verit) size_ok'.elims(3) size_ok'.simps size_ok.elims(2) size_ok.elims(3))
+       \<Longrightarrow> remaining_steps (States dir big smallP) \<ge> 4
+       \<Longrightarrow> size_ok (States dir big small)
+       \<Longrightarrow> size_ok ((step ^^ 4) (States dir big smallP))"
+  by (smt (verit) size_ok'.elims(3) size_ok'.simps size_ok.elims(2) size_ok.elims(3) step_4_pop_small_size_ok_1 step_4_pop_small_size_ok_2 step_4_pop_small_size_ok_3 step_4_pop_small_size_ok_4)
 
-lemma step_4_pop_big_size_ok: "invar (big, small)
+lemma step_4_pop_big_size_ok: "invar (States dir big small)
        \<Longrightarrow> 0 < Big.size big 
        \<Longrightarrow> Big.pop big = (x, bigP) 
-       \<Longrightarrow> remaining_steps (bigP, small) \<ge> 4
-       \<Longrightarrow> size_ok (big, small)
-       \<Longrightarrow> size_ok ((step ^^ 4) (bigP, small))"
+       \<Longrightarrow> remaining_steps  (States dir bigP small) \<ge> 4
+       \<Longrightarrow> size_ok (States dir big small)
+       \<Longrightarrow> size_ok ((step ^^ 4) (States dir bigP small))"
   using step_4_pop_big_size_ok_1 step_4_pop_big_size_ok_2 step_4_pop_big_size_ok_3 step_4_pop_big_size_ok_4
   by (smt (verit) size_ok'.elims(3) size_ok'.simps size_ok.elims(2) size_ok.elims(3))
 
-lemma size_ok_size_small: "size_ok (big, small) \<Longrightarrow> 0 < Small.size small"
+lemma size_ok_size_small: "size_ok (States dir big small) \<Longrightarrow> 0 < Small.size small"
   apply(induction small arbitrary: big)
   by auto
 
-lemma size_ok_size_big: "size_ok (big, small) \<Longrightarrow> 0 < Big.size big"
+lemma size_ok_size_big: "size_ok (States dir big small) \<Longrightarrow> 0 < Big.size big"
   apply(induction big arbitrary: small)
   by auto
 
-lemma size_ok_size_new_small: "size_ok (big, small) \<Longrightarrow> 0 < Small.size_new small"
+lemma size_ok_size_new_small: "size_ok (States dir big small) \<Longrightarrow> 0 < Small.size_new small"
   apply(induction small arbitrary: big)
   by auto
 
-lemma size_ok_size_new_big: "size_ok (big, small) \<Longrightarrow> 0 < Big.size_new big"
+lemma size_ok_size_new_big: "size_ok (States dir big small) \<Longrightarrow> 0 < Big.size_new big"
   apply(induction big arbitrary: small)
   by auto
 
@@ -1489,26 +1497,95 @@ lemma step_size_ok': "invar states \<Longrightarrow>
     size_ok' states x \<Longrightarrow> 
     size_ok' (step states) x"
 proof(induction states x rule: size_ok'.induct)
-  case (1 big small steps)
+  case (1 dir big small steps)
   then show ?case 
-    using step_size_new_big[of big small] step_size_new_small[of big small] step_size_big[of big small] step_size_small[of big small]
+    using step_size_new_big[of dir big small] step_size_new_small[of dir big small] step_size_big[of dir big small] step_size_small[of dir big small]
     apply(auto split: )
-  proof -
-    assume a1: "\<And>big' small'. States.step (big, small) = (big', small') \<Longrightarrow> Big.size_new big = Big.size_new big'"
-    assume a2: "\<And>big' small'. States.step (big, small) = (big', small') \<Longrightarrow> Small.size_new small = Small.size_new small'"
-    assume a3: "\<And>big' small'. States.step (big, small) = (big', small') \<Longrightarrow> Big.size big = Big.size big'"
-    assume a4: "\<And>big' small'. States.step (big, small) = (big', small') \<Longrightarrow> Small.size small = Small.size small'"
-    assume a5: "Suc (Suc (Small.size_new small + steps)) \<le> 3 * Big.size_new big"
-    assume a6: "Suc (Suc (Big.size_new big + steps)) \<le> 3 * Small.size_new small"
-    assume a7: "Suc steps \<le> 4 * Small.size small"
-    assume a8: "Suc steps \<le> 4 * Big.size big"
-  
-      have "\<forall>p n. (\<exists>s sa. (\<not> n + 1 \<le> 4 * Big.size (s::'a Big.state) \<or> \<not> n + 1 \<le> 4 * Small.size sa \<or> \<not> Big.size_new s + n + 2 \<le> 3 * Small.size_new sa \<or> \<not> Small.size_new sa + n + 2 \<le> 3 * Big.size_new s) \<and> (s, sa) = p) \<or> size_ok' p n"
-        by simp
-      then show ?thesis
-        using a8 a7 a6 a5 a4 a3 a2 a1 by (smt (z3) Suc_1 Suc_eq_plus1 add_Suc_shift)
-    qed
+    by (smt (verit, ccfv_threshold) Suc_eq_plus1_left add.commute add_2_eq_Suc' size_ok'.elims(3))
 qed
 
+
+lemma step_same: "step (States dir big small) = States dir' big' small' \<Longrightarrow> dir = dir'"
+  apply(induction "States dir big small" rule: step.induct)
+  by auto
+
+lemma step_n_same: "(step^^n) (States dir big small) = States dir' big' small' \<Longrightarrow> dir = dir'"
+proof(induction n arbitrary: big' small')
+  case 0
+  then show ?case
+    by simp
+next
+  case (Suc n)
+  obtain  big'' small'' where "(States.step ^^ n) (States dir big small) = States dir big'' small''"
+    using Suc apply auto
+    by (metis states.exhaust step_same)
+
+  with Suc show ?case
+    using step_same[of dir big'' small'' dir' big' small']
+    by auto
+qed
   
+
+lemma step_listL: "invar states \<Longrightarrow> listL (step states) = listL states"
+proof(induction states rule: listL.induct)
+  case (1 big small)
+  then have "list_small_first (States Left big small) = Small.list_current small @ rev (Big.list_current big)"
+    by auto
+  then have "list_small_first (step (States Left big small)) = Small.list_current small @ rev (Big.list_current big)"
+    using 1 step_lists by fastforce
+
+  then have "listL (step (States Left big small)) =
+         Small.list_current small @ rev (Big.list_current big)"
+    by (smt (verit, ccfv_SIG) "1" States.invar.elims(2) States_Proof.invar_step listL.simps(1) step_same)
+
+  with 1 show ?case 
+    by auto
+next
+  case (2 big small)
+   then have "list_big_first (States Right big small) = Big.list_current big @ rev (Small.list_current small)"
+     using invar_list_big_first[of "States Right big small"]
+     by auto
+
+  then have "list_big_first (step (States Right big small)) = Big.list_current big @ rev (Small.list_current small)"
+    using 2 step_lists by fastforce
+
+  then have "listL (step (States Right big small)) =
+         Big.list_current big @ rev (Small.list_current small)"
+    by (metis(full_types) listL.cases listL.simps(2) step_same)
+
+  with 2 show ?case 
+    using \<open>list_big_first (States direction.Right big small) = Big.list_current big @ rev (Small.list_current small)\<close> by force
+qed
+
+lemma n_steps: "invar states \<Longrightarrow> listL ((step^^n) states) = listL states"
+  apply(induction n arbitrary: states)
+  by(auto simp: funpow_swap1 invar_step step_listL)
+
+lemma invar_n_steps: "invar states \<Longrightarrow> invar ((step^^n) states)"
+  apply(induction n arbitrary: states)
+  by(auto simp: invar_step)
+
+lemma remaining_steps_decline_4: "invar states \<Longrightarrow> Suc n < remaining_steps ((step ^^ m) states)
+   \<Longrightarrow> n < remaining_steps ((step ^^ Suc m) states)"
+  by(auto simp: remaining_steps_decline_3 invar_n_steps)
+
+
+lemma step_n_size_ok': "invar states \<Longrightarrow>
+    size_ok' states x \<Longrightarrow> 
+    size_ok' ((step ^^ n) states) x"
+proof(induction n arbitrary: states)
+  case 0
+  then show ?case by auto
+next
+  case (Suc n)
+  then show ?case using step_size_ok' 
+    by (metis invar_step comp_eq_dest_lhs funpow_Suc_right) 
+qed
+
+lemma size_ok_steps: "invar states \<Longrightarrow>
+     n < remaining_steps states \<Longrightarrow> 
+    size_ok' states (remaining_steps states - n) \<Longrightarrow> 
+    size_ok' ((step ^^ n) states) (remaining_steps ((step ^^ n) states))"
+  by (simp add: remaining_steps_step_n step_n_size_ok')
+
 end
