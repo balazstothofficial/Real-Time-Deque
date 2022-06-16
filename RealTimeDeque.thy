@@ -195,26 +195,4 @@ fun invar_deque :: "'a deque \<Rightarrow> bool" where
 instance..
 end
 
-(* For Test: *)
-fun runningFold :: "('a deque \<Rightarrow> 'a deque) list \<Rightarrow> 'a deque \<Rightarrow> 'a deque list" where
-  "runningFold [] _ = []"
-| "runningFold (x#xs) deque = (
-  let deque = x deque 
-  in deque # runningFold xs deque
-)"
-
-value "runningFold 
-  [
-  enqL (0::int), 
-  enqL 1, 
-  enqL 2,
-  enqL 3,
-  enqL 4,   
-  enqL 5,
-  deqR,
-  deqR
-  ] 
-  Empty"
-
-
 end

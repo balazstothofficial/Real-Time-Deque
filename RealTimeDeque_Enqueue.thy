@@ -76,7 +76,7 @@ next
 
       with invar have 
          "States.listL (six_steps ?states) = x # Idle.list left' @ rev (Stack.list right)"
-        by (auto simp: n_steps)
+        by (auto simp: step_n_listL)
 
       with False show ?case
         by(auto simp: Let_def split: idle.splits)
@@ -92,13 +92,13 @@ next
     by (meson invar_deque.simps(6) invar_states.simps(1) invar_push_small)
 
   then have list: "States.listL ?newStates = x # Small.list_current small @ rev (Big.list_current big)"
-    by(auto simp: push_small push_list_current)
+    by(auto simp: push_small_lists push_list_current)
                         
   from invar have four_steps: "invar ?steppedStates"
-    using invar_n_steps by blast
+    using invar_step_n by blast
 
   then have "States.listL ?steppedStates = x # Small.list_current small @ rev (Big.list_current big)"
-    using n_steps invar list by fastforce
+    using step_n_listL invar list by fastforce
 
   with 6 show ?case
     by(auto simp: Let_def split: states.split direction.split Big.state.split Common.state.split Small.state.split)
@@ -120,10 +120,10 @@ next
     by (metis Big_Proof.push_list_current append_Cons rev_append rev_rev_ident)
   
   from invar have four_steps: "invar ?steppedStates"
-    using invar_n_steps by blast
+    using invar_step_n by blast
 
   then have "States.listL ?steppedStates = x # Big.list_current big @ rev (Small.list_current small)"
-    using n_steps invar listL by fastforce
+    using step_n_listL invar listL by fastforce
 
   with 7 show ?case 
     apply(auto simp: Let_def split: states.split direction.split prod.split Big.state.split Common.state.split Small.state.split)
@@ -254,7 +254,7 @@ next
         using remaining_steps_decline_3[of ?states 5] by auto
 
       with invar have "4 < remaining_steps ((step ^^ 2) ?states)"
-        using invar_n_steps invar_step remaining_steps_decline_4[of ?states 4 1]
+        using invar_step_n invar_step remaining_steps_decline_4[of ?states 4 1]
         by (smt (z3) add.commute add_Suc_right funpow_0 numeral_2_eq_2 numeral_3_eq_3 numeral_Bit0 remaining_steps remaining_steps_decline_4)
 
       with remaining_steps have remaining_steps_end: "0 < remaining_steps (six_steps ?states)"
@@ -289,7 +289,7 @@ next
         by (meson size_ok.elims(3))
 
      from invar have "invar (six_steps ?states)"
-       using invar_n_steps by blast
+       using invar_step_n by blast
 
       with False six_steps_size_ok show ?case
         apply(auto simp: Let_def split: idle.splits)
@@ -309,7 +309,7 @@ next
     by (meson invar_deque.simps(6) invar_states.simps(1) invar_push_small)
 
   then have invar_four_steps: "invar (four_steps ?newStates)"
-    using invar_n_steps by blast
+    using invar_step_n by blast
 
   with 6 show ?case
   proof(induction "remaining_steps (States Left big small) > 4")
@@ -360,7 +360,7 @@ next
       by (metis invar_deque.simps(6) leI remaining_steps_push_small)
 
     with False have remaining_steps: "remaining_steps ?steppedStates = 0"
-      using invar remaining_steps_decline_5[of ?newStates 4]
+      using invar remaining_steps_decline_n_steps[of ?newStates 4]
       by auto
 
     obtain steppedSmall steppedBig where stepped: "?steppedStates = States Left steppedBig steppedSmall"
@@ -470,7 +470,7 @@ next
     by (meson invar_deque.simps(6) invar_states.simps invar_push_big)
 
   then have invar_four_steps: "invar (four_steps ?newStates)"
-    using invar_n_steps by blast
+    using invar_step_n by blast
 
   with 7 show ?case
   proof(induction "remaining_steps (States Right big small) > 4")
@@ -519,7 +519,7 @@ next
       by (metis invar_deque.simps(6) leI remaining_steps_push_big)
 
     with False have remaining_steps: "remaining_steps ?steppedStates = 0"
-      using invar remaining_steps_decline_5[of ?newStates 4]
+      using invar remaining_steps_decline_n_steps[of ?newStates 4]
       by auto
 
     obtain steppedBig steppedSmall where stepped: "?steppedStates = States Right steppedBig steppedSmall"
