@@ -1149,6 +1149,21 @@ lemma step_n_listL: "invar states \<Longrightarrow> listL ((step^^n) states) = l
   using step_consistent[of listL states] step_listL
   by metis
 
+lemma listL_remaining_steps: 
+  assumes
+    "listL states = []"
+    "0 < remaining_steps states"
+    "invar states"
+    "size_ok states"
+  shows
+    "False"
+proof(cases states)
+  case (States dir big small)
+  with assms show ?thesis 
+    using Small_Proof.list_current_size size_ok_size_small
+    by(cases dir; cases "lists (States dir big small)") auto
+qed
+   
 lemma invar_step_n: "invar (states :: 'a states) \<Longrightarrow> invar ((step^^n) states)"
   by (simp add: invar_step step_consistent_2)
 

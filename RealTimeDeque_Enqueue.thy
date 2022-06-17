@@ -154,323 +154,166 @@ proof(induction x deque rule: enqL.induct)
   qed
 next
   case (6 x big small)
-  let ?newSmall = "Small.push x small"
-  let ?newStates = "States Left big ?newSmall"
-  let ?steppedStates = "four_steps ?newStates"
+  let ?small = "Small.push x small"
+  let ?states = "States Left big ?small"
+  let ?states_stepped = "four_steps ?states"
 
-  have start_size_ok: "size_ok (States Left big small)"
-    using "6.prems" invar_deque.simps(6) by blast
+  from 6 have invar: "invar ?states"
+    using invar_push_small[of Left big small x]
+    by auto
 
-  from 6 have invar: "invar ?newStates"
-    by (meson invar_deque.simps(6) invar_states.simps(1) invar_push_small)
-
-  then have invar_four_steps: "invar (four_steps ?newStates)"
+  then have invar_stepped: "invar ?states_stepped"
     using invar_step_n by blast
 
-  with 6 show ?case
-  proof(induction "remaining_steps (States Left big small) > 4")
-    case True
-    then have states_invar: "invar (States Left big small)" by auto
-    from True have states_rem: "4 \<le> remaining_steps (States Left big small)" by auto
-    from True have states_size_ok: "States.size_ok (States Left big small)" by auto
-    
-    from True have "remaining_steps ?newStates > 4"
-      by (metis remaining_steps_push_small states_invar)
+  show ?case
+   proof(cases "4 < remaining_steps ?states")
+     case True
 
-    then have remaining_steps: "remaining_steps ?steppedStates > 0"
-      by (metis One_nat_def add_Suc_shift funpow_0 invar numeral_2_eq_2 numeral_Bit0 plus_1_eq_Suc remaining_steps_decline_4)
+     obtain big_stepped small_stepped where stepped [simp]: 
+       "?states_stepped = States Left big_stepped small_stepped"
+       by (metis remaining_steps_states.cases step_n_same)
+      
+     from True have remaining_steps: "0 < remaining_steps ?states_stepped"
+       using invar remaining_steps_n_steps_sub[of ?states 4]
+       by simp
 
-    from True have size_ok: "size_ok ?steppedStates"
-      using step_4_push_small_size_ok[of Left big small x] states_invar states_rem states_size_ok 
-      by auto
+     from True 6(1) have size_ok: "size_ok ?states_stepped"
+       using 
+          step_4_push_small_size_ok[of Left big small x] 
+          remaining_steps_push_small[of Left big small x]
+       by auto
 
-    have "case ?steppedStates of
-      States Left (Big.state.Common (state.Idle _ _)) (Small.state.Common (state.Idle _ _)) \<Rightarrow> False
-    | _ \<Rightarrow> True"
-      using step_same[of Left big ?newSmall]
-      apply(auto split: direction.splits prod.splits states.splits Small.state.splits Big.state.splits Common.state.splits)
-      using remaining_steps by auto
+     from remaining_steps size_ok invar_stepped show ?thesis
+       by(cases big_stepped; cases small_stepped) 
+         (auto simp: Let_def split!: Common.state.split)
+   next
+     case False
+     then have remaining_steps_stepped: "remaining_steps ?states_stepped = 0"
+       using invar by auto
 
-    then have "(case ?steppedStates of 
+     then obtain small_current small_idle big_current big_idle where idle [simp]: "
+      ?states_stepped = 
       States Left 
-        (Big.Common (Common.Idle _ big))
-        (Small.Common (Common.Idle _ small)) 
-         \<Rightarrow> Idle small big
-   | _ \<Rightarrow> Transforming ?steppedStates) = Transforming ?steppedStates"
-      by(auto split: states.splits direction.splits  Small.state.splits Common.state.splits Big.state.splits)
+          (Big.state.Common (state.Idle big_current big_idle))
+          (Small.state.Common (state.Idle small_current small_idle))
+      "
+       using remaining_steps_idle' invar_stepped remaining_steps_stepped step_n_same
+       by (smt (verit) invar_states.elims(2))
 
-    with True  have "invar (case ?steppedStates of 
-      States Left 
-        (Big.Common (Common.Idle _ big))
-        (Small.Common (Common.Idle _ small)) 
-         \<Rightarrow> Idle small big
-   | _ \<Rightarrow> Transforming ?steppedStates)"
-      by (smt (z3) invar_deque.simps(6) remaining_steps size_ok) 
+     from 6 have [simp]: "size_new (Small.push x small) = Suc (size_new small)"
+       using Small_Proof.size_new_push by auto
 
-    with True show ?case
-      by(auto simp: Let_def)
+     have [simp]: "size small_idle = size_new (Small.push x small)"
+       using invar invar_stepped step_n_size_new_small[of Left big "Small.push x small" 4]
+       by auto
 
-  next
-    case False
-    then have "remaining_steps ?newStates \<le> 4"
-      by (metis invar_deque.simps(6) leI remaining_steps_push_small)
+     then have [simp]: "\<not>is_empty small_idle" 
+       using Idle_Proof.size_not_empty[of small_idle]
+       by auto
 
-    with False have remaining_steps: "remaining_steps ?steppedStates = 0"
-      using invar remaining_steps_decline_n_steps[of ?newStates 4]
-      by auto
+     have size_new_big [simp]: "0 < size_new big"
+       using 6
+       by auto
 
-    obtain steppedSmall steppedBig where stepped: "?steppedStates = States Left steppedBig steppedSmall"
-      by (metis(full_types) States.listL.cases step_n_same)
+     then have [simp]: "size big_idle = size_new big"
+       using invar invar_stepped step_n_size_new_big[of Left big "Small.push x small" 4]
+       by auto
+      
+     then have [simp]: "\<not>is_empty big_idle" 
+       using Idle_Proof.size_not_empty size_new_big
+       by metis
 
-    with remaining_steps have "case States Left steppedBig steppedSmall of
-      States Left (Big.state.Common (state.Idle _ _)) (Small.state.Common (state.Idle _ _))  \<Rightarrow> True
-    | _ \<Rightarrow> False"   
-      using False.prems(2) remaining_steps_idle by fastforce
+     have size_ok_1: "size small_idle \<le> 3 * size big_idle"
+       using 6 by auto
 
-    then obtain sI smallIdle bI bigIdle where idle: "States Left steppedBig steppedSmall = 
-     States Left (Big.state.Common (state.Idle bI bigIdle)) (Small.state.Common (state.Idle sI smallIdle)) "
-      by(auto split: Small.state.splits Common.state.splits Big.state.splits)
+     have size_ok_2: "size big_idle \<le> 3 * size small_idle"
+      using 6 by auto
 
-    then have states_invar: "invar (States Left steppedBig steppedSmall)"
-      using False
-      by (metis stepped)
-
-    with stepped invar_four_steps have "size_new big = size_new steppedBig"
-      using invar
-      by (metis step_n_size_new_big)
-
-    have small_sizes_1: "size ?newSmall = Suc (size small)"
-      by (meson "6.prems" invar_deque.simps(6) invar_states.simps(1) funpow_0 step_n_push_size_small)
-
-    with stepped invar_four_steps have small_sizes: "size_new ?newSmall = size_new steppedSmall"
-      using invar
-      by (metis step_n_size_new_small)
-
-    then have "0 < size_new small"
-      using "6.prems" invar_deque.simps(6) invar_states.simps(1) size_ok_size_new_small by blast
-
-    then have "0 < size_new ?newSmall"
-      using \<open>size (Small.push x small) = Suc (size small)\<close> invar Small_Proof.size_size_new sorry (* by fastforce *)
-
-    then have "0 < size_new steppedSmall"
-      by (simp add: \<open>size_new (Small.push x small) = size_new steppedSmall\<close>)
-
-    then have "0 < size_new big"
-      using "6.prems" invar_deque.simps(6) invar_states.simps(1) size_ok_size_new_big by blast
-
-    then have big_not_empty: "0 < size_new steppedBig"
-      by (simp add: \<open>size_new big = size_new steppedBig\<close>)
-
-    have small_size: "size smallIdle = size_new steppedSmall"
-      using idle states_invar by auto
-
-    have big_size: "size bigIdle = size_new steppedBig"
-      using idle states_invar by auto
-
-    have wind2: "size_new small \<le> 3 * size_new big - 1"
-      using start_size_ok
-      by auto
-
-    have "Suc (size_new small) = size_new ?newSmall"
-      by (metis "6.prems" invar_deque.simps(6) funpow_0 step_n_push_size_new_small)
-
-    with wind2 have "size_new ?newSmall \<le> 3 * size_new big"
-      using \<open>0 < size_new big\<close> by linarith
-
-    then have "size_new steppedSmall \<le> 3 * size_new big"  
-      by (simp add: small_sizes)
-
-    then have T: "size_new steppedSmall \<le> 3 * size_new steppedBig"  
-      using \<open>size_new big = size_new steppedBig\<close> by presburger
-
-    have "size_new big \<le> 3 * size_new small"
-      using start_size_ok small_sizes_1
-      by auto
-
-    then have "size_new big \<le> 3 * size_new ?newSmall"
-      using small_sizes_1
-      by (metis (no_types, opaque_lifting) "6.prems" invar_deque.simps(6) dual_order.trans funpow_0 le_add2 mult_le_mono2 plus_1_eq_Suc step_n_push_size_new_small)
-
-    then have "size_new big \<le> 3 * size_new steppedSmall"
-      by (simp add: small_sizes)
-
-    then have "size_new steppedBig \<le> 3 * size_new steppedSmall"
-      by (simp add: \<open>size_new big = size_new steppedBig\<close>)
-    
-    with idle states_invar T have "invar (Idle smallIdle bigIdle)"
-      apply auto
-      apply (metis Common.size_new_state.simps(1) is_empty_idle.elims(2) size_idle.simps size_new_state.simps(1) \<open>0 < size_new (Small.push x small)\<close> \<open>size_new (Small.push x small) = size_new steppedSmall\<close> list.size(3) Stack_Proof.size_list_length Stack_Proof.list_not_empty verit_comp_simplify1(1))
-      using big_not_empty sorry
-     
-     with False have "invar(case States Left steppedBig steppedSmall of 
-      States Left 
-        (Big.Common (Common.Idle _ big))
-        (Small.Common (Common.Idle _ small)) 
-         \<Rightarrow> Idle small big
-   | _ \<Rightarrow> Transforming (States Left steppedBig steppedSmall))"
-       using Big.state.simps(6) Common.state.simps(6) Small.state.simps(12) idle states.inject(1) states.simps(5) by auto
-
-     with False show ?case
-       by (metis \<open>four_steps (States  Left  big (Small.push x small)) = States Left steppedBig steppedSmall\<close> enqL.simps(6))
+     from False show ?thesis 
+       using invar_stepped size_ok_1 size_ok_2
+       by auto
    qed
 next
   case (7 x big small)
-  let ?newBig = "Big.push x big"
-  let ?newStates = "States Right ?newBig small"
-  let ?steppedStates = "four_steps ?newStates"
+  let ?big = "Big.push x big"
+  let ?states = "States Right ?big small"
+  let ?states_stepped = "four_steps ?states"
 
-  have start_size_ok: "size_ok (States Right big small)"
-    using "7.prems" invar_deque.simps(6) by blast
+  from 7 have invar: "invar ?states"
+    using invar_push_big[of Right big small x]
+    by auto
 
-  from 7 have invar: "invar ?newStates"
-    by (meson invar_deque.simps(6) invar_states.simps invar_push_big)
-
-  then have invar_four_steps: "invar (four_steps ?newStates)"
+  then have invar_stepped: "invar ?states_stepped"
     using invar_step_n by blast
 
-  with 7 show ?case
-  proof(induction "remaining_steps (States Right big small) > 4")
-    case True
-    then have states_invar: "invar (States Right big small)" by auto
-    from True have states_rem: "4 \<le> remaining_steps (States Right big small)" by auto
-    from True have states_size_ok: "size_ok (States Right big small)" by auto
-    
-    from True have "remaining_steps ?newStates > 4"
-      by (metis remaining_steps_push_big states_invar)
-
-    then have remaining_steps: "remaining_steps ?steppedStates > 0"
-      by (metis One_nat_def add_Suc_shift funpow_0 invar numeral_2_eq_2 numeral_Bit0 plus_1_eq_Suc remaining_steps_decline_4)
-
-    from True have size_ok: "size_ok ?steppedStates"
-      using step_4_push_big_size_ok[of Right big small x] states_invar states_rem states_size_ok 
-      by blast
-
-    have "case ?steppedStates of
-      States Right (Big.state.Common (state.Idle _ _)) (Small.state.Common (state.Idle _ _)) \<Rightarrow> False
-    | _ \<Rightarrow> True"
-      using step_same[of Right ?newBig small] 
-      sorry
-      (* apply(auto split: prod.splits direction.splits states.splits Small.state.splits Big.state.splits Common.state.splits)
-      using remaining_steps by auto *)
-
-    then have "(case ?steppedStates of 
-      States Right 
-        (Big.Common (Common.Idle _ big)) 
-        (Small.Common (Common.Idle _ small)) \<Rightarrow> Idle big small
-   | _ \<Rightarrow> Transforming ?steppedStates) = Transforming ?steppedStates"
-      by(auto split: states.splits direction.splits Small.state.splits Common.state.splits Big.state.splits)
-
-    with True  have "invar (case ?steppedStates of 
-      States Right 
-        (Big.Common (Common.Idle _ big)) 
-        (Small.Common (Common.Idle _ small)) \<Rightarrow> Idle big small
-   | _ \<Rightarrow> Transforming ?steppedStates)"
-      by (smt (z3) invar_deque.simps(6) remaining_steps size_ok) 
-
-    with True show ?case
-      by(auto simp: Let_def)
-
-  next
-    case False
-    then have "remaining_steps ?newStates \<le> 4"
-      by (metis invar_deque.simps(6) leI remaining_steps_push_big)
-
-    with False have remaining_steps: "remaining_steps ?steppedStates = 0"
-      using invar remaining_steps_decline_n_steps[of ?newStates 4]
-      by auto
-
-    obtain steppedBig steppedSmall where stepped: "?steppedStates = States Right steppedBig steppedSmall"
-      by (metis(full_types) States.listL.cases step_n_same)
-
-    with remaining_steps have "case States Right steppedBig steppedSmall of
-      States Right (Big.state.Common (state.Idle _ _)) (Small.state.Common (state.Idle _ _)) \<Rightarrow> True
-    | _ \<Rightarrow> False"
-      using invar_four_steps remaining_steps_idle sorry
-
-    then obtain bI bigIdle sI smallIdle where idle: "States Right steppedBig steppedSmall = 
-      States Right (Big.state.Common (state.Idle bI bigIdle)) (Small.state.Common (state.Idle sI smallIdle))"
-      by(auto split: Small.state.splits Common.state.splits Big.state.splits)
-
-    then have states_invar: "invar (States Right steppedBig steppedSmall)"
-      by (metis False(3) stepped)
-      
-    with stepped invar_four_steps have "size_new small = size_new steppedSmall"
-      by (metis invar step_n_size_new_small)
-
-    have big_sizes_1: "size ?newBig = Suc (size big)"
-      using "7.prems" Big_Proof.size_push by fastforce
-
-    with stepped invar_four_steps have big_sizes: "size_new ?newBig = size_new steppedBig"
-      by (metis invar step_n_size_new_big)
-
-    then have "0 < size_new big"
-     using "7.prems" invar_deque.simps(6) size_ok_size_new_big
-     by fastforce
-
-    then have "0 < size_new ?newBig"
-      using \<open>size (Big.push x big) = Suc (size big)\<close> invar Big_Proof.size_size_new sorry (* by fastforce *)
-
-    then have "0 < size_new steppedBig"
-      by (simp add: \<open>size_new (Big.push x big) = size_new steppedBig\<close>)
-
-    then have "0 < size_new small"
-      using "7.prems" invar_deque.simps size_ok_size_new_small
-      by fastforce
-
-    then have small_not_empty: "0 < size_new steppedSmall"
-      by (simp add: \<open>size_new small = size_new steppedSmall\<close>)
-
-    have big_size: "size bigIdle = size_new steppedBig"
-      using idle states_invar by auto
-
-    have small_size: "size smallIdle = size_new steppedSmall"
-      using idle states_invar by auto
-
-    have size_ok_2: "size_new big \<le> 3 * size_new small - 1"
-      using start_size_ok
-      by auto
-
-    have "Suc (size_new big) = size_new ?newBig"
-      using "7.prems" Big_Proof.size_new_push by fastforce
-
-    with size_ok_2 have "size_new ?newBig \<le> 3 * size_new small"
-      using \<open>0 < size_new small\<close> by linarith
-
-    then have "size_new steppedBig \<le> 3 * size_new small"  
-      by (simp add: big_sizes)
-
-    then have T: "size_new steppedBig \<le> 3 * size_new steppedSmall"  
-      using \<open>size_new small = size_new steppedSmall\<close> by presburger
-
-    have "size_new small \<le> 3 * size_new big"
-      using start_size_ok big_sizes_1
-      by auto
-
-    then have "size_new small \<le> 3 * size_new ?newBig"
-      using big_sizes_1
-      using \<open>Suc (size_new big) = size_new (Big.push x big)\<close> by linarith
-
-    then have "size_new small \<le> 3 * size_new steppedBig"
-      by (simp add: big_sizes)
-
-    then have "size_new steppedSmall \<le> 3 * size_new steppedBig"
-      by (simp add: \<open>size_new small = size_new steppedSmall\<close>)
-    
-    with idle states_invar T have "invar (Idle bigIdle smallIdle)"
-      apply auto
-      apply (metis is_empty_idle.elims(2) size_idle.simps Stack_Proof.size_empty Suc_neq_Zero \<open>Suc (size_new big) = size_new (Big.push x big)\<close> big_size big_sizes)
-      using small_not_empty sorry
+  show ?case
+   proof(cases "4 < remaining_steps ?states")
+     case True
      
-     with False  have "invar (case States Right steppedBig steppedSmall of 
-      States Right 
-        (Big.Common (Common.Idle _ big)) 
-        (Small.Common (Common.Idle _ small)) \<Rightarrow> Idle big small
-   | _ \<Rightarrow> Transforming (States Right steppedBig steppedSmall))"
-       using Big.state.simps(6) Common.state.simps(6) Small.state.simps(12) idle states.inject(1) states.simps(5) by auto
+     obtain big_stepped small_stepped where stepped [simp]:
+       "?states_stepped = States Right big_stepped small_stepped"
+       by (metis remaining_steps_states.cases step_n_same)
+      
+     from True have remaining_steps: "0 < remaining_steps ?states_stepped"
+       using invar remaining_steps_n_steps_sub[of ?states 4]
+       by simp
 
-     with False show ?case
-      by (metis enqL.simps(7) stepped)
-  qed
+     from True 7(1) have size_ok: "size_ok ?states_stepped"
+       using 
+          step_4_push_big_size_ok[of Right big small x] 
+          remaining_steps_push_big[of Right big small x]
+       by auto
+
+     from remaining_steps size_ok invar_stepped show ?thesis
+       by(cases big_stepped; cases small_stepped) 
+         (auto simp: Let_def split!: Common.state.split)
+   next
+     case False
+     then have remaining_steps_stepped: "remaining_steps ?states_stepped = 0"
+       using invar by auto
+
+     then obtain small_current small_idle big_current big_idle where idle [simp]: "
+      ?states_stepped = 
+      States Right 
+          (Big.state.Common (state.Idle big_current big_idle))
+          (Small.state.Common (state.Idle small_current small_idle))
+      "
+       using remaining_steps_idle' invar_stepped remaining_steps_stepped step_n_same
+       by (smt (verit) invar_states.elims(2))
+
+     from 7 have [simp]: "size_new (Big.push x big) = Suc (size_new big)"
+       using Big_Proof.size_new_push by auto
+
+     have [simp]: "size big_idle = size_new (Big.push x big)"
+       using invar invar_stepped step_n_size_new_big[of Right "Big.push x big" small 4]
+       by auto
+
+     then have [simp]: "\<not>is_empty big_idle" 
+       using Idle_Proof.size_not_empty[of big_idle]
+       by auto
+
+     have size_new_small [simp]: "0 < size_new small"
+       using 7
+       by auto
+
+     then have [simp]: "size small_idle = size_new small"
+       using invar invar_stepped step_n_size_new_small[of Right "Big.push x big" small 4]
+       by auto
+      
+     then have [simp]: "\<not>is_empty small_idle" 
+       using Idle_Proof.size_not_empty size_new_small
+       by metis
+
+     have size_ok_1: "size small_idle \<le> 3 * size big_idle"
+       using 7 by auto
+
+     have size_ok_2: "size big_idle \<le> 3 * size small_idle"
+      using 7 by auto
+
+     from False show ?thesis 
+       using invar_stepped size_ok_1 size_ok_2
+       by auto
+   qed
 qed auto
 
 end
