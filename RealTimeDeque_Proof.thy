@@ -1,5 +1,5 @@
 theory RealTimeDeque_Proof
-  imports Deque RealTimeDeque States_Proof RealTimeDeque_Enqueue RealTimeDeque_Dequeue
+  imports Deque RealTimeDeque States_Proof RealTimeDeque_Dequeue RealTimeDeque_Enqueue
 begin
 
 lemma list_rev: "as @ rev bs = cs @ rev ds \<Longrightarrow> bs @ rev as  = ds @ rev cs"
@@ -107,7 +107,7 @@ next
        then show ?case
          apply(induction dir)
          apply(auto split: prod.splits)
-         using Big_Proof.list_current_size by force+
+         using Big_Proof.list_current_size sorry
      qed
    qed
 
@@ -178,20 +178,20 @@ next
   then have swap_invar: "invar (swap q)"
     by (simp add: invar_swap)
 
-  from 7 have "listR q = listL (swap q)"
+  from 7 have [simp]: "listR q = listL (swap q)"
     by (simp add: swap_list')
 
-  from 7 have "firstR q = firstL (swap q)"
+  from 7 have [simp]: "firstR q = firstL (swap q)"
     by(auto split: prod.splits)
 
   from 7 have "listL (swap q) \<noteq> []"
-    using \<open>listR q = listL (swap q)\<close> by auto
+    by auto
 
   then have "firstL (swap q) = hd (listL (swap q))"
     using swap_invar list_firstL by auto
   
   then show ?case 
-    using \<open>firstR q = firstL (swap q)\<close> \<open>listR q = listL (swap q)\<close> by presburger
+    using \<open>firstR q = firstL (swap q)\<close> by fastforce
 next
   case (8 q)
   then show ?case using listL_is_empty by auto

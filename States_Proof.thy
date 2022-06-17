@@ -29,7 +29,9 @@ proof(induction states rule: lists.induct)
       by (simp add: Stack_Proof.size_not_empty Stack_Proof.list_empty)
 
     with "2_1" show ?case 
-       using reverseN_step[of "Stack.list big" count' auxB] Stack_Proof.list_empty[symmetric, of small]       
+      using 
+          reverseN_step[of "Stack.list big" count' auxB] 
+          Stack_Proof.list_empty[symmetric, of small]       
        by (cases currentB)(auto simp: first_hd funpow_swap1 reverseN_step reverseN_finish)
     qed
 next

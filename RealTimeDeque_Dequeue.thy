@@ -160,7 +160,7 @@ next
       case (Pair bigs smalls)
       with invar big_list_current show ?thesis
         using app_rev[of smalls bigs]
-        by(auto simp: split: prod.splits)
+        by(auto split: prod.splits)
     qed
  
   from invar have four_steps: "invar ?states_stepped"
