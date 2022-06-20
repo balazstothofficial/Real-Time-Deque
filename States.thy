@@ -62,7 +62,6 @@ fun list_current_small_first :: "'a states \<Rightarrow> 'a list" where
 fun list_current_big_first :: "'a states \<Rightarrow> 'a list" where
   "list_current_big_first states = (let (big, small) = lists_current states in big @ (rev small))"
 
-(* TODO: Steps inbetween probably not necessary *)
 fun listL :: "'a states \<Rightarrow> 'a list" where
   "listL (States Left big small)  = list_small_first (States Left big small)"
 | "listL (States Right big small) = list_big_first (States Right big small)"

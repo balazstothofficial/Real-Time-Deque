@@ -410,11 +410,6 @@ lemma remaining_steps_decline: "invar (states :: 'a states)
    \<Longrightarrow> remaining_steps (step states) \<le> remaining_steps states"
   using remaining_steps_decline_sub[of states] by auto
 
-(* TODO: Needed? *)
-lemma remaining_steps_decline_n: "\<lbrakk>invar (states :: 'a states); Suc n < remaining_steps states\<rbrakk>
-   \<Longrightarrow> n < remaining_steps (step states)"
-  by(cases n) auto
-
 lemma remaining_steps_decline_n_steps [simp]: 
   "\<lbrakk>invar (states :: 'a states); remaining_steps states \<le> n\<rbrakk>
    \<Longrightarrow> remaining_steps ((step ^^ n) states) = 0"
@@ -1076,7 +1071,6 @@ lemma step_4_pop_big_size_ok: "\<lbrakk>
   using step_4_pop_big_size_ok_1 step_4_pop_big_size_ok_2 step_4_pop_big_size_ok_3 step_4_pop_big_size_ok_4
   by (smt (verit) size_ok'.elims(3) size_ok'.simps)
 
-(* TODO: Are these 4 needed? *)
 lemma size_ok_size_small: "size_ok (States dir big small) \<Longrightarrow> 0 < size small"
   by auto
 
@@ -1166,12 +1160,6 @@ qed
    
 lemma invar_step_n: "invar (states :: 'a states) \<Longrightarrow> invar ((step^^n) states)"
   by (simp add: invar_step step_consistent_2)
-
-(* TODO: Needed? *)
-lemma remaining_steps_decline_4: 
-  "\<lbrakk>invar (states :: 'a states); Suc n < remaining_steps ((step ^^ m) states)\<rbrakk> 
-    \<Longrightarrow> n < remaining_steps ((step ^^ Suc m) states)"
-  by(simp add: invar_step_n)
 
 lemma step_n_size_ok': "\<lbrakk>invar states; size_ok' states x\<rbrakk> \<Longrightarrow> size_ok' ((step ^^ n) states) x"
 proof(induction n arbitrary: states x)

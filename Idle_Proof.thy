@@ -5,12 +5,8 @@ begin
 lemma push_list [simp]: "list (push x idle) = x # list idle"
   by(induction idle arbitrary: x) auto
 
-(* TODO: Just have one version *)
 lemma pop_list [simp]: "\<lbrakk>\<not> is_empty idle; pop idle = (x, idle')\<rbrakk> \<Longrightarrow> x # list idle' = list idle"
   by(induction idle arbitrary: x)(auto simp: list_not_empty)
-
-lemma pop_list_2 [simp]: "\<lbrakk>0 < size idle; pop idle = (x, idle')\<rbrakk> \<Longrightarrow> x # list idle' = list idle"
-  by(induction idle arbitrary: x) (auto simp: size_not_empty list_not_empty)
 
 lemma pop_list_tl [simp]: 
     "\<lbrakk>\<not> is_empty idle; pop idle = (x, idle')\<rbrakk> \<Longrightarrow> x # (tl (list idle)) = list idle" 
