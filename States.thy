@@ -62,7 +62,6 @@ fun list_current_small_first :: "'a states \<Rightarrow> 'a list" where
 fun list_current_big_first :: "'a states \<Rightarrow> 'a list" where
   "list_current_big_first states = (let (big, small) = lists_current states in big @ (rev small))"
 
-(* TODO: Steps inbetween probably not necessary *)
 fun listL :: "'a states \<Rightarrow> 'a list" where
   "listL (States Left big small)  = list_small_first (States Left big small)"
 | "listL (States Right big small) = list_big_first (States Right big small)"
@@ -94,8 +93,8 @@ fun size_ok' :: "'a states \<Rightarrow> nat \<Rightarrow> bool" where
     \<and> steps + 1 \<le> 4 * size big
   "
 
-fun size_ok :: "'a states \<Rightarrow> bool" where
-  "size_ok states \<longleftrightarrow> size_ok' states (remaining_steps states)"
+abbreviation size_ok :: "'a states \<Rightarrow> bool" where
+  "size_ok states \<equiv> size_ok' states (remaining_steps states)"
 
 instantiation states::(type) emptyable
 begin
@@ -105,5 +104,15 @@ fun is_empty_states :: "'a states \<Rightarrow> bool" where
 
 instance..
 end
+
+abbreviation size_small where "size_small states \<equiv> case states of States _ _ small \<Rightarrow> size small"
+
+abbreviation size_new_small where 
+  "size_new_small states \<equiv> case states of States _ _ small \<Rightarrow> size_new small"
+
+abbreviation size_big where "size_big states \<equiv> case states of States _ big _ \<Rightarrow> size big"
+
+abbreviation size_new_big where 
+  "size_new_big states \<equiv> case states of States _ big _ \<Rightarrow> size_new big"
 
 end

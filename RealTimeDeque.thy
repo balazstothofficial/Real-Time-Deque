@@ -51,18 +51,18 @@ fun deqL' :: "'a deque \<Rightarrow> 'a * 'a deque" where
   "deqL' (One x) = (x, Empty)"
 | "deqL' (Two x y) = (x, One y)"
 | "deqL' (Three x y z) = (x, Two y z)"
-| "deqL' (Idle left (idle.Idle right rightLength)) = (
-   case Idle.pop left of (x, (idle.Idle left leftLength)) \<Rightarrow>
-    if 3 * leftLength \<ge> rightLength 
+| "deqL' (Idle left (idle.Idle right length_right)) = (
+   case Idle.pop left of (x, (idle.Idle left length_left)) \<Rightarrow>
+    if 3 * length_left \<ge> length_right 
     then 
-      (x, Idle (idle.Idle left leftLength) (idle.Idle right rightLength))
-    else if leftLength \<ge> 1
+      (x, Idle (idle.Idle left length_left) (idle.Idle right length_right))
+    else if length_left \<ge> 1
     then 
-      let newLeftLength = 2 * leftLength + 1 in
-      let newRightLength = rightLength - leftLength - 1 in
+      let length_left' = 2 * length_left + 1 in
+      let length_right' = length_right - length_left - 1 in
 
-      let small  = Reverse1 (Current [] 0 left newLeftLength) left [] in
-      let big = Reverse (Current [] 0 right newRightLength) right [] newRightLength in
+      let small  = Reverse1 (Current [] 0 left length_left') left [] in
+      let big = Reverse (Current [] 0 right length_right') right [] length_right' in
 
       let states = States Left big small in
       let states = six_steps states in
@@ -115,17 +115,17 @@ fun enqL :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
 | "enqL x (One y) = Two x y"
 | "enqL x (Two y z) = Three x y z"
 | "enqL x (Three a b c) = Idle (idle.Idle (Stack [x, a] []) 2) (idle.Idle (Stack [c, b] []) 2)"
-| "enqL x (Idle left (idle.Idle right rightLength)) = (
-    case Idle.push x left of idle.Idle left leftLength \<Rightarrow> 
-      if 3 * rightLength \<ge> leftLength
+| "enqL x (Idle left (idle.Idle right length_right)) = (
+    case Idle.push x left of idle.Idle left length_left \<Rightarrow> 
+      if 3 * length_right \<ge> length_left
       then 
-        Idle (idle.Idle left leftLength) (idle.Idle right rightLength)
+        Idle (idle.Idle left length_left) (idle.Idle right length_right)
       else 
-        let newLeftLength = leftLength - rightLength - 1 in
-        let newRightLength = 2 * rightLength + 1 in
+        let length_left = length_left - length_right - 1 in
+        let length_right = 2 * length_right + 1 in
 
-        let big  = Reverse  (Current [] 0 left newLeftLength) left [] newLeftLength in
-        let small = Reverse1 (Current [] 0 right newRightLength) right [] in
+        let big  = Reverse  (Current [] 0 left length_left) left [] length_left in
+        let small = Reverse1 (Current [] 0 right length_right) right [] in
   
         let states = States Right big small in
         let states = six_steps states in
@@ -194,27 +194,5 @@ fun invar_deque :: "'a deque \<Rightarrow> bool" where
 
 instance..
 end
-
-(* For Test: *)
-fun runningFold :: "('a deque \<Rightarrow> 'a deque) list \<Rightarrow> 'a deque \<Rightarrow> 'a deque list" where
-  "runningFold [] _ = []"
-| "runningFold (x#xs) deque = (
-  let deque = x deque 
-  in deque # runningFold xs deque
-)"
-
-value "runningFold 
-  [
-  enqL (0::int), 
-  enqL 1, 
-  enqL 2,
-  enqL 3,
-  enqL 4,   
-  enqL 5,
-  deqR,
-  deqR
-  ] 
-  Empty"
-
 
 end

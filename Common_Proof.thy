@@ -2,7 +2,7 @@ theory Common_Proof
   imports Common Idle_Proof Current_Proof ReverseN_Proof
 begin
 
-lemma step_list: "invar common \<Longrightarrow> list (step common) = list common"
+lemma step_list [simp]: "invar common \<Longrightarrow> list (step common) = list common"
 proof(induction common rule: step_state.induct)
   case (1 idle)
   then show ?case by auto
@@ -10,43 +10,41 @@ next
   case (2 current aux new moved)
 
   then show ?case 
-  proof(induction current)
+  proof(cases current)
     case (Current extra added old remained)
     
-    then have aux_not_empty: "aux \<noteq> []"
+    with 2 have aux_not_empty: "aux \<noteq> []"
         by auto
 
-    from Current show ?case 
-    proof(induction "remained \<le> Suc moved")
+    from 2 Current show ?thesis 
+    proof(cases "remained \<le> Suc moved")
       case True
      
-      then have "remained - length new = 1"
+      with 2 Current have "remained - length new = 1"
         by auto
 
-      with True aux_not_empty show ?case 
-        by(auto simp: reverseN_take take_hd)
+      with True Current 2 aux_not_empty show ?thesis 
+        by(auto simp: reverseN_take)
     next
       case False
-      then show ?case 
+      with Current show ?thesis 
         by(auto simp: aux_not_empty reverseN_step Suc_diff_Suc)
     qed
   qed
 qed
 
-lemma step_list_current: "invar common \<Longrightarrow> list_current (step common) = list_current common"
-  apply(induction common)
-  by(auto split: current.splits)
+lemma step_list_current [simp]: "invar common \<Longrightarrow> list_current (step common) = list_current common"
+  by(cases common)(auto split: current.splits)
 
-lemma push_list: "list (push x common) = x # list common"
+lemma push_list [simp]: "list (push x common) = x # list common"
 proof(induction x common rule: push.induct)
   case (1 x stack stackSize)
   then show ?case 
-    by(auto simp: Stack_Proof.push_list)
+    by auto
 next
   case (2 x current aux new moved)
   then show ?case 
-    apply(induction x current rule: Current.push.induct)
-    by auto
+    by(induction x current rule: Current.push.induct) auto
 qed
 
 lemma invar_step: "invar (common :: 'a state) \<Longrightarrow> invar (step common)" 
@@ -57,26 +55,29 @@ proof(induction "common" rule: invar_state.induct)
 next
   case (2 current aux new moved)
   then show ?case
-  proof(induction current)
+  proof(cases current)
     case (Current extra added old remained)
-    then show ?case
-    proof(induction "aux = []")
+    then show ?thesis
+    proof(cases "aux = []")
       case True
-      then show ?case by auto 
+      with 2 Current show ?thesis by auto 
     next
       case False
-      then show ?case
-      proof(induction "remained \<le> Suc (length new)")
+      note AUX_NOT_EMPTY = False
+
+      then show ?thesis
+      proof(cases "remained \<le> Suc (length new)")
         case True
-        then have "take (Suc (length new)) (Stack.list old) = take (size old) (hd aux # new)"
-          apply(induction "(remained - length new)" aux new rule: reverseN.induct)
-          by(auto simp: le_Suc_eq)
+        with 2 Current False 
+          have "take (Suc (length new)) (Stack.list old) = take (size old) (hd aux # new)"
+            apply(induction "Suc 0" aux new rule: reverseN.induct)
+            by(auto simp: le_Suc_eq)
          
-        with True show ?case 
+        with 2 Current True show ?thesis 
           by auto
       next
         case False
-        then show ?case 
+        with 2 Current AUX_NOT_EMPTY show ?thesis 
           by(auto simp: reverseN_step Suc_diff_Suc)
       qed
     qed
@@ -104,7 +105,6 @@ next
   qed
 qed
 
-
 lemma invar_pop: "\<lbrakk>
   0 < size common; 
   invar common;
@@ -118,52 +118,47 @@ proof(induction common arbitrary: x rule: pop.induct)
   obtain current' where current: "drop_first current = current'"
     by auto
 
-  from 1 idle have prop_1: "invar idle'"
-    by(auto simp: size_not_empty Idle_Proof.invar_pop)
-
-  from 1 current have prop_2: "invar current'"
-    by(auto simp: invar_size_pop eq_snd_iff split: prod.splits)
-
-  from 1 current idle have prop_3: "size_new current' = size idle'"
-    using Idle_Proof.size_pop[of idle x idle'] size_new_pop[of current]
-    by(auto simp: size_not_empty)
-
-  from 1 current idle have prop_4: "take (size idle') (Current.list current') = 
-      take (size current') (Idle.list idle')"
-    using Idle_Proof.size_pop[of idle x idle'] 
-          size_not_empty[of idle] 
-          size_pop[of current] 
-          drop_first_list_size[of current]
-          pop_list_2[of idle x idle'] cons_tl[of x "Idle.list idle'"]
-    by(auto simp: take_tl split: prod.splits)
-
-  from 1 prop_1 prop_2 prop_3 prop_4 current idle show ?case 
-    by auto
+  from 1 current idle show ?case 
+    using Idle_Proof.size_pop[of idle x idle', symmetric] 
+        size_new_pop[of current] 
+        size_pop_sub[of current _ current']
+    by(auto simp: Idle_Proof.invar_pop invar_size_pop eq_snd_iff take_tl size_not_empty)
 next
   case (2 current aux new moved)
   then show ?case 
   proof(induction current rule: Current.pop.induct)
     case (1 added old remained)
     then show ?case
-    proof(induction "remained - Suc 0 \<le> length new")
+    proof(cases "remained - Suc 0 \<le> length new")
       case True
-      
-      then have "length new = remained - Suc 0" by auto
 
-      with True show ?case 
+      with 1 have [simp]: 
+          "0 < size old" 
+          "Stack.list old \<noteq> []" 
+          "aux \<noteq> []"
+          "length new = remained - Suc 0"
+        by(auto simp: Stack_Proof.size_not_empty Stack_Proof.list_not_empty)
+
+      then have [simp]: "Suc 0 \<le> size old" 
+        by linarith
+
+      from 1 have "0 < remained"
+        by auto
+
+      then have "take remained (Stack.list old)
+          = hd (Stack.list old) # take (remained - Suc 0) (tl (Stack.list old))"
+        by (metis Suc_pred \<open>Stack.list old \<noteq> []\<close> list.collapse take_Suc_Cons)
+
+      with 1 True show ?thesis 
         using Stack_Proof.pop_list[of old] 
-              Stack_Proof.size_not_empty[of old] 
-              Stack_Proof.size_pop[of old]
-        by(auto simp: reverseN_take rev_take take_tl tl_drop) 
+        by(auto simp: reverseN_take Stack_Proof.size_not_empty)
     next
       case False
-      then have "remained - Suc 0 \<le> length aux + length new" by auto
+      with 1 have "remained - Suc 0 \<le> length aux + length new" by auto
 
-      with False show ?case 
+      with 1 False show ?thesis 
         using Stack_Proof.pop_list[of old] 
-              Stack_Proof.size_not_empty[of old] 
-              Stack_Proof.size_pop[of old]
-        by(auto simp: reverseN_tl Suc_diff_Suc take_tl)
+        by(auto simp: reverseN_tl Suc_diff_Suc take_tl Stack_Proof.size_not_empty)
     qed
    next
     case (2 x xs added old remained)
@@ -171,103 +166,114 @@ next
   qed
 qed
 
-lemma push_list_current: "list_current (push x left) = x # list_current left"
-  apply(induction x left rule: push.induct)
-  by(auto simp: Current_Proof.push_list)
+lemma push_list_current [simp]: "list_current (push x left) = x # list_current left"
+  by(induction x left rule: push.induct) auto
 
-lemma take_1: "0 < x \<and> 0 < y \<Longrightarrow> take x xs = take y ys \<Longrightarrow> take 1 xs = take 1 ys"
-  by (metis One_nat_def bot_nat_0.not_eq_extremum hd_take take_Suc take_eq_Nil)
-
-lemma pop_list: "invar common \<Longrightarrow> 0 < size common \<Longrightarrow> pop common = (x, common') \<Longrightarrow>
-   list common = x # list common'"
+lemma pop_list [simp]: "invar common \<Longrightarrow> 0 < size common \<Longrightarrow> pop common = (x, common') \<Longrightarrow>
+   x # list common' = list common"
 proof(induction common arbitrary: x rule: pop.induct)
-  case (1 current idle)
+  case 1
   then show ?case
-    by(auto simp: Idle_Proof.pop_list_2 split: prod.splits)
+    by(auto simp: size_not_empty split: prod.splits)
 next
   case (2 current aux new moved)
   then show ?case
   proof(induction current rule: Current.pop.induct)
     case (1 added old remained)
     then show ?case
-    proof(induction "remained - Suc 0 \<le> length new")
+    proof(cases "remained - Suc 0 \<le> length new")
       case True
 
-      then have hd: "Stack.first old = hd aux"
-        apply(auto simp: reverseN_take)
-        by (smt (z3) Suc_diff_Suc diff_add_inverse diff_commute diff_is_0_eq first_list hd_append2 hd_conv_nth hd_drop_conv_nth hd_take le_add1 le_add_diff_inverse2 length_greater_0_conv length_rev lessI less_add_same_cancel2 less_le_trans less_or_eq_imp_le Stack_Proof.list_not_empty rev_nth rev_take Stack_Proof.size_list_length take_eq_Nil)
+      from 1 True have [simp]: 
+          "aux \<noteq> []" "0 < remained" 
+          "Stack.list old \<noteq> []" "remained - length new = 1"
+        by(auto simp: Stack_Proof.size_not_empty Stack_Proof.list_not_empty)
 
-      from True have 1: "remained - length new = Suc 0"
-        by auto
+      then have "take remained (Stack.list old) = hd aux # take (size old - Suc 0) new
+             \<Longrightarrow> Stack.first old = hd aux"
+        by (metis first_hd hd_take list.sel(1))
      
-      with 1 True take_hd show ?case 
-        apply(auto simp: reverseN_take)
-        by (smt (z3) Nat.add_0_right add.commute hd leD list.size(3) take_hd)
+      with 1 True take_hd[of aux] show ?thesis 
+        by(auto simp: reverseN_take Suc_leI)
     next
       case False
-    
-      from False show ?case 
-      proof(induction "length aux = remained - length new")
+      then show ?thesis 
+      proof(cases "remained - length new = length aux")
         case True
 
-        then have aux_not_empty: "aux \<noteq> []"
-          by auto
+        then have length_minus_1: "remained - Suc (length new) = length aux - 1"
+          by simp
 
-        from True have old_not_empty: "\<not> is_empty old"
-          apply auto
-          using Stack_Proof.size_not_empty by blast
-        
-        from True have "take 1 (Stack.list old) = take 1 (rev aux)"
-          apply(auto simp: reverseN_take)
-          by (smt (z3) add_gr_0 hd_append2 hd_take le_add_diff_inverse2 length_greater_0_conv length_rev less_imp_le_nat list_not_empty Stack_Proof.size_list_length take_eq_Nil take_hd zero_less_diff)
+        from 1 have not_empty: "0 < remained" "0 < size old"  "aux \<noteq> []" "\<not> is_empty old"
+          by(auto simp: Stack_Proof.size_not_empty)
 
+        from 1 True not_empty have "take 1 (Stack.list old) = take 1 (rev aux)"
+          using take_1[of 
+                remained 
+                "size old" 
+                "Stack.list old"  
+                "(rev aux) @ take (size old + length new - remained) new"
+                ] 
+          by(auto simp: reverseN_take)
+         
         then have "[last aux] = [Stack.first old]"
-          using take_last first_take aux_not_empty old_not_empty
+          using take_last first_take not_empty
           by fastforce
 
         then have "last aux = Stack.first old"
           by auto
 
-        with True show ?case 
-          apply(auto simp: reverseN_take min_def split: if_splits)
-          by (metis Suc_eq_plus1 butlast_conv_take diff_diff_left diff_less_mono2 less_nat_zero_code list.size(3) snoc_eq_iff_butlast)+
-      next
+        with 1 True False show ?thesis 
+          using not_empty last_drop_rev[of aux]
+          by(auto simp: reverseN_drop length_minus_1)
+       next
         case False
 
-        then have a: "take (remained - length new) aux \<noteq> []"
+        with 1 have a: "take (remained - length new) aux \<noteq> []"
           by auto
 
-        from False have b: "\<not> is_empty old"
-          apply auto
-          using Stack_Proof.size_not_empty by blast
+        from 1 False have b: "\<not> is_empty old"
+          by(auto simp: Stack_Proof.size_not_empty)
 
-        from False have "take 1 (Stack.list old) = take 1 (rev (take (remained - length new) aux))"
-          apply(auto simp: reverseN_take)
-          apply(induction "0 < size old \<and> 0 < remained")
-          using take_1[of 
+        from 1 have c: "remained - Suc (length new) < length aux"
+          by auto
+
+        from 1 have not_empty: "0 < remained" "0 < size old" "0 < remained - length new" "0 < length aux" 
+          by auto
+
+        with False have "
+              take remained (Stack.list old) = take (size old) (reverseN (remained - length new) aux new)
+          \<Longrightarrow> take (Suc 0) (Stack.list old) = take (Suc 0) (rev (take (remained - length new) aux))"
+          using take_1[of
                 remained 
                 "size old" 
                 "Stack.list old" 
-                "(rev (take (remained - length new) aux)) @ take (size old + length new - remained) new"
+                " (reverseN (remained - length new) aux new)"
               ]
+          by(auto simp: reverseN_take not_empty Suc_le_eq)
+
+        with 1 False have "take 1 (Stack.list old) = take 1 (rev (take (remained - length new) aux))"
           by auto
           
-        then have c: "[Stack.first old] = [last (take (remained - length new) aux)]"
+        then have d: "[Stack.first old] = [last (take (remained - length new) aux)]"
           using take_last first_take a b
           by metis
 
-        with False show ?case 
-          apply(auto simp: reverseN_take min_def split: if_splits)
-          by (smt (z3) Nil_is_rev_conv Suc_diff_Suc first_list hd_append2 hd_rev hd_take last_snoc le_Suc_eq length_greater_0_conv less_imp_Suc_add list_not_empty not_le Stack_Proof.size_list_length take_eq_Nil take_hd_drop zero_less_Suc)+
+        have "last (take (remained - length new) aux) # rev (take (remained - Suc (length new)) aux) 
+            = rev (take (remained - length new) aux)"
+          using Suc_diff_Suc c not_empty
+          by (metis a drop_drop last_drop_rev plus_1_eq_Suc rev_take zero_less_diff)
+          
+        with 1(1) 1(3) False not_empty d show ?thesis 
+          by(cases "remained - length new = 1") (auto simp: reverseN_take)
       qed
     qed
   next
-    case (2 x xs added old remained)
+    case 2
     then show ?case by auto
   qed
 qed
 
-(* TODO: *)
 lemma pop_list_current: "invar common \<Longrightarrow> 0 < size common \<Longrightarrow> pop common = (x, common')
    \<Longrightarrow> x # list_current common' = list_current common"
 proof(induction common arbitrary: x rule: pop.induct)
@@ -278,34 +284,55 @@ proof(induction common arbitrary: x rule: pop.induct)
     then show ?case
     proof(induction current rule: Current.pop.induct)
       case (1 added old remained)
-      then show ?case apply auto
-        by (metis first_pop hd_take list.sel(1) Stack_Proof.size_not_empty)
+      then have "Stack.first old = Stack.first stack"
+        using take_first[of old stack]
+        by auto
+
+      with 1 show ?case 
+        by(auto simp: Stack_Proof.size_not_empty Stack_Proof.list_not_empty)
     next
-      case (2 x' xs added old remained)
-      then show ?case apply auto
-        by (metis Stack_Proof.size_empty first_pop hd_take list.sel(1) old.nat.distinct(2) zero_less_Suc)
+      case (2 x xs added old remained)
+      then have "0 < size stack" 
+        by auto
+
+      with Stack_Proof.size_not_empty Stack_Proof.list_not_empty
+      have not_empty: "\<not> is_empty stack" "Stack.list stack \<noteq> []"
+        by auto
+
+      with 2 have "hd (Stack.list stack) = x"
+        using take_hd'[of "Stack.list stack" x "xs @ Stack.list old"]
+        by auto
+       
+      with 2 show ?case 
+        using first_list[of stack] not_empty
+        by auto
     qed
   qed
 next
-  case (2 current aux new moved)
+  case (2 current)
   then show ?case
   proof(induction current rule: Current.pop.induct)
     case (1 added old remained)
-    then show ?case apply(auto split: if_splits)
-      using first_pop Stack_Proof.size_not_empty by blast+
+    then have "\<not> is_empty old"
+      by(auto simp: Stack_Proof.size_not_empty)
+
+    with 1 show ?case
+      using first_pop
+      by(auto simp: Stack_Proof.list_not_empty)
   next
-    case (2 x xs added old remained)
+    case 2
     then show ?case by auto
   qed
 qed
-  
-lemma list_current_size: "\<lbrakk>0 < size common; list_current common = []; invar common\<rbrakk> \<Longrightarrow> False"
+
+lemma list_current_size [simp]: 
+  "\<lbrakk>0 < size common; list_current common = []; invar common\<rbrakk> \<Longrightarrow> False"
 proof(induction common rule: invar_state.induct)
-  case (1 current idle)
+  case 1
   then show ?case
     using list_size by auto
 next
-  case (2 current aux new moved)
+  case (2 current)
   then have "invar current" 
             "Current.list current = []"  
             "0 < size current" 
@@ -314,11 +341,12 @@ next
   then show ?case using list_size by auto
 qed
 
-lemma list_size: "\<lbrakk>0 < size common; list common = []; invar common\<rbrakk> \<Longrightarrow> False"
+lemma list_size [simp]: "\<lbrakk>0 < size common; list common = []; invar common\<rbrakk> \<Longrightarrow> False"
 proof(induction common rule: invar_state.induct)
-  case (1 current idle)
+  case 1
   then show ?case
-    using list_size by auto
+    using list_size Idle_Proof.size_empty
+    by auto
 next
   case (2 current aux new moved)
   then have "invar current" 
@@ -331,7 +359,7 @@ qed
 
 lemma size_empty: "invar (common :: 'a state) \<Longrightarrow> size common = 0 \<Longrightarrow> is_empty common"
 proof(induction common rule: is_empty_state.induct)
-  case (1 current idle)
+  case 1
   then show ?case 
     by(auto simp: min_def size_empty size_new_empty split: if_splits)
 next
@@ -343,18 +371,19 @@ next
     by(auto simp: min_def size_empty size_new_empty split: if_splits)
 qed
   
-lemma step_size: "invar (x :: 'a state) \<Longrightarrow> size x = size (step x)"
-proof(induction x rule: step_state.induct)
-  case (1 current idle)
+lemma step_size [simp]: "invar (common :: 'a state) \<Longrightarrow> size (step common) = size common"
+proof(induction common rule: step_state.induct)
+  case 1
   then show ?case by auto
 next
-  case (2 current aux new moved)
+  case 2
   then show ?case 
     by(auto simp: min_def split: current.splits)
 qed
 
-lemma step_size_new: "invar (x :: 'a state) \<Longrightarrow> size_new x = size_new (step x)"
-proof(induction x rule: step_state.induct)
+lemma step_size_new [simp]: "invar (common :: 'a state)
+   \<Longrightarrow> size_new (step common) = size_new common"
+proof(induction common rule: step_state.induct)
   case (1 current idle)
   then show ?case by auto
 next
@@ -362,25 +391,21 @@ next
   then show ?case by(auto split: current.splits)
 qed
 
-lemma remaining_steps_step: "\<lbrakk>invar (common :: 'a state); remaining_steps common > 0\<rbrakk>
-   \<Longrightarrow> remaining_steps common = Suc (remaining_steps (step common))"
-  apply(induction common)
-  by(auto split: current.splits)
+lemma remaining_steps_step [simp]: "\<lbrakk>invar (common :: 'a state); remaining_steps common > 0\<rbrakk>
+   \<Longrightarrow> Suc (remaining_steps (step common)) = remaining_steps common"
+  by(induction common)(auto split: current.splits)
 
-lemma remaining_steps_step_0: "\<lbrakk>invar (common :: 'a state); remaining_steps common = 0\<rbrakk>
+lemma remaining_steps_step_sub [simp]: "\<lbrakk>invar (common :: 'a state)\<rbrakk>
+ \<Longrightarrow> remaining_steps (step common) = remaining_steps common - 1"
+  by(induction common)(auto split: current.splits)
+
+lemma remaining_steps_step_0 [simp]: "\<lbrakk>invar (common :: 'a state); remaining_steps common = 0\<rbrakk>
    \<Longrightarrow> remaining_steps (step common) = 0"
-  apply(induction common)
-  by(auto split: current.splits)
+  by(induction common)(auto split: current.splits)
 
-lemma remaining_steps_push: "invar common \<Longrightarrow> 
-  remaining_steps common = remaining_steps (push x common)"
-proof(induction x common rule: Common.push.induct)
-  case (1 x current stack stackSize)
-  then show ?case by auto
-next
-  case (2 x current aux new moved)
-  then show ?case by(auto split: current.splits)
-qed
+lemma remaining_steps_push [simp]: "invar common
+   \<Longrightarrow> remaining_steps (push x common) = remaining_steps common"
+  by(induction x common rule: Common.push.induct)(auto split: current.splits)
 
 lemma remaining_steps_pop: "\<lbrakk>invar common; 0 < size common; pop common = (x, common')\<rbrakk> 
   \<Longrightarrow> remaining_steps common' \<le> remaining_steps common"
@@ -388,66 +413,36 @@ proof(induction common rule: pop.induct)
   case (1 current idle)
   then show ?case 
   proof(induction idle rule: Idle.pop.induct)
-    case (1 stack stackSize)
+    case 1
     then show ?case  
-    proof(induction current rule: Current.pop.induct)
-      case (1 added old remained)
-      then show ?case by auto
-    next
-      case (2 x xs added old remained)
-      then show ?case by auto
-    qed
+      by(induction current rule: Current.pop.induct) auto
   qed
 next
   case (2 current aux new moved)
   then show ?case 
-  proof(induction current rule: Current.pop.induct)
-    case (1 added old remained)
-    then show ?case 
-      by auto
-  next
-    case (2 x xs added old remained)
-    then show ?case by auto
-  qed
+    by(induction current rule: Current.pop.induct) auto
 qed
 
-lemma size_push: "invar common \<Longrightarrow> Suc (size common) = size (push x common)"
-proof(induction x common rule: push.induct)
-  case (1 x current stack stackSize)
-  then show ?case 
-    by(auto simp: min_def size_push Stack_Proof.size_push)
-next
-  case (2 x current aux new moved)
-  then show ?case 
-    by(auto simp: size_push split: current.splits)
-qed
+lemma size_push [simp]: "invar common \<Longrightarrow> size (push x common) = Suc (size common)"
+  by(induction x common rule: push.induct) (auto split: current.splits)
+ 
+lemma size_new_push [simp]: "invar common \<Longrightarrow> size_new (push x common) = Suc (size_new common)"
+  by(induction x common rule: Common.push.induct) (auto split: current.splits)
 
-lemma size_new_push: "invar common \<Longrightarrow> Suc (size_new common) = size_new (push x common)"
-proof(induction x common rule: Common.push.induct)
-  case (1 x current stack stackSize)
-  then show ?case 
-    by(auto simp: min_def size_push size_new_push)
-next
-  case (2 x current aux new moved)
-  then show ?case 
-    by(auto split: current.splits)
-qed
-
-lemma size_pop: "\<lbrakk>invar common; 0 < size common; pop common = (x, common')\<rbrakk>
+lemma size_pop [simp]: "\<lbrakk>invar common; 0 < size common; pop common = (x, common')\<rbrakk>
    \<Longrightarrow> Suc (size common') = size common"
 proof(induction common rule: Common.pop.induct)
   case (1 current idle)
   then show ?case 
-    using size_pop[of current] Idle_Proof.size_pop[of idle] size_not_empty[of idle]
-    by(auto split: prod.splits)
+    using size_drop_first_sub[of current] Idle_Proof.size_pop_sub[of idle]
+    by(auto simp: size_not_empty split: prod.splits)
 next
   case (2 current aux new moved)
   then show ?case 
-    using size_pop[of current] apply(induction current rule: Current.pop.induct)
-    by auto
+    by(induction current rule: Current.pop.induct) auto
 qed
 
-lemma size_new_pop: "\<lbrakk>invar common; 0 < size_new common; pop common = (x, common')\<rbrakk>
+lemma size_new_pop [simp]: "\<lbrakk>invar common; 0 < size_new common; pop common = (x, common')\<rbrakk>
    \<Longrightarrow>  Suc (size_new common') = size_new common"
 proof(induction common rule: Common.pop.induct)
   case (1 current idle)

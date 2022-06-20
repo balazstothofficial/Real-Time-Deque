@@ -110,8 +110,4 @@ fun size_new_state :: "'a state \<Rightarrow> nat" where
 instance..
 end
 
-(* Just for proof: (Still needed?)*)
-fun length :: "'a state \<Rightarrow> nat" where
-  "length small = List.length (list small)"
-
 end

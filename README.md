@@ -14,10 +14,10 @@ The Realtime-Deque can be in the following states:
 	* 3 * size of left end >= size of right end
 	* 3 * size of right end >= size of left end
 	* Neither of the ends is empty
-* `Transformation`: Deque which violated the invariant of the `idle` state by non-balanced dequeue and enqueue operations. The invariants during in this state are:
-	* The `transformation` is not done yet. The Deque needs to be in `idle` state otherwise.
-	* The `transformation` is in a valid state (Defined in [Transformation.thy](Transformation.thy))
-	* The two ends of the Deque are in a size window, such that after finishing the `transformation` the invariant of the `idle` state will be met. 
+* `Transforming`: Deque which violated the invariant of the `idle` state by non-balanced dequeue and enqueue operations. The invariants during in this state are:
+	* The transformation is not done yet. The Deque needs to be in `idle` state otherwise.
+	* The transformation is in a valid state (Defined in [States.thy](States.thy))
+	* The two ends of the Deque are in a size window, such that after finishing the transformation the invariant of the `idle` state will be met. 
 
 The Realtime-Deque has following operations:
 
@@ -28,7 +28,7 @@ The Realtime-Deque has following operations:
 * `enqL`: Enqueues an element on the left and returns the resulting deque. Like in `deqL’` when violating the size invariant in `idle` state, a `transformation` with six initial steps is started. During `transformation` state four steps are executed and if it is finished the deque returns to `idle` state.
 * `swap`: The two ends of the deque are swapped.
 * `deqR’`, `deqR`, `firstR`, `enqR`: Same behaviour as the left-counterparts. Implemented using the left-counterparts by swapping the deque before and after the operation.
-* `listL`, `listR`: Get all elements of the deque in a list starting at the left or right end. They are needed for the correctness proofs.
+* `listL`, `listR`: Get all elements of the deque in a list starting at the left or right end. They are needed as list abstractions for the correctness proofs.
 
 [Deque](Deque.thy)
 
@@ -41,23 +41,6 @@ A datatype encapsulating two lists, which will be used as a base data-structure 
 [Idle](Idle.thy)
 
 Represents the `idle` state of one Deque end. It contains a `stack` and its size as a natural number. It has the operations `push`, `pop` and `first` to insert and remove elements. The function `list` is needed for the list abstraction of the deque.
-
-[Transformation](Transformation.thy)
-
-A `transformation` goes either from right to left (called `Left`), meaning that elements are transferred from the right to the left end, or from left to right (called `Right`), meaning that elements are transferred from the left to the right end. The side where the elements are transferred to contains a `small` state and the side where the elements are transferred from contains a `big` state. These states are implemented in [Small.thy](Small.thy) and [Big.thy](Big.thy).
-
-*Functions:*
-
-* `steo`: Executes one step of the `transformation`, while keeping the invariant.
-* `remaining_steps`: Returns how many steps are left until the `transformation` is finished.
-* `size_ok`: Specifies if it is possible to finish the `transformation`, in such a way that the size constraints of the Idle state are met.
-* `listL`, `listR`: List abstractions.
-
-The implementations of these functions are delegated to their respective implementation in [States.thy](States.thy), where the order of the two ends doesn’t play a role anymore. 
-
-[States](States.thy)
-
-`states` is a type-alias for a tuple of a `big` and a `small` state, representing the two deque ends during the `transformation` state.
 
 *Functions:*
 
@@ -145,7 +128,7 @@ This data structure is composed of:
 * `size`: The number of the originally contained elements.
 * `size_new`: Number of elements which will be contained after the transformation is finished.
 
-[Stack_Proof.thy](Stack_Proof.thy), [Current_Proof.thy](Current_Proof.thy), [Common_Proof.thy](Common_Proof.thy), [Small_Proof.thy](Small_Proof.thy), [Big_Proof.thy](Big_Proof.thy) and [Transformation_Proof.thy](Transformation_Proof.thy) contain the proofs on of the operations of the respective data structures based on the specified invariants and list abstractions.
+[Stack_Proof.thy](Stack_Proof.thy), [Current_Proof.thy](Current_Proof.thy), [Common_Proof.thy](Common_Proof.thy), [Small_Proof.thy](Small_Proof.thy), [Big_Proof.thy](Big_Proof.thy) and [States_Proof.thy](States_Proof.thy) contain the proofs on of the operations of the respective data structures based on the specified invariants and list abstractions.
 
 [RealTimeDeque_Dequeue.thy](RealTimeDeque_Dequeue.thy), [RealTimeDeque_Enqueue.thy](RealTimeDeque_Enqueue.thy) and [RealTimeDeque_Proof.thy](RealTimeDeque_Proof.thy) use these proofs to prove the deque specification from [Deque.thy](Deque.thy) for the RealTimeDeque implementation.
 

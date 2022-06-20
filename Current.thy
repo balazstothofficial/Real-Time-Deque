@@ -14,8 +14,8 @@ fun pop :: "'a current \<Rightarrow> 'a * 'a current" where
 fun first :: "'a current \<Rightarrow> 'a" where
   "first current = fst (pop current)"
 
-fun drop_first :: "'a current \<Rightarrow> 'a current" where
-  "drop_first current = snd (pop current)"
+abbreviation drop_first :: "'a current \<Rightarrow> 'a current" where
+  "drop_first current \<equiv> snd (pop current)"
 
 fun list :: "'a current \<Rightarrow> 'a list" where
   "list (Current extra _ old _) = extra @ (Stack.list old)"
