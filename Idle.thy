@@ -1,6 +1,11 @@
+section \<open>Idle\<close>
+
 theory Idle
   imports Stack
 begin
+
+text \<open>Represents the `idle' state of one deque end.
+It contains a \<open>stack\<close> and its size as a natural number.\<close>
 
 datatype (plugins del: size) 'a idle = Idle "'a stack" nat
 

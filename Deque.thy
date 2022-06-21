@@ -1,3 +1,5 @@
+section  \<open>Specification of a Double-Ended Queue\<close>
+
 theory Deque
   imports Main
 begin

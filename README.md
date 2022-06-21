@@ -36,7 +36,7 @@ Specification of the expected behaviour of a deque using list abstractions. Thes
 
 [Stack](Stack.thy)
 
-A datatype encapsulating two lists, which will be used as a base data-structure in different places. It has the operations `push`, `pop` and `first` to insert and remove elements. The function `list` appends the two lists and is needed for the list abstraction of the deque.
+A datatype encapsulating two lists, which will be used as a base data structure in different places. It has the operations `push`, `pop` and `first` to insert and remove elements. The function `list` appends the two lists and is needed for the list abstraction of the deque.
 
 [Idle](Idle.thy)
 

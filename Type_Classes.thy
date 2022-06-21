@@ -1,6 +1,10 @@
+section \<open>Type Classes\<close>
+
 theory Type_Classes
-  imports Main
+imports Main
 begin
+
+text \<open>Overloaded functions:\<close>
 
 class emptyable = 
   fixes is_empty :: "'a \<Rightarrow> bool"
