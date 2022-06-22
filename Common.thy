@@ -1,10 +1,41 @@
+section \<open>Common\<close>
+
 theory Common
-  imports Current Idle ReverseN
+imports Current Idle
 begin
+
+text \<open>
+\<^noindent> The last two phases of both deque ends during transformation:
+
+ \<^descr> \<open>Copy\<close>: Using the \<open>step\<close> function the new elements of this deque end are brought back into the original order.
+ \<^descr> \<open>Idle\<close>: The transformation of the deque end is finished.
+
+\<^noindent> Each phase contains a \<open>current\<close> state, that holds the original elements of the deque end.
+\<close>
 
 datatype (plugins del: size)'a state = 
       Copy "'a current" "'a list" "'a list" nat
     | Idle "'a current" "'a idle"
+
+text\<open>
+\<^noindent> Functions:
+
+\<^descr> \<open>push\<close>, \<open>pop\<close>: Add and remove elements using the \<open>current\<close> state.
+\<^descr> \<open>list\<close>: List abstraction of the elements which this end will contain after the transformation is finished
+\<^descr> \<open>list_current\<close>: List abstraction of the elements currently in this deque end.
+\<^descr> \<open>step\<close>: Executes one step of the transformation, while keeping the invariant.
+\<^descr> \<open>remaining_steps\<close>: Returns how many steps are left until the transformation is finished.
+\<^descr> \<open>size_new\<close>: Returns the size, that the deque end will have after the transformation is finished.
+\<^descr> \<open>size\<close>: Minimum of \<open>size_new\<close> and the number of elements contained in the \<open>current\<close> state.
+\<close>
+
+fun reverseN :: "nat \<Rightarrow> 'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
+  "reverseN 0 xs acc = acc"
+| "reverseN n [] acc = acc"
+| "reverseN (Suc n) (x#xs) acc = reverseN n xs (x#acc)"
+
+(*abbreviation reverseN' where
+  "reverseN' n xs acc \<equiv> rev (take n xs) @ acc"*)
 
 fun list :: "'a state \<Rightarrow> 'a list" where
   "list (Idle _ idle) = Idle.list idle"
@@ -53,7 +84,7 @@ fun pop :: "'a state \<Rightarrow> 'a * 'a state" where
 | "pop (Copy current aux new moved) = 
       (first current, normalize (Copy (drop_first current) aux new moved))"
 
-instantiation state ::(type) emptyable
+instantiation state ::(type) is_empty
 begin
 
 fun is_empty_state :: "'a state \<Rightarrow> bool" where

@@ -1,5 +1,7 @@
+section \<open>Real-Time Deque\<close>
+
 theory RealTimeDeque
-  imports States
+imports States
 begin
 
 datatype 'a deque =
@@ -13,7 +15,7 @@ datatype 'a deque =
 definition empty where
   "empty \<equiv> Empty"
 
-instantiation deque::(type) emptyable
+instantiation deque::(type) is_empty
 begin
 
 fun is_empty_deque :: "'a deque \<Rightarrow> bool" where
@@ -65,7 +67,7 @@ fun deqL' :: "'a deque \<Rightarrow> 'a * 'a deque" where
       let big = Reverse (Current [] 0 right length_right') right [] length_right' in
 
       let states = States Left big small in
-      let states = six_steps states in
+      let states = (step^^6) states in
       
       (x, Transforming states)
     else 
@@ -73,7 +75,7 @@ fun deqL' :: "'a deque \<Rightarrow> 'a * 'a deque" where
   )"
 | "deqL' (Transforming (States Left big small)) = (
     let (x, small) = Small.pop small in 
-    let states = four_steps (States Left big small) in
+    let states = (step^^4) (States Left big small) in
     case states of 
         States Left
           (Big.Common (Common.Idle _ big))
@@ -83,7 +85,7 @@ fun deqL' :: "'a deque \<Rightarrow> 'a * 'a deque" where
   )"
 | "deqL' (Transforming (States Right big small)) = (
     let (x, big) = Big.pop big in 
-    let states = four_steps (States Right big small) in
+    let states = (step^^4) (States Right big small) in
     case states of 
        States Right 
           (Big.Common (Common.Idle _ big)) 
@@ -128,13 +130,13 @@ fun enqL :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
         let small = Reverse1 (Current [] 0 right length_right) right [] in
   
         let states = States Right big small in
-        let states = six_steps states in
+        let states = (step^^6) states in
         
         Transforming states
   )"
 | "enqL x (Transforming (States Left big small)) = (
     let small = Small.push x small in 
-    let states = four_steps (States Left big small) in
+    let states = (step^^4) (States Left big small) in
     case states of 
         States Left 
           (Big.Common (Common.Idle _ big))
@@ -144,7 +146,7 @@ fun enqL :: "'a \<Rightarrow> 'a deque \<Rightarrow> 'a deque" where
   )"
 | "enqL x (Transforming (States Right big small)) = (
     let big = Big.push x big in 
-    let states = four_steps (States Right big small) in
+    let states = (step^^4) (States Right big small) in
     case states of 
         States Right 
           (Big.Common (Common.Idle _ big)) 

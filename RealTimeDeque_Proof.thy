@@ -1,3 +1,5 @@
+section \<open>Top-Level Proof\<close>
+
 theory RealTimeDeque_Proof
   imports Deque RealTimeDeque States_Proof RealTimeDeque_Dequeue RealTimeDeque_Enqueue
 begin

@@ -1,11 +1,33 @@
+section \<open>Smaller End of Deque\<close>
+
 theory Small
-  imports Common
+imports Common
 begin
+
+text \<open>
+\<^noindent> The smaller end of the deque during \<open>transformation\<close> can be in one three phases:
+
+ \<^descr> \<open>Reverse1\<close>: Using the \<open>step\<close> function the originally contained elements are reversed.
+ \<^descr> \<open>Reverse2\<close>: Using the \<open>step\<close> function the newly obtained elements from the bigger end are reversed on top of the ones reversed in the previous phase.
+ \<^descr> \<open>Common\<close>: See theory \<open>Common\<close>. Is used to reverse the elements from the two previous phases again to get them again in the original order.
+
+\<^noindent> Each phase contains a \<open>current\<close> state, which holds the original elements of the deque end. 
+\<close>
 
 datatype (plugins del: size) 'a state =
    Reverse1 "'a current" "'a stack" "'a list"
  | Reverse2 "'a current" "'a list" "'a stack" "'a list" nat
  | Common "'a Common.state"
+
+text \<open>\<^noindent> Functions:
+
+ \<^descr> \<open>push\<close>, \<open>pop\<close>: Add and remove elements using the \<open>current\<close> state.
+ \<^descr> \<open>step\<close>: Executes one step of the transformation, while keeping the invariant.
+ \<^descr> \<open>size_new\<close>: Returns the size, that the deque end will have after the transformation is finished.
+ \<^descr> \<open>size\<close>: Minimum of \<open>size_new\<close> and the number of elements contained in the `current` state.
+ \<^descr> \<open>list\<close>: List abstraction of the elements which this end will contain after the transformation is finished. The first phase is not covered, since the elements, which will be transferred from the bigger deque end are not known yet.
+ \<^descr> \<open>list_current\<close>: List abstraction of the elements currently in this deque end.
+\<close>
 
 fun list :: "'a state \<Rightarrow> 'a list" where
   "list (Common common) = Common.list common"
@@ -52,7 +74,7 @@ fun pop :: "'a state \<Rightarrow> 'a * 'a state" where
 | "pop (Reverse2 current auxS big newS count) = 
     (first current, Reverse2 (drop_first current) auxS big newS count)"
 
-instantiation state::(type) emptyable
+instantiation state::(type) is_empty
 begin
 
 fun is_empty_state :: "'a state \<Rightarrow> bool" where

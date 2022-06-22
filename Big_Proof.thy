@@ -1,5 +1,7 @@
+section "Big Proofs"
+
 theory Big_Proof
-  imports Big Common_Proof
+imports Big Common_Proof
 begin
 
 lemma step_list [simp]: "invar big \<Longrightarrow> list (step big) = list big"

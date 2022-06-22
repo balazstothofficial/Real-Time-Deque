@@ -1,3 +1,5 @@
+section "Idle Proofs"
+
 theory Idle_Proof
   imports Idle Stack_Proof
 begin

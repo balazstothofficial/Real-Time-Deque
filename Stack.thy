@@ -29,7 +29,7 @@ fun first :: "'a stack \<Rightarrow> 'a" where
 fun list :: "'a stack \<Rightarrow> 'a list" where
   "list (Stack left right) = left @ right"
 
-instantiation stack ::(type) emptyable
+instantiation stack ::(type) is_empty
 begin
 
 fun is_empty_stack where

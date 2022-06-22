@@ -1,5 +1,7 @@
+section "Stack Proofs"
+
 theory Stack_Proof
-  imports Stack Util
+imports Stack Util
 begin
 
 lemma push_list [simp]: "list (push x stack) = x # list stack"

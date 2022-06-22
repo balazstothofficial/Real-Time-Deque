@@ -1,11 +1,11 @@
-section \<open>Current\<close>
+section \<open>Current Stack\<close>
 
 theory Current
 imports Stack
 begin
 
-text \<open>This data structure is composed of:
-
+text \<open>
+\noindent This data structure is composed of:
 \<^item> the newly added elements to one end of a deque during the transformation phase
 \<^item> the number of these newly added elements 
 \<^item> the originally contained elements
@@ -30,7 +30,7 @@ abbreviation drop_first :: "'a current \<Rightarrow> 'a current" where
 fun list :: "'a current \<Rightarrow> 'a list" where
   "list (Current extra _ old _) = extra @ (Stack.list old)"
 
-instantiation current::(type) emptyable
+instantiation current::(type) is_empty
 begin
 
 (* TODO: Actually it should be "added + remained = 0" Maybe directly base it on size? *) 
@@ -39,6 +39,13 @@ fun is_empty_current :: "'a current \<Rightarrow> bool" where
 
 instance..
 end
+
+text \<open>
+\<^descr> \<open>list\<close>: list abstraction for the originally contained elements of a deque end during transformation.
+\<^descr> \<open>invar\<close>: Is the stored number of newly added elements correct?
+\<^descr> \<open>size\<close>: The number of the originally contained elements.
+\<^descr> \<open>size_new\<close>: Number of elements which will be contained after the transformation is finished.
+\<close>
 
 instantiation current::(type) invar
 begin

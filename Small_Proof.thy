@@ -1,5 +1,7 @@
+section "Small Proofs"
+
 theory Small_Proof 
-  imports Common_Proof Small
+imports Common_Proof Small
 begin
 
 lemma step_size [simp]: "invar (small :: 'a state) \<Longrightarrow> size (step small) = size small"

@@ -1,5 +1,7 @@
+section "Big + Small Proofs"
+
 theory States_Proof
-  imports States Big_Proof Small_Proof HOL.Real Complex_Main
+imports States Big_Proof Small_Proof
 begin
 
 lemmas state_splits = idle.splits Common.state.splits Small.state.splits Big.state.splits
@@ -770,14 +772,14 @@ lemma remaining_steps_push_big [simp]: "invar (States dir big small)
 lemma step_4_remaining_steps_push_big [simp]: "\<lbrakk>
   invar (States dir big small); 
   4 \<le> remaining_steps (States dir big small);
-  four_steps (States dir (Big.push x big) small) = States dir' big' small'\<rbrakk>
+  (step^^4) (States dir (Big.push x big) small) = States dir' big' small'\<rbrakk>
     \<Longrightarrow> remaining_steps (States dir' big' small') = remaining_steps (States dir big small) - 4"
   by (metis invar_push_big remaining_steps_n_steps_sub remaining_steps_push_big )
 
 lemma step_4_remaining_steps_push_small [simp]: "\<lbrakk>
   invar (States dir big small); 
   4 \<le> remaining_steps (States dir big small);
- four_steps (States dir big (Small.push x small)) = States dir' big' small'
+ (step^^4) (States dir big (Small.push x small)) = States dir' big' small'
 \<rbrakk> \<Longrightarrow> remaining_steps (States dir' big' small') = remaining_steps (States dir big small) - 4"
   by (metis invar_push_small remaining_steps_n_steps_sub remaining_steps_push_small)
 
@@ -786,7 +788,7 @@ lemma step_4_remaining_steps_pop_big: "\<lbrakk>
   0 < size big; 
   Big.pop big = (x, bigP); 
   4 \<le> remaining_steps (States dir bigP small);
-  four_steps (States dir bigP small) = States dir' big' small'
+  (step^^4) (States dir bigP small) = States dir' big' small'
 \<rbrakk> \<Longrightarrow> remaining_steps (States dir' big' small') \<le> remaining_steps (States dir big small) - 4"
   by (metis add_le_imp_le_diff invar_pop_big remaining_steps_pop_big remaining_steps_n_steps_plus)
 
@@ -795,7 +797,7 @@ lemma step_4_remaining_steps_pop_small: "\<lbrakk>
   0 < size small; 
   Small.pop small = (x, smallP); 
   4 \<le> remaining_steps (States dir big smallP);
-  four_steps (States dir big smallP) = States dir' big' small'
+  (step^^4) (States dir big smallP) = States dir' big' small'
 \<rbrakk> \<Longrightarrow> remaining_steps (States dir' big' small') \<le> remaining_steps (States dir big small) - 4"
   by (metis add_le_imp_le_diff invar_pop_small remaining_steps_n_steps_plus remaining_steps_pop_small)
 
@@ -804,7 +806,7 @@ lemma step_4_pop_small_size_ok_1: "\<lbrakk>
   0 < size small; 
   Small.pop small = (x, smallP); 
   4 \<le> remaining_steps (States dir big smallP);
-  four_steps (States dir big smallP) = States dir' big' small'; 
+  (step^^4) (States dir big smallP) = States dir' big' small'; 
   remaining_steps (States dir big small) + 1 \<le> 4 * size small
 \<rbrakk> \<Longrightarrow> remaining_steps (States dir' big' small') + 1 \<le> 4 * size small'"
   by (smt (verit, ccfv_SIG) add.left_commute add.right_neutral add_le_cancel_left distrib_left_numeral dual_order.trans invar_pop_small le_add_diff_inverse2 mult.right_neutral plus_1_eq_Suc remaining_steps_n_steps_sub remaining_steps_pop_small step_n_pop_size_small)
@@ -813,7 +815,7 @@ lemma step_4_pop_big_size_ok_1: "\<lbrakk>
   invar (States dir big small); 
   0 < size big; Big.pop big = (x, bigP); 
   4 \<le> remaining_steps (States dir bigP small);
-  four_steps (States dir bigP small) = States dir' big' small'; 
+  (step^^4) (States dir bigP small) = States dir' big' small'; 
   remaining_steps (States dir big small) + 1 \<le> 4 * size small
 \<rbrakk> \<Longrightarrow> remaining_steps (States dir' big' small') + 1 \<le> 4 * size small'"
   by (smt (verit, ccfv_SIG) add_leE add_le_cancel_right invar_pop_big order_trans remaining_steps_pop_big step_n_size_small remaining_steps_n_steps_plus)
@@ -823,7 +825,7 @@ lemma step_4_pop_small_size_ok_2: "\<lbrakk>
   0 < size small; 
   Small.pop small = (x, smallP); 
   4 \<le> remaining_steps (States dir big smallP);
-  four_steps (States dir big smallP) = States dir' big' small'; 
+  (step^^4) (States dir big smallP) = States dir' big' small'; 
   remaining_steps (States dir big small) + 1 \<le> 4 * size big
 \<rbrakk> \<Longrightarrow> remaining_steps (States dir' big' small') + 1 \<le> 4 * size big'"
   by (smt (z3) add.commute add_leE invar_pop_small le_add_diff_inverse2 nat_add_left_cancel_le remaining_steps_n_steps_sub step_n_size_big remaining_steps_pop_small)
@@ -951,7 +953,7 @@ qed
 lemma step_4_push_small_size_ok_1: "\<lbrakk>
   invar (States dir big small); 
   4 \<le> remaining_steps (States dir big small);
-  four_steps (States dir big (Small.push x small)) = States dir' big' small';
+  (step^^4) (States dir big (Small.push x small)) = States dir' big' small';
   remaining_steps (States dir big small) + 1 \<le> 4 * size small
 \<rbrakk> \<Longrightarrow> remaining_steps (States dir' big' small') + 1 \<le> 4 * size small'"
   by (smt (z3) add.commute add_leD1 add_le_mono le_add1 le_add_diff_inverse2 mult_Suc_right nat_1_add_1 numeral_Bit0 step_n_push_size_small step_4_remaining_steps_push_small)
@@ -959,7 +961,7 @@ lemma step_4_push_small_size_ok_1: "\<lbrakk>
 lemma step_4_push_big_size_ok_1: "\<lbrakk>
   invar (States dir big small); 
   4 \<le> remaining_steps (States dir big small);
-  four_steps (States dir (Big.push x big) small) = States dir' big' small';
+  (step^^4) (States dir (Big.push x big) small) = States dir' big' small';
   remaining_steps (States dir big small) + 1 \<le> 4 * size small
 \<rbrakk> \<Longrightarrow> remaining_steps (States dir' big' small') + 1 \<le> 4 * size small'"
   by (smt (verit, ccfv_SIG) Nat.le_diff_conv2 add_leD2 invar_push_big le_add1 le_add_diff_inverse2 remaining_steps_n_steps_sub remaining_steps_push_big step_n_size_small)
@@ -967,7 +969,7 @@ lemma step_4_push_big_size_ok_1: "\<lbrakk>
 lemma step_4_push_small_size_ok_2: "\<lbrakk>
   invar (States dir big small); 
   4 \<le> remaining_steps (States dir big small);
-  four_steps (States dir big (Small.push x small)) = States dir' big' small';
+  (step^^4) (States dir big (Small.push x small)) = States dir' big' small';
   remaining_steps (States dir big small) + 1 \<le> 4 * size big
 \<rbrakk> \<Longrightarrow> remaining_steps (States dir' big' small') + 1 \<le> 4 * size big'"
   by (metis (full_types) Suc_diff_le Suc_eq_plus1 invar_push_small less_Suc_eq_le less_imp_diff_less step_4_remaining_steps_push_small step_n_size_big)
@@ -975,7 +977,7 @@ lemma step_4_push_small_size_ok_2: "\<lbrakk>
 lemma step_4_push_big_size_ok_2: "\<lbrakk>
   invar (States dir big small); 
   4 \<le> remaining_steps (States dir big small);
-  four_steps (States dir (Big.push x big) small) = States dir' big' small';
+  (step^^4) (States dir (Big.push x big) small) = States dir' big' small';
   remaining_steps (States dir big small) + 1 \<le> 4 * size big
 \<rbrakk> \<Longrightarrow> remaining_steps (States dir' big' small') + 1 \<le> 4 * size big'"
   by (smt (verit, ccfv_SIG) add.commute add_diff_cancel_left' add_leD1 add_le_mono invar_push_big mult_Suc_right nat_le_iff_add one_le_numeral remaining_steps_n_steps_sub remaining_steps_push_big step_n_push_size_big)
@@ -989,7 +991,7 @@ lemma step_4_push_small_size_ok_3_aux: "\<lbrakk>
 lemma step_4_push_small_size_ok_3: "\<lbrakk>
   invar (States dir big small); 
   4 \<le> remaining_steps (States dir big small);
-  four_steps (States dir big (Small.push x small)) = States dir' big' small';
+  (step^^4) (States dir big (Small.push x small)) = States dir' big' small';
   size_new small + remaining_steps (States dir big small) + 2 \<le> 3 * size_new big
 \<rbrakk> \<Longrightarrow> size_new small' + remaining_steps (States dir' big' small') + 2 \<le> 3 * size_new big'"
   using step_n_size_new_big step_n_push_size_new_small step_4_remaining_steps_push_small
@@ -1004,7 +1006,7 @@ lemma step_4_push_big_size_ok_3_aux: "\<lbrakk>
 lemma step_4_push_big_size_ok_3: "\<lbrakk>
   invar (States dir big small); 
   4 \<le> remaining_steps (States dir big small);
-  four_steps (States dir (Big.push x big) small) = States dir' big' small';
+  (step^^4) (States dir (Big.push x big) small) = States dir' big' small';
   size_new small + remaining_steps (States dir big small) + 2 \<le> 3 * size_new big
 \<rbrakk> \<Longrightarrow> size_new small' + remaining_steps (States dir' big' small') + 2 \<le> 3 * size_new big'"
   by (metis invar_push_big remaining_steps_n_steps_sub remaining_steps_push_big step_4_push_big_size_ok_3_aux step_n_push_size_new_big step_n_size_new_small)
@@ -1018,7 +1020,7 @@ lemma step_4_push_small_size_ok_4_aux: "\<lbrakk>
 lemma step_4_push_small_size_ok_4: "\<lbrakk>
   invar (States dir big small); 
   4 \<le> remaining_steps (States dir big small);
-  four_steps (States dir big (Small.push x small)) = States dir' big' small';
+  (step^^4) (States dir big (Small.push x small)) = States dir' big' small';
   size_new big + remaining_steps (States dir big small) + 2 \<le> 3 * size_new small
 \<rbrakk> \<Longrightarrow> size_new big' + remaining_steps (States dir' big' small') + 2 \<le> 3 * size_new small'"
   by (metis invar_push_small step_n_size_new_big step_n_push_size_new_small step_4_remaining_steps_push_small step_4_push_small_size_ok_4_aux)
@@ -1032,7 +1034,7 @@ lemma step_4_push_big_size_ok_4_aux: "\<lbrakk>
 lemma step_4_push_big_size_ok_4: "\<lbrakk>
   invar (States dir big small); 
   4 \<le> remaining_steps (States dir big small);
-  four_steps (States dir (Big.push x big) small) = States dir' big' small';
+  (step^^4) (States dir (Big.push x big) small) = States dir' big' small';
   size_new big + remaining_steps (States dir big small) + 2 \<le> 3 * size_new small
 \<rbrakk> \<Longrightarrow> size_new big' + remaining_steps (States dir' big' small') + 2 \<le> 3 * size_new small'"
   by (metis invar_push_big remaining_steps_n_steps_sub remaining_steps_push_big step_4_push_big_size_ok_4_aux step_n_push_size_new_big step_n_size_new_small)
@@ -1041,7 +1043,7 @@ lemma step_4_push_small_size_ok: "\<lbrakk>
   invar (States dir big small); 
   4 \<le> remaining_steps (States dir big small); 
   size_ok (States dir big small)
-\<rbrakk> \<Longrightarrow> size_ok (four_steps (States dir big (Small.push x small)))"
+\<rbrakk> \<Longrightarrow> size_ok ((step^^4) (States dir big (Small.push x small)))"
   using step_4_push_small_size_ok_1 step_4_push_small_size_ok_2 step_4_push_small_size_ok_3 step_4_push_small_size_ok_4 
   by (smt (verit) size_ok'.elims(3) size_ok'.simps)
 
@@ -1049,7 +1051,7 @@ lemma step_4_push_big_size_ok: "\<lbrakk>
   invar (States dir big small); 
   4 \<le> remaining_steps (States dir big small); 
   size_ok (States dir big small)
-\<rbrakk> \<Longrightarrow> size_ok (four_steps (States dir (Big.push x big) small))"
+\<rbrakk> \<Longrightarrow> size_ok ((step^^4) (States dir (Big.push x big) small))"
   using step_4_push_big_size_ok_1 step_4_push_big_size_ok_2 step_4_push_big_size_ok_3 step_4_push_big_size_ok_4
   by (smt (verit) size_ok'.elims(3) size_ok'.simps)
 
@@ -1059,7 +1061,7 @@ lemma step_4_pop_small_size_ok: "\<lbrakk>
   Small.pop small = (x, smallP); 
   4 \<le> remaining_steps (States dir big smallP);
   size_ok (States dir big small)
-\<rbrakk> \<Longrightarrow> size_ok (four_steps (States dir big smallP))"
+\<rbrakk> \<Longrightarrow> size_ok ((step^^4) (States dir big smallP))"
   by (smt (verit) size_ok'.elims(3) size_ok'.simps step_4_pop_small_size_ok_1 step_4_pop_small_size_ok_2 step_4_pop_small_size_ok_3 step_4_pop_small_size_ok_4)
 
 lemma step_4_pop_big_size_ok: "\<lbrakk>
@@ -1067,7 +1069,7 @@ lemma step_4_pop_big_size_ok: "\<lbrakk>
   0 < size big; Big.pop big = (x, bigP); 
   4 \<le> remaining_steps (States dir bigP small);
   size_ok (States dir big small)
-\<rbrakk> \<Longrightarrow> size_ok (four_steps (States dir bigP small))"
+\<rbrakk> \<Longrightarrow> size_ok ((step^^4) (States dir bigP small))"
   using step_4_pop_big_size_ok_1 step_4_pop_big_size_ok_2 step_4_pop_big_size_ok_3 step_4_pop_big_size_ok_4
   by (smt (verit) size_ok'.elims(3) size_ok'.simps)
 

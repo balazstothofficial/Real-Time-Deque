@@ -1,10 +1,30 @@
+section \<open>Bigger End of Deque\<close>
+
 theory Big
-  imports Common
+imports Common
 begin
+
+text \<open>\<^noindent> The bigger end of the deque during transformation can be in two phases:
+
+ \<^descr> \<open>Reverse\<close>: Using the \<open>step\<close> function the originally contained elements, which will be kept in this end, are reversed.
+ \<^descr> \<open>Common\<close>: Specified in theory \<open>Common\<close>. Is used to reverse the elements from the previous phase again to get them in the original order.
+
+\<^noindent> Each phase contains a \<open>current\<close> state, which holds the original elements of the deque end. 
+\<close>
 
 datatype (plugins del: size) 'a state = 
      Reverse "'a current" "'a stack" "'a list" nat
    | Common "'a Common.state"
+
+text \<open>\<^noindent> Functions:
+
+\<^descr> \<open>step\<close>: Executes one step of the transformation
+\<^descr> \<open>size_new\<close>: Returns the size that the deque end will have after the transformation is finished.
+\<^descr> \<open>size\<close>: Minimum of \<open>size_new\<close> and the number of elements contained in the current state.
+\<^descr> \<open>remaining_steps\<close>: Returns how many steps are left until the transformation is finished.
+\<^descr> \<open>list\<close>: List abstraction of the elements which this end will contain after the transformation is finished
+\<^descr> \<open>list_current\<close>: List abstraction of the elements currently in this deque end.
+\<close>
 
 fun list :: "'a state \<Rightarrow> 'a list" where
   "list (Common common) = Common.list common"
@@ -37,7 +57,7 @@ fun pop :: "'a state \<Rightarrow> 'a * 'a state" where
   "pop (Common state) = (let (x, state) = Common.pop state in (x, Common state))"
 | "pop (Reverse current big aux count) = (first current, Reverse (drop_first current) big aux count)"
 
-instantiation state ::(type) emptyable
+instantiation state ::(type) is_empty
 begin
 
 fun is_empty_state :: "'a state \<Rightarrow> bool" where

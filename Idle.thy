@@ -27,7 +27,7 @@ fun size_idle :: "'a idle \<Rightarrow> nat" where
 instance..
 end
 
-instantiation idle :: (type) emptyable
+instantiation idle :: (type) is_empty
 begin
 
 fun is_empty_idle :: "'a idle \<Rightarrow> bool" where

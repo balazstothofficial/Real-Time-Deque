@@ -1,5 +1,7 @@
+section "Enqueue Proofs"
+
 theory RealTimeDeque_Enqueue
-  imports Deque RealTimeDeque States_Proof
+imports Deque RealTimeDeque States_Proof
 begin
 
 lemma list_enqL: "invar deque \<Longrightarrow> listL (enqL x deque) = x # listL deque"
@@ -26,7 +28,7 @@ proof(induction x deque rule: enqL.induct)
     let ?big = "Reverse  (Current [] 0 left' ?length_left) left' [] ?length_left"
     let ?small = "Reverse1 (Current [] 0 right ?length_right) right []"
     let ?states = "States Right ?big ?small"
-    let ?states_stepped = "six_steps ?states"
+    let ?states_stepped = "(step^^6) ?states"
 
     from False 5 invar_left' have invar: "invar ?states"
       by(auto simp: reverseN_take rev_drop rev_take)
@@ -45,7 +47,7 @@ next
   case (6 x big small)
   let ?small = "Small.push x small"
   let ?states = "States Left big ?small"
-  let ?states_stepped = "four_steps ?states"
+  let ?states_stepped = "(step^^4) ?states"
 
   obtain big_stepped small_stepped where stepped:
       "?states_stepped = States Left big_stepped small_stepped"
@@ -67,7 +69,7 @@ next
 
   let ?big = "Big.push x big"
   let ?states = "States Right ?big small"
-  let ?states_stepped = "four_steps ?states"
+  let ?states_stepped = "(step^^4) ?states"
 
   obtain big_stepped small_stepped where stepped:
       "?states_stepped = States Right big_stepped small_stepped"
@@ -123,7 +125,7 @@ proof(induction x deque rule: enqL.induct)
     let ?states = "States Right 
           (Reverse (Current [] 0 left' ?length_left) left' [] ?length_left)
           (Reverse1 (Current [] 0 right ?length_right) right [])"
-    let ?states_stepped = "six_steps ?states"
+    let ?states_stepped = "(step^^6) ?states"
 
     from invar_left' 5 False have invar: "invar ?states" 
       by(auto simp: reverseN_take rev_drop rev_take)
@@ -156,7 +158,7 @@ next
   case (6 x big small)
   let ?small = "Small.push x small"
   let ?states = "States Left big ?small"
-  let ?states_stepped = "four_steps ?states"
+  let ?states_stepped = "(step^^4) ?states"
 
   from 6 have invar: "invar ?states"
     using invar_push_small[of Left big small x]
@@ -237,7 +239,7 @@ next
   case (7 x big small)
   let ?big = "Big.push x big"
   let ?states = "States Right ?big small"
-  let ?states_stepped = "four_steps ?states"
+  let ?states_stepped = "(step^^4) ?states"
 
   from 7 have invar: "invar ?states"
     using invar_push_big[of Right big small x]

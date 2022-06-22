@@ -1,5 +1,7 @@
+section "Dequeue Proofs"
+
 theory RealTimeDeque_Dequeue
-  imports Deque RealTimeDeque States_Proof
+imports Deque RealTimeDeque States_Proof
 begin
  
 lemma list_deqL' [simp]: "\<lbrakk>invar deque; listL deque \<noteq> []; deqL' deque = (x, deque')\<rbrakk>
@@ -52,7 +54,7 @@ proof(induction deque arbitrary: x rule: deqL'.induct)
         by auto
     
       with invar 
-      have "States.listL (six_steps ?states) = tl (Idle.list left) @ rev (Stack.list right)"
+      have "States.listL ((step^^6) ?states) = tl (Idle.list left) @ rev (Stack.list right)"
         using step_n_listL[of ?states 6]
         by presburger
       
@@ -90,7 +92,7 @@ next
       (auto simp: Let_def split: states.splits direction.splits state_splits prod.splits)
 
   let ?states_new = "States Left big small'"
-  let ?states_stepped = "four_steps ?states_new"
+  let ?states_stepped = "(step^^4) ?states_new"
 
   have invar: "invar ?states_new"
     using pop start_invar small_size invar_pop_small[of Left big small x small']
@@ -145,7 +147,7 @@ next
       (auto simp: Let_def split: prod.splits direction.splits states.splits state_splits)
 
   let ?states_new = "States Right big' small"
-  let ?states_stepped = "four_steps ?states_new"
+  let ?states_stepped = "(step^^4) ?states_new"
 
   have invar: "invar ?states_new"
     using pop start_invar big_size invar_pop_big[of Right big small]
@@ -162,7 +164,7 @@ next
         using app_rev[of smalls bigs]
         by(auto split: prod.splits)
     qed
- 
+
   from invar have four_steps: "invar ?states_stepped"
     using invar_step_n by blast
 
@@ -247,21 +249,21 @@ proof(induction deque rule: deqL'.induct)
       have invar: "invar ?states"
         by(auto simp: reverseN_take Let_def rev_take rev_drop)
 
-      then have invar_stepped: "invar (six_steps ?states)"
+      then have invar_stepped: "invar ((step^^6) ?states)"
         using invar_step_n by blast
 
       from 4 Start_Transformation True 
       have remaining_steps: "6 < remaining_steps ?states"
         by auto
 
-      then have remaining_steps_end: "0 < remaining_steps (six_steps ?states)"
+      then have remaining_steps_end: "0 < remaining_steps ((step^^6) ?states)"
         by(simp only: remaining_steps_n_steps_sub[of ?states 6] invar)
 
       from 4 Start_Transformation True  
       have size_ok': "size_ok' ?states (remaining_steps ?states - 6)"
         by auto
          
-      then have size_ok: "size_ok (six_steps ?states)"
+      then have size_ok: "size_ok ((step^^6) ?states)"
         using invar remaining_steps size_ok_steps by blast
 
       from True Start_Transformation 4 show ?thesis
@@ -290,7 +292,7 @@ next
     by fastforce
 
   let ?states = "States Left big small'"
-  let ?states_stepped = "four_steps ?states"
+  let ?states_stepped = "(step^^4) ?states"
 
   obtain big_stepped small_stepped where stepped [simp]: 
        "?states_stepped = States Left big_stepped small_stepped"
@@ -378,7 +380,7 @@ next
     by fastforce
 
   let ?states = "States Right big' small"
-  let ?states_stepped = "four_steps ?states"
+  let ?states_stepped = "(step^^4) ?states"
 
   obtain big_stepped small_stepped where stepped [simp]: 
        "?states_stepped = States Right big_stepped small_stepped"

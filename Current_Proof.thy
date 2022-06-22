@@ -1,5 +1,7 @@
+section "Current Proofs"
+
 theory Current_Proof
-  imports Current Stack_Proof
+imports Current Stack_Proof
 begin
 
 lemma push_list [simp]: "list (push x current) = x # list current"

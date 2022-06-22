@@ -6,7 +6,7 @@ begin
 
 text \<open>Overloaded functions:\<close>
 
-class emptyable = 
+class is_empty = 
   fixes is_empty :: "'a \<Rightarrow> bool"
 
 class invar =
