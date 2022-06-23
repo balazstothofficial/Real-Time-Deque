@@ -3,27 +3,15 @@ section "Common Proofs"
 theory Common_Proof
 imports Common Idle_Proof Current_Proof
 begin
-(*
-lemma reverseN_take: "reverseN n xs acc = rev (take n xs) @ acc"
-  by(induction n xs acc rule: reverseN.induct) auto
-*)
+
 lemma reverseN_drop: "reverseN n xs acc = drop (length xs - n) (rev xs) @ acc"
   unfolding reverseN_def using rev_take by blast
-
-lemma reverseN_reverseN: "reverseN n (reverseN n xs []) [] = take n xs"
-  by(simp add: )
 
 lemma reverseN_step: "xs \<noteq> [] \<Longrightarrow> reverseN n (tl xs) (hd xs # acc) = reverseN (Suc n) xs acc"
   by (simp add: take_Suc)
 
 lemma reverseN_finish: "reverseN n [] acc = acc"
   by (simp)
-
-lemma reverse1_tl: "xs \<noteq> [] \<Longrightarrow> acc = tl (reverseN (Suc 0) xs acc)"
-  by simp
-
-lemma reverseN_tl: "n < length xs \<Longrightarrow> reverseN n xs acc = tl (reverseN (Suc n) xs acc)"
-  by (simp add: take_Suc_conv_app_nth)
 
 lemma reverseN_tl_hd: "0 < n \<Longrightarrow> xs \<noteq> [] \<Longrightarrow> reverseN n xs ys = reverseN (n - (Suc 0)) (tl xs) (hd xs #ys)"
   by (simp add: reverseN_step del: reverseN_def)
@@ -491,6 +479,6 @@ next
 qed
 
 lemma size_size_new: "\<lbrakk>invar (common :: 'a state); 0 < size common\<rbrakk> \<Longrightarrow> 0 < size_new common"
-  by(induction common) auto
+  by(cases common) auto
 
 end
