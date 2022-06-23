@@ -42,15 +42,6 @@ A datatype encapsulating two lists, which will be used as a base data structure 
 
 Represents the `idle` state of one Deque end. It contains a `stack` and its size as a natural number. It has the operations `push`, `pop` and `first` to insert and remove elements. The function `list` is needed for the list abstraction of the deque.
 
-*Functions:*
-
-* `step`: Executes one step of the `transformation`, while keeping the invariant. Delegates to the implementation in [Big.thy](Big.thy) and [Small.thy](Small.thy), except of the case where elements are transferred from the bigger end to the smaller end.
-* `remaining_steps`: Returns the maximum of remaining steps of the two ends until the transformation is finished.
-* `lists`, `list_small_first`, `list_big_first`: List abstractions using the list abstractions of the two states [big](Big.thy) and [small](Small.thy) which are based on how these will look like if the transformation is finished.
-* `lists_current`, `list_current_small_first`, `list_current_big_first`: List abstractions using the list abstractions of the two states [big](Big.thy) and [small](Small.thy) which are based on their `current` state in the `transformation`.
-* `invar`: Based on the invariants of [small](Small.thy) and [big](Big.thy) adding the constraint that the two different list abstractions need to be the same and excludes invalid combinations of phases of the bigger and small deque end.
-* `size_ok’`, `size_ok`: Specifies if it is possible to finish the `transformation`, in such a way that the size constraints of the `idle` state of the deque are met.
-
 [Small](Small.thy)
 
 The smaller end of the deque during `transformation` can be in three phases:
