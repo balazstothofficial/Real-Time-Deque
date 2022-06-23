@@ -28,14 +28,14 @@ text\<open>
 \<^descr> \<open>size_new\<close>: Returns the size, that the deque end will have after the transformation is finished.
 \<^descr> \<open>size\<close>: Minimum of \<open>size_new\<close> and the number of elements contained in the \<open>current\<close> state.
 \<close>
-
+(*
 fun reverseN :: "nat \<Rightarrow> 'a list \<Rightarrow> 'a list \<Rightarrow> 'a list" where
   "reverseN 0 xs acc = acc"
 | "reverseN n [] acc = acc"
 | "reverseN (Suc n) (x#xs) acc = reverseN n xs (x#acc)"
-
-(*abbreviation reverseN' where
-  "reverseN' n xs acc \<equiv> rev (take n xs) @ acc"*)
+*)
+definition reverseN where
+[simp]:  "reverseN n xs acc \<equiv> rev (take n xs) @ acc"
 
 fun list :: "'a state \<Rightarrow> 'a list" where
   "list (Idle _ idle) = Idle.list idle"

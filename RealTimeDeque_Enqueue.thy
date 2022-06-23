@@ -31,11 +31,11 @@ proof(induction x deque rule: enqL.induct)
     let ?states_stepped = "(step^^6) ?states"
 
     from False 5 invar_left' have invar: "invar ?states"
-      by(auto simp: reverseN_take rev_drop rev_take)
+      by(auto simp: rev_drop rev_take)
 
     then have "States.listL ?states = x # Idle.list left @ rev (Stack.list right)"
       using Idle_Proof.push_list[of x left]
-      by(auto simp: reverseN_take)
+      by(auto)
 
     then have "States.listL ?states_stepped = x # Idle.list left @ rev (Stack.list right)"
       by (metis invar step_n_listL)
@@ -128,7 +128,7 @@ proof(induction x deque rule: enqL.induct)
     let ?states_stepped = "(step^^6) ?states"
 
     from invar_left' 5 False have invar: "invar ?states" 
-      by(auto simp: reverseN_take rev_drop rev_take)
+      by(auto simp: rev_drop rev_take)
 
     then have invar_stepped: "invar ?states_stepped"
       using invar_step_n by blast 

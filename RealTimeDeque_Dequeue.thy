@@ -46,12 +46,12 @@ proof(induction deque arbitrary: x rule: deqL'.induct)
       let ?states = "States Left ?big ?small"
 
       from 4 Start_Transformation True invar_left' have invar: "invar ?states"
-        by(auto simp: reverseN_take Let_def rev_take rev_drop)
+        by(auto simp: Let_def rev_take rev_drop)
 
       with 4 Start_Transformation True invar_left'
       have "States.listL ?states = tl (Idle.list left) @ rev (Stack.list right)"
         using pop_list_tl'[of left x left'] 
-        by auto
+        by (auto simp del: reverseN_def)
     
       with invar 
       have "States.listL ((step^^6) ?states) = tl (Idle.list left) @ rev (Stack.list right)"
@@ -247,7 +247,7 @@ proof(induction deque rule: deqL'.induct)
 
       from 4 Start_Transformation True invar_left' 
       have invar: "invar ?states"
-        by(auto simp: reverseN_take Let_def rev_take rev_drop)
+        by(auto simp: Let_def rev_take rev_drop)
 
       then have invar_stepped: "invar ((step^^6) ?states)"
         using invar_step_n by blast

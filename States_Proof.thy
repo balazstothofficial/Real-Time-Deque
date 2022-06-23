@@ -34,7 +34,7 @@ proof(induction states rule: lists.induct)
       using 
           reverseN_step[of "Stack.list big" count' auxB] 
           Stack_Proof.list_empty[symmetric, of small]       
-       by (cases currentB)(auto simp: first_hd funpow_swap1 reverseN_step reverseN_finish)
+       by (cases currentB)(auto simp: first_hd funpow_swap1 reverseN_step reverseN_finish simp del: reverseN_def)
     qed
 next
   case ("2_1" dir common small)
@@ -125,7 +125,7 @@ lemma list_small_first_pop_small [simp]: "\<lbrakk>
 proof(induction "States dir big small" rule: lists.induct)
   case (1 currentB big auxB count currentS small auxS) 
   then show ?case
-    by(cases currentS)(auto simp: reverseN_take Cons_eq_appendI)
+    by(cases currentS)(auto simp: Cons_eq_appendI)
 next
   case ("2_1" common)
   then show ?case  
@@ -145,7 +145,7 @@ next
   case ("2_2" current)
   then show ?case 
     by(induction current rule: Current.pop.induct)
-      (auto simp: first_hd reverseN_take rev_take Suc_diff_le)
+      (auto simp: first_hd rev_take Suc_diff_le)
 next
   case ("2_3" common)
   then show ?case 
@@ -760,7 +760,7 @@ next
   next
     case 2
     then show ?case 
-      by(auto split: Small.state.splits current.splits)
+      by(auto split: Small.state.splits current.splits simp del: reverseN_def)
   qed
 qed
 

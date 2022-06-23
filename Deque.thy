@@ -1,8 +1,10 @@
-section  \<open>Specification of a Double-Ended Queue\<close>
+section  \<open>Double-Ended Queue Specification\<close>
 
 theory Deque
-  imports Main
+imports Main
 begin
+
+text \<open>Model-oriented specification in terms of an abstraction function to a list.\<close>
 
 locale Deque =
 fixes empty :: "'q"

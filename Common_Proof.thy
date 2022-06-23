@@ -3,33 +3,33 @@ section "Common Proofs"
 theory Common_Proof
 imports Common Idle_Proof Current_Proof
 begin
-
+(*
 lemma reverseN_take: "reverseN n xs acc = rev (take n xs) @ acc"
   by(induction n xs acc rule: reverseN.induct) auto
-
+*)
 lemma reverseN_drop: "reverseN n xs acc = drop (length xs - n) (rev xs) @ acc"
-  by(induction n xs acc rule: reverseN.induct) auto
+  unfolding reverseN_def using rev_take by blast
 
 lemma reverseN_reverseN: "reverseN n (reverseN n xs []) [] = take n xs"
-  by(auto simp: reverseN_take)
+  by(simp add: )
 
 lemma reverseN_step: "xs \<noteq> [] \<Longrightarrow> reverseN n (tl xs) (hd xs # acc) = reverseN (Suc n) xs acc"
-  by(induction "Suc n" xs acc rule: reverseN.induct) auto
+  by (simp add: take_Suc)
 
 lemma reverseN_finish: "reverseN n [] acc = acc"
-  by (simp add: reverseN_take)
+  by (simp)
 
 lemma reverse1_tl: "xs \<noteq> [] \<Longrightarrow> acc = tl (reverseN (Suc 0) xs acc)"
-  by(induction "Suc 0" xs acc rule: reverseN.induct) auto
+  by simp
 
 lemma reverseN_tl: "n < length xs \<Longrightarrow> reverseN n xs acc = tl (reverseN (Suc n) xs acc)"
-  by(induction n xs acc rule: reverseN.induct)(auto simp: reverse1_tl)
+  by (simp add: take_Suc_conv_app_nth)
 
 lemma reverseN_tl_hd: "0 < n \<Longrightarrow> xs \<noteq> [] \<Longrightarrow> reverseN n xs ys = reverseN (n - (Suc 0)) (tl xs) (hd xs #ys)"
-  by (simp add: reverseN_step)
+  by (simp add: reverseN_step del: reverseN_def)
 
 lemma reverseN_nth: "n < length xs \<Longrightarrow> x = xs ! n \<Longrightarrow> x # reverseN n xs ys = reverseN (Suc n) xs ys"
-  by(induction n xs ys rule: reverseN.induct) (auto simp: reverseN_tl_hd hd_conv_nth)
+  by (simp add: take_Suc_conv_app_nth)
 
 lemma step_list [simp]: "invar common \<Longrightarrow> list (step common) = list common"
 proof(induction common rule: step_state.induct)
@@ -53,11 +53,11 @@ next
         by auto
 
       with True Current 2 aux_not_empty show ?thesis 
-        by(auto simp: reverseN_take)
+        by(auto simp: )
     next
       case False
       with Current show ?thesis 
-        by(auto simp: aux_not_empty reverseN_step Suc_diff_Suc)
+        by(auto simp: aux_not_empty reverseN_step Suc_diff_Suc simp del: reverseN_def)
     qed
   qed
 qed
@@ -99,15 +99,14 @@ next
         case True
         with 2 Current False 
           have "take (Suc (length new)) (Stack.list old) = take (size old) (hd aux # new)"
-            apply(induction "Suc 0" aux new rule: reverseN.induct)
-            by(auto simp: le_Suc_eq)
+            by(auto simp: le_Suc_eq take_Cons')
          
         with 2 Current True show ?thesis 
           by auto
       next
         case False
         with 2 Current AUX_NOT_EMPTY show ?thesis 
-          by(auto simp: reverseN_step Suc_diff_Suc)
+          by(auto simp: reverseN_step Suc_diff_Suc simp del: reverseN_def)
       qed
     qed
   qed
@@ -180,14 +179,15 @@ next
 
       with 1 True show ?thesis 
         using Stack_Proof.pop_list[of old] 
-        by(auto simp: reverseN_take Stack_Proof.size_not_empty)
+        by(auto simp: Stack_Proof.size_not_empty)
     next
       case False
       with 1 have "remained - Suc 0 \<le> length aux + length new" by auto
 
       with 1 False show ?thesis 
-        using Stack_Proof.pop_list[of old] 
-        by(auto simp: reverseN_tl Suc_diff_Suc take_tl Stack_Proof.size_not_empty)
+        using Stack_Proof.pop_list[of old]
+        apply(auto simp: Suc_diff_Suc take_tl Stack_Proof.size_not_empty tl_append_if)
+        by (simp add: Suc_diff_le rev_take tl_drop_2 tl_take)
     qed
    next
     case (2 x xs added old remained)
@@ -223,7 +223,7 @@ next
         by (metis first_hd hd_take list.sel(1))
      
       with 1 True take_hd[of aux] show ?thesis 
-        by(auto simp: reverseN_take Suc_leI)
+        by(auto simp: Suc_leI)
     next
       case False
       then show ?thesis 
@@ -243,7 +243,7 @@ next
                 "Stack.list old"  
                 "(rev aux) @ take (size old + length new - remained) new"
                 ] 
-          by(auto simp: reverseN_take)
+          by(simp)
          
         then have "[last aux] = [Stack.first old]"
           using take_last first_take not_empty
@@ -254,7 +254,7 @@ next
 
         with 1 True False show ?thesis 
           using not_empty last_drop_rev[of aux]
-          by(auto simp: reverseN_drop length_minus_1)
+          by(auto simp: reverseN_drop length_minus_1 simp del: reverseN_def)
        next
         case False
 
@@ -279,7 +279,7 @@ next
                 "Stack.list old" 
                 " (reverseN (remained - length new) aux new)"
               ]
-          by(auto simp: reverseN_take not_empty Suc_le_eq)
+          by(auto simp: not_empty Suc_le_eq)
 
         with 1 False have "take 1 (Stack.list old) = take 1 (rev (take (remained - length new) aux))"
           by auto
@@ -294,7 +294,7 @@ next
           by (metis a drop_drop last_drop_rev plus_1_eq_Suc rev_take zero_less_diff)
           
         with 1(1) 1(3) False not_empty d show ?thesis 
-          by(cases "remained - length new = 1") (auto simp: reverseN_take)
+          by(cases "remained - length new = 1") (auto)
       qed
     qed
   next

@@ -1,7 +1,7 @@
 section \<open>Idle\<close>
 
 theory Idle
-  imports Stack
+imports Stack
 begin
 
 text \<open>Represents the `idle' state of one deque end.

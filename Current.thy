@@ -14,6 +14,13 @@ text \<open>
 
 datatype (plugins del: size) 'a current = Current "'a list" nat "'a stack" nat
 
+text \<open>Specification functions:
+\<^descr> \<open>list\<close>: list abstraction for the originally contained elements of a deque end during transformation.
+\<^descr> \<open>invar\<close>: Is the stored number of newly added elements correct?
+\<^descr> \<open>size\<close>: The number of the originally contained elements.
+\<^descr> \<open>size_new\<close>: Number of elements which will be contained after the transformation is finished.
+\<close>
+
 fun push :: "'a \<Rightarrow> 'a current \<Rightarrow> 'a current" where
   "push x (Current extra added old remained) = Current (x#extra) (added + 1) old remained"
 
@@ -39,13 +46,6 @@ fun is_empty_current :: "'a current \<Rightarrow> bool" where
 
 instance..
 end
-
-text \<open>
-\<^descr> \<open>list\<close>: list abstraction for the originally contained elements of a deque end during transformation.
-\<^descr> \<open>invar\<close>: Is the stored number of newly added elements correct?
-\<^descr> \<open>size\<close>: The number of the originally contained elements.
-\<^descr> \<open>size_new\<close>: Number of elements which will be contained after the transformation is finished.
-\<close>
 
 instantiation current::(type) invar
 begin

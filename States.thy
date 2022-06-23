@@ -4,28 +4,9 @@ theory States
 imports Big Small
 begin
 
-text \<open>
-\<^noindent> The last two phases of both deque ends during transformation:
-
- \<^descr> \<open>Copy\<close>: Using the \<open>step\<close> function the new elements of this deque end are brought back into the original order.
- \<^descr> \<open>Idle\<close>: The transformation of the deque end is finished.
-
-\<^noindent> Each phase contains a `current` state, which holds the original elements of the deque end. 
-\<close>
-
 datatype direction = Left | Right
 
 datatype 'a states = States direction "'a Big.state" "'a Small.state"
-
-text \<open>\<^noindent> Functions:
-
- \<^descr> \<open>list\<close>: List abstraction of the elements which this end will contain after the transformation is finished
- \<^descr> \<open>list_curent\<close>: List abstraction of the elements currently in this deque end.
- \<^descr> \<open>step\<close>: Executes one step of the transformation, while keeping the invariant.
- \<^descr> \<open>remaining_steps\<close>: Returns how many steps are left until the transformation is finished.
- \<^descr> \<open>size_new\<close>: Returns the size, that the deque end will have after the transformation is finished.
- \<^descr> \<open>size\<close>: Minimum of \<open>size_new\<close> and the number of elements contained in the \<open>current\<close> state.
-\<close>
 
 instantiation states::(type) step
 begin

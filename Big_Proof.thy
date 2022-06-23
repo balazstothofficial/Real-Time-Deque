@@ -16,7 +16,7 @@ next
 next
   case 3
   then show ?case 
-    by(auto simp: reverseN_take rev_take take_drop drop_Suc tl_take rev_drop split: current.splits)
+    by(auto simp: rev_take take_drop drop_Suc tl_take rev_drop split: current.splits)
 qed
     
 lemma step_list_current [simp]: "invar big \<Longrightarrow> list_current (step big) = list_current big"
@@ -41,7 +41,7 @@ lemma list_Reverse: "\<lbrakk>
 proof(induction current rule: Current.pop.induct)
   case (1 added old remained)
   then have [simp]: "remained - Suc 0 < length (reverseN count (Stack.list big) aux)"
-    by(auto simp: le_diff_conv reverseN_take)
+    by(auto simp: le_diff_conv)
 
   (* TODO: *)
   then have "
@@ -54,10 +54,10 @@ proof(induction current rule: Current.pop.induct)
      rev (take (remained - count) aux) @ rev (take remained (rev (take count (Stack.list big))))\<rbrakk>
     \<Longrightarrow> hd (rev (take (size old - size big) aux) @ rev (take (size old) (rev (Stack.list big)))) =
         (rev (take count (Stack.list big)) @ aux) ! (remained - Suc 0)"
-    by (smt (verit) Suc_pred hd_drop_conv_nth hd_rev hd_take last_snoc length_rev length_take min.absorb2 rev_append reverseN_take size_list_length take_append take_hd_drop)
+    by (smt (verit) Suc_pred hd_drop_conv_nth hd_rev hd_take last_snoc length_rev length_take min.absorb2 rev_append reverseN_def size_list_length take_append take_hd_drop)
 
   with 1 have [simp]: "Stack.first old = reverseN count (Stack.list big) aux ! (remained - Suc 0)"
-    by(auto simp: reverseN_take take_hd_drop first_hd)
+    by(auto simp: take_hd_drop first_hd)
  
   from 1 show ?case
     using reverseN_nth[of 
@@ -201,13 +201,13 @@ next
             drop (length aux - (size old - Suc (size big))) (rev aux) @
             drop (Suc (size big) - size old) (Stack.list big)"
       apply(cases "size old - size big \<le> length aux"; cases "size old \<le> size big")
-      by(auto simp: reverseN_take tl_drop_2 Suc_diff_le le_diff_conv le_refl a)
+      by(auto simp: tl_drop_2 Suc_diff_le le_diff_conv le_refl a)
 
     from 1 have "remained \<le> length (reverseN count (Stack.list big) aux)"
-      by(auto simp: reverseN_take)
+      by(auto)
 
     with 1 show ?case 
-      apply(auto simp: rev_take take_tl drop_Suc Suc_diff_le tl_drop linarith)
+      apply(auto simp: rev_take take_tl drop_Suc Suc_diff_le tl_drop linarith simp del: reverseN_def)
       using b by simp
   next
     case (2 x xs added old remained)
@@ -256,7 +256,7 @@ next
   case (2 current uu uv uw)
   then show ?case 
     apply(cases current)
-    by(auto simp: reverseN_take Stack_Proof.size_not_empty Stack_Proof.list_empty)
+    by(auto simp: Stack_Proof.size_not_empty Stack_Proof.list_empty)
 qed
 
 lemma step_size: "invar (big :: 'a state) \<Longrightarrow> size big = size (step big)"

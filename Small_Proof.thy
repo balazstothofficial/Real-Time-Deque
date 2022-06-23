@@ -78,7 +78,7 @@ proof -
 
   with assms show ?thesis 
     using Stack_Proof.size_pop[of big] size_not_empty
-    by(auto simp: reverseN_take Stack_Proof.list_empty split: current.splits)
+    by(auto simp: Stack_Proof.list_empty split: current.splits)
 qed
   
 lemma invar_step: "invar (small :: 'a state) \<Longrightarrow> invar (step small)" 
@@ -124,7 +124,7 @@ next
       next
         case False
         with True 3 Current show ?thesis 
-          by(auto simp: reverseN_take)
+          by(auto)
         qed
     qed
   next
@@ -185,7 +185,7 @@ proof(induction current arbitrary: x rule: Current.pop.induct)
     by(auto simp: Stack_Proof.size_not_empty)
     
   with 1 show ?case
-    by(auto simp: reverseN_take rev_take Cons_nth_drop_Suc Suc_diff_le hd_drop_conv_nth)
+    by(auto simp: rev_take Cons_nth_drop_Suc Suc_diff_le hd_drop_conv_nth)
 next
   case (2 x xs added old remained)
   then show ?case by auto
@@ -250,6 +250,6 @@ lemma list_Reverse2 [simp]: "\<lbrakk>
    fst (Current.pop current) # Small.list (Reverse2 (drop_first current) auxS big newS count) =
    Small.list (Reverse2 current auxS big newS count)"
   by(induction current rule: Current.pop.induct)
-    (auto simp: first_hd reverseN_take rev_take Suc_diff_le)
+    (auto simp: first_hd rev_take Suc_diff_le)
 
 end

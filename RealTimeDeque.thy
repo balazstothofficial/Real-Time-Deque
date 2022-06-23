@@ -1,8 +1,36 @@
-section \<open>Real-Time Deque\<close>
+section \<open>Real-Time Deque Implementation\<close>
 
 theory RealTimeDeque
 imports States
 begin
+
+text\<open>
+The real-time deque can be in the following states:
+
+ \<^descr> \<open>Empty\<close>: No values stored. No dequeue operation possible.
+ \<^descr> \<open>One\<close>: One element in the deque.
+ \<^descr> \<open>Two\<close>: Two elements in the deque.
+ \<^descr> \<open>Three\<close>: Three elements in the deque.
+ \<^descr> \<open>Idle\<close>: Deque with a left and a right end, fulfilling the following invariant:
+   \<^item> 3 * size of left end \<open>\<ge>\<close> size of right end
+   \<^item> 3 * size of right end \<open>\<ge>\<close> size of left end
+   \<^item> Neither of the ends is empty
+ \<^descr> \<open>Transforming\<close>: Deque which violated the invariant of the \<open>idle\<close> state by non-balanced dequeue and enqueue operations. The invariants during in this state are:
+   \<^item> The transformation is not done yet. The deque needs to be in \<open>idle\<close> state otherwise.
+   \<^item> The transformation is in a valid state (Defined in theory \<open>States\<close>)
+   \<^item> The two ends of the deque are in a size window, such that after finishing the transformation the invariant of the \<open>idle\<close> state will be met. 
+
+Functions:
+
+ \<^descr> \<open>is_empty\<close>: Checks if a deque is in the \<open>Empty\<close> state
+ \<^descr> \<open>deqL’\<close>: Dequeues an element on the left end and return the element and the deque without this element. If the deque is in \<open>idle\<close> state and the size invariant is violated either a \<open>transformation\<close> is started or if there are 3 or less elements left the respective states are used. On \<open>transformation\<close> start, six steps are executed initially. During \<open>transformation\<close> state four steps are executed and if it is finished the deque returns to \<open>idle\<close> state.
+ \<^descr> \<open>deqL\<close>: Removes one element on the left end and only returns the new deque.
+ \<^descr> \<open>firstL\<close>: Removes one element on the left end and only returns the element.
+ \<^descr> \<open>enqL\<close>: Enqueues an element on the left and returns the resulting deque. Like in \<open>deqL'\<close> when violating the size invariant in \<open>idle\<close> state, a \<open>transformation\<close> with six initial steps is started. During \<open>transformation\<close> state four steps are executed and if it is finished the deque returns to \<open>idle\<close> state.
+ \<^descr> \<open>swap\<close>: The two ends of the deque are swapped.
+ \<^descr> \<open>deqR’\<close>, \<open>deqR\<close>, \<open>firstR\<close>, \<open>enqR\<close>: Same behaviour as the left-counterparts. Implemented using the left-counterparts by swapping the deque before and after the operation.
+ \<^descr> \<open>listL\<close>, \<open>listR\<close>: Get all elements of the deque in a list starting at the left or right end. They are needed as list abstractions for the correctness proofs.
+\<close>
 
 datatype 'a deque =
     Empty
